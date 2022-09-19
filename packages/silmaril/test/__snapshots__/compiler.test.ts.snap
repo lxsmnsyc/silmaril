@@ -42,30 +42,6 @@ $$(() => {
 });"
 `;
 
-exports[`$$ > should compile to internal setup 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
-$$(() => {
-  let _ctx = _$$context();
-});"
-`;
-
-exports[`$$ > should compile to internal setup on a different alias 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
-import { $$ as setup } from 'silmaril';
-setup(() => {
-  let _ctx = _$$context();
-});"
-`;
-
-exports[`$$ > should compile to internal setup on a different string alias 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
-import { '$$' as setup } from 'silmaril';
-setup(() => {
-  let _ctx = _$$context();
-});"
-`;
-
 exports[`$store > should allow tracking for stores 1`] = `
 "import { $$update as _$$update } from \\"silmaril\\";
 import { $$subscribe as _$$subscribe } from \\"silmaril\\";

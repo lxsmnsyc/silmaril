@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as babel from '@babel/core';
-import plugin from './babel';
+import plugin from '../babel';
 
 async function compile(code: string) {
   const result = await babel.transformAsync(code, {
@@ -11,41 +11,6 @@ async function compile(code: string) {
   return result?.code;
 }
 
-describe('$$', () => {
-  it('should compile to internal setup', async () => {
-    const result = await compile(`
-    import { $$ } from 'silmaril';
-
-    $$(() => {
-
-    });
-    `);
-
-    expect(result).toMatchSnapshot();
-  });
-  it('should compile to internal setup on a different alias', async () => {
-    const result = await compile(`
-    import { $$ as setup } from 'silmaril';
-
-    setup(() => {
-
-    });
-    `);
-
-    expect(result).toMatchSnapshot();
-  });
-  it('should compile to internal setup on a different string alias', async () => {
-    const result = await compile(`
-    import { '$$' as setup } from 'silmaril';
-
-    setup(() => {
-
-    });
-    `);
-
-    expect(result).toMatchSnapshot();
-  });
-});
 describe('let', () => {
   it('should compile on AssignmentExpression', async () => {
     const result = await compile(`

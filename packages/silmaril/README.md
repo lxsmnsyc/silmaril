@@ -249,6 +249,8 @@ $$(() => {
 
 ### Composition
 
+#### `$composable`
+
 `$composable` allows composing functions that can be used in `$$`, `$sync`, `$`, another `$composable` or computed variables.
 
 ```js
@@ -297,6 +299,30 @@ $$(() => {
   // Count: 0
   // Count: 100
   // Count: 200
+});
+```
+
+#### `$` and `$sync`
+
+Both `$` and `$sync` behave much like `$$`: variables become reactive, `onMount` and `onDestroy` can be used, same goes to other APIs.
+
+```js
+import { $$, $ } from 'silmaril';
+
+$$(() => {
+  let y = 0;
+  $(() => {
+    let x = 0;
+
+    $(console.log(x + y));
+
+    onDestroy(() => {
+      console.log('This will be cleaned up when `y` changes');
+    });
+
+    x += 100;
+  });
+  y += 100;
 });
 ```
 
