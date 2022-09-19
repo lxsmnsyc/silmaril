@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { unwrap, pcall } from './pcall';
 
+function forEach<T>(arr: T[], cb: (item: T) => void) {
+  for (let i = 0, len = arr.length; i < len; i += 1) {
+    cb(arr[i]);
+  }
+}
+
 interface Instance {
   alive: boolean;
   mounted: boolean;
@@ -41,27 +47,21 @@ function createInstance(): Instance {
 function flushSync(instance: Instance) {
   if (instance.alive) {
     runWithInstance(instance, () => {
-      for (let i = 0, len = instance.syncs.length; i < len; i += 1) {
-        instance.syncs[i]();
-      }
+      forEach(instance.syncs, (item) => item());
     });
   }
 }
 
 function flushEffects(instance: Instance) {
   if (instance.alive) {
-    for (let i = 0, len = instance.effects.length; i < len; i += 1) {
-      instance.effects[i]();
-    }
+    forEach(instance.effects, (item) => item());
   }
 }
 
-function mount(instance: Instance) {
+function scheduleFlush(instance: Instance) {
   if (instance.alive) {
-    instance.mounted = true;
-
-    for (let i = 0, len = instance.mounts.length; i < len; i += 1) {
-      instance.mounts[i]();
+    if (instance.timeout) {
+      clearTimeout(instance.timeout);
     }
     instance.timeout = setTimeout(() => {
       if (instance.alive) {
@@ -71,16 +71,20 @@ function mount(instance: Instance) {
   }
 }
 
+function mount(instance: Instance) {
+  if (instance.alive) {
+    instance.mounted = true;
+
+    forEach(instance.mounts, (item) => item());
+    scheduleFlush(instance);
+  }
+}
+
 function destroy(instance: Instance) {
   if (instance.alive) {
     instance.alive = false;
-
-    for (let i = 0, len = instance.instances.length; i < len; i += 1) {
-      destroy(instance.instances[i]);
-    }
-    for (let i = 0, len = instance.destroys.length; i < len; i += 1) {
-      instance.destroys[i]();
-    }
+    forEach(instance.instances, destroy);
+    forEach(instance.destroys, (item) => item());
   }
 }
 
@@ -114,15 +118,7 @@ function changed(signals: any[][], index: number, next: any[]) {
 export function $$update<T>(instance: Instance, value: T): T {
   if (instance.alive) {
     flushSync(instance);
-
-    if (instance.timeout) {
-      clearTimeout(instance.timeout);
-    }
-    instance.timeout = setTimeout(() => {
-      if (instance.alive) {
-        flushEffects(instance);
-      }
-    });
+    scheduleFlush(instance);
   }
   return value;
 }
