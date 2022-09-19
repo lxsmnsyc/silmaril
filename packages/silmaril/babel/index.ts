@@ -47,13 +47,12 @@ function getHookIdentifier(
   ctx: StateContext,
   path: NodePath,
   name: string,
-  source = SOURCE_MODULE,
 ): t.Identifier {
   const current = ctx.hooks.get(name);
   if (current) {
     return current;
   }
-  const newID = addNamed(path, name, source);
+  const newID = addNamed(path, name, SOURCE_MODULE);
   ctx.hooks.set(name, newID);
   return newID;
 }
@@ -430,20 +429,45 @@ function transformReads(
 function transformSetup(
   ctx: StateContext,
   path: NodePath<t.CallExpression>,
-  type: '$$' | '$composable',
+  type: '$$' | '$composable' | '$' | '$sync',
 ) {
   // Check arguments
   if (path.node.arguments.length !== 1) {
     throw new Error(`${type} can only accept a single argument`);
   }
+  const isTopLevel = type === SETUP || type === COMPOSABLE;
   const arg = path.node.arguments[0];
   if (!(t.isArrowFunctionExpression(arg) || t.isFunctionExpression(arg))) {
-    throw new Error(`${type} argument must be ArrowFunctionExpression or FunctionExpression`);
+    if (isTopLevel) {
+      throw new Error(`${type} argument must be ArrowFunctionExpression or FunctionExpression`);
+    }
+    return;
   }
-  // Insert instance argument
-  const instanceID = path.scope.generateUidIdentifier('ctx');
-
   if (t.isBlockStatement(arg.body)) {
+    path.traverse({
+      CallExpression(p) {
+        const { callee } = p.node;
+
+        if (t.isIdentifier(callee)) {
+          const binding = p.scope.getBindingIdentifier(callee.name);
+          if (binding) {
+            if (ctx.identifiers.setup.has(binding)) {
+              transformSetup(ctx, p, SETUP);
+            }
+            if (ctx.identifiers.composable.has(binding)) {
+              transformSetup(ctx, p, COMPOSABLE);
+            }
+            if (ctx.identifiers.effect.has(binding)) {
+              transformSetup(ctx, p, EFFECT);
+            }
+            if (ctx.identifiers.sync.has(binding)) {
+              transformSetup(ctx, p, SYNC);
+            }
+          }
+        }
+      },
+    });
+    const instanceID = path.scope.generateUidIdentifier('ctx');
     arg.body.body.unshift(
       t.variableDeclaration(
         'let',
