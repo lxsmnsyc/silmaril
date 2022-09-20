@@ -42,12 +42,12 @@
   },
   "description": "Compile-time reactivity for JS",
   "repository": {
-    "url": "https://github.com/lxsmnsyc/compostate.git",
+    "url": "https://github.com/lxsmnsyc/silmaril.git",
     "type": "git"
   },
-  "homepage": "https://github.com/lxsmnsyc/compostate",
+  "homepage": "https://github.com/lxsmnsyc/silmaril/packages/silmaril",
   "bugs": {
-    "url": "https://github.com/lxsmnsyc/compostate/issues"
+    "url": "https://github.com/lxsmnsyc/silmaril/issues"
   },
   "publishConfig": {
     "access": "public"
