@@ -18,6 +18,20 @@ yarn add -D rollup-plugin-silmaril
 pnpm add -D rollup-plugin-silmaril
 ```
 
+## Usage
+
+```js
+import silmaril from 'rollup-plugin-silmaril';
+
+///...
+silmaril({
+  filter: {
+    include: 'src/**/*.ts',
+    exclude: 'node_modules/**/*.{ts,js}',
+  },
+}),
+```
+
 ## License
 
 MIT © [lxsmnsyc](https://github.com/lxsmnsyc)
