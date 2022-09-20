@@ -254,7 +254,7 @@ $$(() => {
 `$composable` allows composing functions that can be used in `$$`, `$sync`, `$`, another `$composable` or computed variables.
 
 ```js
-import { $$, $sync, $composable, $store } from 'silmaril';
+import { $$, $sync, $composable, $store, onDestroy } from 'silmaril';
 import Store from 'silmaril/store';
 
 // Create a composable
@@ -307,7 +307,7 @@ $$(() => {
 Both `$` and `$sync` behave much like `$$`: variables become reactive, `onMount` and `onDestroy` can be used, same goes to other APIs.
 
 ```js
-import { $$, $ } from 'silmaril';
+import { $$, $, onDestroy } from 'silmaril';
 
 $$(() => {
   let y = 0;
