@@ -46,6 +46,32 @@ $$(() => {
 });
 ```
 
+### `fromStore`
+
+```js
+import { createEffect } from 'solid-js';
+import { fromStore } from 'solid-silmaril';
+import { $$, $sync, $store } from 'silmaril';
+
+const countStore = new Store(0);
+
+const [count, setCount] = fromStore(countStore);
+
+$$(() => {
+  let counter = $store(countStore);
+
+  $sync(console.log('Silmaril Count:', counter));
+});
+
+createEffect(() => {
+  console.log('SolidJS Count:', count());
+});
+
+setInterval(() => {
+  setCount((current) += 1);
+}, 1000);
+```
+
 ## License
 
 MIT © [lxsmnsyc](https://github.com/lxsmnsyc)
