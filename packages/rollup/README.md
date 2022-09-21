@@ -29,7 +29,7 @@ silmaril({
     include: 'src/**/*.ts',
     exclude: 'node_modules/**/*.{ts,js}',
   },
-}),
+})
 ```
 
 ## License
