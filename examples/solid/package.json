@@ -1,0 +1,27 @@
+{
+  "version": "0.1.0",
+  "name": "solid-demo",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "silmaril": "0.1.0",
+    "solid-js": "^1.5.5",
+    "solid-silmaril": "0.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.22.0",
+    "eslint-config-lxsmnsyc": "^0.4.8",
+    "rollup-plugin-silmaril": "0.1.0",
+    "typescript": "^4.8.3",
+    "vite": "^3.1.3",
+    "vite-plugin-solid": "^2.3.6"
+  },
+  "private": true,
+  "publishConfig": {
+    "access": "restricted"
+  }
+}
