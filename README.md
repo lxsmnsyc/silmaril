@@ -326,6 +326,12 @@ $$(() => {
 });
 ```
 
+## Bindings
+
+- [SolidJS](https://github.com/lxsmnsyc/silmaril/tree/main/packages/solid)
+- [Rollup](https://github.com/lxsmnsyc/silmaril/tree/main/packages/rollup)
+- [Vite](https://github.com/lxsmnsyc/silmaril/tree/main/packages/vite)
+
 ## Inspirations/Prior Art
 
 - [Svelte](https://svelte.dev/)

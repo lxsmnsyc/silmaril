@@ -154,34 +154,6 @@ $$(() => {
 });"
 `;
 
-exports[`const > should compile when accessing owned variables 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
-$$(() => {
-  let _ctx = _$$context();
-
-  let greeting = 'Hello';
-  let receiver = 'World';
-
-  let message,
-
-  /*$skip*/
-  _computed = _$$sync(() => [greeting, receiver], () => _$$update(_ctx, message = greeting + ' ' + receiver));
-});"
-`;
-
-exports[`const > should not compile when not accessing owned variables 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
-$$(() => {
-  let _ctx = _$$context();
-
-  let message = Math.random();
-});"
-`;
-
 exports[`let > should compile on AssignmentExpression 1`] = `
 "import { $$update as _$$update } from \\"silmaril\\";
 import { $$context as _$$context } from \\"silmaril\\";
@@ -209,6 +181,34 @@ $$(() => {
   function increment() {
     _$$update(_ctx, x++);
   }
+});"
+`;
+
+exports[`let > should compile when accessing owned variables 1`] = `
+"import { $$update as _$$update } from \\"silmaril\\";
+import { $$sync as _$$sync } from \\"silmaril\\";
+import { $$context as _$$context } from \\"silmaril\\";
+import { $$ } from 'silmaril';
+$$(() => {
+  let _ctx = _$$context();
+
+  let greeting = 'Hello';
+  let receiver = 'World';
+
+  let message,
+
+  /*$skip*/
+  _computed = _$$sync(() => [greeting, receiver], () => _$$update(_ctx, message = greeting + ' ' + receiver));
+});"
+`;
+
+exports[`let > should not compile when not accessing owned variables 1`] = `
+"import { $$context as _$$context } from \\"silmaril\\";
+import { $$ } from 'silmaril';
+$$(() => {
+  let _ctx = _$$context();
+
+  let message = Math.random();
 });"
 `;
 

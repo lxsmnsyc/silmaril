@@ -18,29 +18,29 @@ importers:
     specifiers:
       eslint: ^8.22.0
       eslint-config-lxsmnsyc: ^0.4.8
-      rollup-plugin-silmaril: 0.1.0
       silmaril: 0.1.0
       typescript: ^4.8.3
       vite: ^3.0.9
+      vite-plugin-silmaril: 0.1.0
     dependencies:
       silmaril: link:../../packages/silmaril
     devDependencies:
       eslint: 8.23.1
       eslint-config-lxsmnsyc: 0.4.8_irgkl5vooow2ydyo6aokmferha
-      rollup-plugin-silmaril: link:../../packages/rollup
       typescript: 4.8.3
       vite: 3.1.1
+      vite-plugin-silmaril: link:../../packages/vite
 
   examples/solid:
     specifiers:
       eslint: ^8.22.0
       eslint-config-lxsmnsyc: ^0.4.8
-      rollup-plugin-silmaril: 0.1.0
       silmaril: 0.1.0
       solid-js: ^1.5.5
       solid-silmaril: 0.1.0
       typescript: ^4.8.3
       vite: ^3.1.3
+      vite-plugin-silmaril: 0.1.0
       vite-plugin-solid: ^2.3.6
     dependencies:
       silmaril: link:../../packages/silmaril
@@ -49,9 +49,9 @@ importers:
     devDependencies:
       eslint: 8.23.1
       eslint-config-lxsmnsyc: 0.4.8_irgkl5vooow2ydyo6aokmferha
-      rollup-plugin-silmaril: link:../../packages/rollup
       typescript: 4.8.3
       vite: 3.1.3
+      vite-plugin-silmaril: link:../../packages/vite
       vite-plugin-solid: 2.3.6_solid-js@1.5.5+vite@3.1.3
 
   packages/rollup:
@@ -136,6 +136,37 @@ importers:
       solid-js: 1.5.5
       tslib: 2.4.0
       typescript: 4.8.3
+      vitest: 0.23.4
+
+  packages/vite:
+    specifiers:
+      '@babel/core': ^7.19.1
+      '@babel/preset-typescript': ^7.18.6
+      '@rollup/pluginutils': ^4.2.1
+      '@types/babel__core': ^7.1.19
+      '@types/node': ^18.0.0
+      eslint: ^8.22.0
+      eslint-config-lxsmnsyc: ^0.4.8
+      pridepack: 2.3.0
+      silmaril: ^0.1.0
+      tslib: ^2.4.0
+      typescript: ^4.8.3
+      vite: ^3.1.4
+      vitest: ^0.23.4
+    dependencies:
+      '@babel/core': 7.19.1
+      '@babel/preset-typescript': 7.18.6_@babel+core@7.19.1
+      '@rollup/pluginutils': 4.2.1
+    devDependencies:
+      '@types/babel__core': 7.1.19
+      '@types/node': 18.7.18
+      eslint: 8.23.1
+      eslint-config-lxsmnsyc: 0.4.8_irgkl5vooow2ydyo6aokmferha
+      pridepack: 2.3.0_pc7zswgett2h5ilzpsd4urzaq4
+      silmaril: link:../silmaril
+      tslib: 2.4.0
+      typescript: 4.8.3
+      vite: 3.1.4
       vitest: 0.23.4
 
 packages:
@@ -6688,6 +6719,33 @@ packages:
       fsevents: 2.3.2
     dev: true
 
+  /vite/3.1.4:
+    resolution: {integrity: sha512-JoQI08aBjY9lycL7jcEq4p9o1xUjq5aRvdH4KWaXtkSx7e7RpAh9D3IjzDWRD4Fg44LS3oDAIOG/Kq1L+82psA==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    hasBin: true
+    peerDependencies:
+      less: '*'
+      sass: '*'
+      stylus: '*'
+      terser: ^5.4.0
+    peerDependenciesMeta:
+      less:
+        optional: true
+      sass:
+        optional: true
+      stylus:
+        optional: true
+      terser:
+        optional: true
+    dependencies:
+      esbuild: 0.15.8
+      postcss: 8.4.16
+      resolve: 1.22.1
+      rollup: 2.78.1
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
+
   /vitest/0.23.4:
     resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
     engines: {node: '>=v14.16.0'}
@@ -6720,7 +6778,7 @@ packages:
       tinybench: 2.1.5
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 3.1.1
+      vite: 3.1.4
     transitivePeerDependencies:
       - less
       - sass

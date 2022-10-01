@@ -42,8 +42,6 @@ describe('let', () => {
 
     expect(result).toMatchSnapshot();
   });
-});
-describe('const', () => {
   it('should compile when accessing owned variables', async () => {
     const result = await compile(`
     import { $$ } from 'silmaril';

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import silmaril from 'rollup-plugin-silmaril';
+import silmaril from 'vite-plugin-silmaril';
 
 export default defineConfig({
   plugins: [

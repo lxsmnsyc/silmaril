@@ -1,4 +1,4 @@
-import silmaril from 'rollup-plugin-silmaril';
+import silmaril from 'vite-plugin-silmaril';
 
 export default {
   plugins: [
