@@ -1,4 +1,4 @@
-// Vitest Snapshot v1
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`$ > should compile to $$effect 1`] = `
 "import { $$effect as _$$effect } from \\"silmaril\\";
@@ -6,10 +6,8 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
-  _$$effect(() => [], () => console.log('Example'));
-
-  _$$effect(() => [], () => console.log('Example'));
+  _$$effect(_ctx, () => [], () => console.log('Example'));
+  _$$effect(_ctx, () => [], () => console.log('Example'));
 });"
 `;
 
@@ -20,10 +18,8 @@ import { $$, $ } from 'silmaril';
 let x = 0;
 $$(() => {
   let _ctx = _$$context();
-
-  _$$effect(() => [], () => console.log(x));
-
-  _$$effect(() => [], () => console.log(x));
+  _$$effect(_ctx, () => [], () => console.log(x));
+  _$$effect(_ctx, () => [], () => console.log(x));
 });"
 `;
 
@@ -33,12 +29,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let x = 0;
-
-  _$$effect(() => [x], () => console.log(x));
-
-  _$$effect(() => [x], () => console.log(x));
+  _$$effect(_ctx, () => [x], () => console.log(x));
+  _$$effect(_ctx, () => [x], () => console.log(x));
 });"
 `;
 
@@ -49,13 +42,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $store } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let _store = someStore,
-      example = _store.get(),
-
-  /*$skip*/
-  _subscribe = _$$subscribe(_store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
-
+    example = _store.get(),
+    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
   $(console.log(example));
 });"
 `;
@@ -67,13 +56,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $store } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let _store = someStore,
-      example = _store.get(),
-
-  /*$skip*/
-  _subscribe = _$$subscribe(_store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
-
+    example = _store.get(),
+    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
   function mutate() {
     _$$update(_ctx, example = newValue);
   }
@@ -87,12 +72,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $store } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let _store = someStore,
-      example = _store.get(),
-
-  /*$skip*/
-  _subscribe = _$$subscribe(_store, () => _$$update(_ctx, example = _store.get()));
+    example = _store.get(),
+    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()));
 });"
 `;
 
@@ -103,12 +85,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $store } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let _store = someStore,
-      example = _store.get(),
-
-  /*$skip*/
-  _subscribe = _$$subscribe(_store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
+    example = _store.get(),
+    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
 });"
 `;
 
@@ -118,10 +97,8 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $sync } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
-  _$$sync(() => [], () => console.log('Example'));
-
-  _$$sync(() => [], () => console.log('Example'));
+  _$$sync(_ctx, () => [], () => console.log('Example'));
+  _$$sync(_ctx, () => [], () => console.log('Example'));
 });"
 `;
 
@@ -132,10 +109,8 @@ import { $$, $sync } from 'silmaril';
 let x = 0;
 $$(() => {
   let _ctx = _$$context();
-
-  _$$sync(() => [], () => console.log(x));
-
-  _$$sync(() => [], () => console.log(x));
+  _$$sync(_ctx, () => [], () => console.log(x));
+  _$$sync(_ctx, () => [], () => console.log(x));
 });"
 `;
 
@@ -145,12 +120,9 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$, $sync } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let x = 0;
-
-  _$$sync(() => [x], () => console.log(x));
-
-  _$$sync(() => [x], () => console.log(x));
+  _$$sync(_ctx, () => [x], () => console.log(x));
+  _$$sync(_ctx, () => [x], () => console.log(x));
 });"
 `;
 
@@ -160,9 +132,7 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let x = 0;
-
   function increment() {
     _$$update(_ctx, x += 1);
   }
@@ -175,9 +145,7 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let x = 0;
-
   function increment() {
     _$$update(_ctx, x++);
   }
@@ -191,14 +159,10 @@ import { $$context as _$$context } from \\"silmaril\\";
 import { $$ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let greeting = 'Hello';
   let receiver = 'World';
-
   let message,
-
-  /*$skip*/
-  _computed = _$$sync(() => [greeting, receiver], () => _$$update(_ctx, message = greeting + ' ' + receiver));
+    /*$skip*/_computed = _$$sync(_ctx, () => [greeting, receiver], () => _$$update(_ctx, message = greeting + ' ' + receiver));
 });"
 `;
 
@@ -207,27 +171,26 @@ exports[`let > should not compile when not accessing owned variables 1`] = `
 import { $$ } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
   let message = Math.random();
 });"
 `;
 
 exports[`onDestroy > should compile to $$destroy 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
+"import { $$destroy as _$$destroy } from \\"silmaril\\";
+import { $$context as _$$context } from \\"silmaril\\";
 import { $$, onDestroy } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
-  onDestroy(() => console.log('Example'));
+  _$$destroy(_ctx, () => console.log('Example'));
 });"
 `;
 
 exports[`onMount > should compile to $$mount 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
+"import { $$mount as _$$mount } from \\"silmaril\\";
+import { $$context as _$$context } from \\"silmaril\\";
 import { $$, onMount } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
-
-  onMount(() => sconsole.log('Example'));
+  _$$mount(_ctx, () => sconsole.log('Example'));
 });"
 `;

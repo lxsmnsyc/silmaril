@@ -2,19 +2,39 @@ import { PluginObj, PluginPass } from '@babel/core';
 import { addNamed } from '@babel/helper-module-imports';
 import { NodePath } from '@babel/traverse';
 import * as t from '@babel/types';
+import { getImportSpecifierName } from './checks';
+import unwrapNode from './unwrap-node';
 
 const SOURCE_MODULE = 'silmaril';
-const SETUP = '$$';
-const EFFECT = '$';
-const SYNC = '$sync';
-const STORE = '$store';
-const COMPOSABLE = '$composable';
+
+type SilmarilTopLevel = '$$' | '$composable';
+type SilmarilEffects = '$' | '$sync';
+type SilmarilLifecycles = 'onMount' | 'onDestroy';
+type SilmarilStores = '$store';
+
+type SilmarilCTFS =
+  | SilmarilTopLevel
+  | SilmarilEffects
+  | SilmarilLifecycles
+  | SilmarilStores;
+
+const TRACKED_IMPORTS: Record<SilmarilCTFS, boolean> = {
+  $$: true,
+  $: true,
+  $sync: true,
+  $store: true,
+  $composable: true,
+  onMount: true,
+  onDestroy: true,
+};
 
 const TRUE_CONTEXT = '$$context';
 const TRUE_UPDATE = '$$update';
 const TRUE_EFFECT = '$$effect';
 const TRUE_SYNC = '$$sync';
 const TRUE_SUBSCRIBE = '$$subscribe';
+const TRUE_ON_MOUNT = '$$mount';
+const TRUE_ON_DESTROY = '$$destroy';
 
 const SKIP = '$skip';
 const CAN_SKIP = /^\s*\$skip\s*$/;
@@ -30,12 +50,8 @@ function canSkip(node: t.Node) {
   return false;
 }
 
-interface ImportIdentifiers {
-  setup: Set<t.Identifier>;
-  effect: Set<t.Identifier>;
-  sync: Set<t.Identifier>;
-  store: Set<t.Identifier>;
-  composable: Set<t.Identifier>;
+type ImportIdentifiers =  {
+  [key in SilmarilCTFS]: Set<t.Identifier>;
 }
 
 interface StateContext {
@@ -57,16 +73,6 @@ function getHookIdentifier(
   return newID;
 }
 
-function isValidSpecifier(
-  specifier: t.ImportSpecifier,
-  name: string,
-): boolean {
-  return (
-    (t.isIdentifier(specifier.imported) && specifier.imported.name === name)
-    || (t.isStringLiteral(specifier.imported) && specifier.imported.value === name)
-  );
-}
-
 function extractImportIdentifiers(
   ctx: StateContext,
   path: NodePath<t.ImportDeclaration>,
@@ -75,20 +81,9 @@ function extractImportIdentifiers(
     for (let i = 0, len = path.node.specifiers.length; i < len; i += 1) {
       const specifier = path.node.specifiers[i];
       if (t.isImportSpecifier(specifier)) {
-        if (isValidSpecifier(specifier, SETUP)) {
-          ctx.identifiers.setup.add(specifier.local);
-        }
-        if (isValidSpecifier(specifier, EFFECT)) {
-          ctx.identifiers.effect.add(specifier.local);
-        }
-        if (isValidSpecifier(specifier, SYNC)) {
-          ctx.identifiers.sync.add(specifier.local);
-        }
-        if (isValidSpecifier(specifier, STORE)) {
-          ctx.identifiers.store.add(specifier.local);
-        }
-        if (isValidSpecifier(specifier, COMPOSABLE)) {
-          ctx.identifiers.composable.add(specifier.local);
+        const specifierName = getImportSpecifierName(specifier);
+        if (specifierName in TRACKED_IMPORTS) {
+          ctx.identifiers[specifierName as SilmarilCTFS].add(specifier.local);
         }
       }
     }
@@ -146,6 +141,7 @@ function getDependencies(
 function transformTracking(
   ctx: StateContext,
   path: NodePath<t.CallExpression>,
+  instanceID: t.Identifier,
   dependencies: Set<t.Identifier>,
   type: string,
 ) {
@@ -157,7 +153,10 @@ function transformTracking(
 
   let result: t.Expression;
 
-  if (t.isArrowFunctionExpression(arg) || t.isFunctionExpression(arg)) {
+  if (
+    unwrapNode(arg, t.isArrowFunctionExpression)
+    || unwrapNode(arg, t.isFunctionExpression)
+  ) {
     result = arg;
   } else {
     result = t.arrowFunctionExpression(
@@ -170,6 +169,7 @@ function transformTracking(
     t.callExpression(
       getHookIdentifier(ctx, path, type),
       [
+        instanceID,
         t.arrowFunctionExpression([], t.arrayExpression(Array.from(dependencies))),
         result,
       ],
@@ -181,6 +181,7 @@ function transformComputed(
   ctx: StateContext,
   path: NodePath<t.VariableDeclarator>,
   identifiers: Set<t.Identifier>,
+  instanceID: t.Identifier,
   id: t.LVal,
   init: t.Expression,
 ) {
@@ -193,6 +194,7 @@ function transformComputed(
           t.callExpression(
             getHookIdentifier(ctx, path, TRUE_SYNC),
             [
+              instanceID,
               t.arrowFunctionExpression(
                 [],
                 t.arrayExpression(Array.from(dependencies)),
@@ -215,9 +217,10 @@ function transformComputed(
 function transformStore(
   ctx: StateContext,
   path: NodePath<t.VariableDeclarator>,
+  instanceID: t.Identifier,
   id: t.LVal,
   init: t.CallExpression,
-  kind: 'let' | 'const' | 'var',
+  kind: t.VariableDeclaration['kind'],
 ) {
   if (init.arguments.length !== 1) {
     throw new Error('$store can only accept a single argument.');
@@ -263,6 +266,7 @@ function transformStore(
         t.callExpression(
           getHookIdentifier(ctx, path, TRUE_SUBSCRIBE),
           [
+            instanceID,
             storeIdentifier,
             t.arrowFunctionExpression(
               [],
@@ -286,6 +290,7 @@ function transformStore(
 function traverseIdentifiers(
   ctx: StateContext,
   path: NodePath<t.CallExpression>,
+  instanceID: t.Identifier,
   arg: t.Function,
 ) {
   const identifiers = new Set<t.Identifier>();
@@ -304,10 +309,11 @@ function traverseIdentifiers(
               if (child.node.init) {
                 if (t.isCallExpression(child.node.init) && t.isIdentifier(child.node.init.callee)) {
                   const binding = child.scope.getBindingIdentifier(child.node.init.callee.name);
-                  if (binding && ctx.identifiers.store.has(binding)) {
+                  if (binding && ctx.identifiers.$store.has(binding)) {
                     transformStore(
                       ctx,
                       child,
+                      instanceID,
                       child.node.id,
                       child.node.init,
                       kind,
@@ -319,6 +325,7 @@ function traverseIdentifiers(
                   ctx,
                   child,
                   identifiers,
+                  instanceID,
                   child.node.id,
                   child.node.init,
                 );
@@ -398,26 +405,43 @@ function transformReads(
       if (functionParent && functionParent.node === arg) {
         const { callee } = p.node;
 
-        if (t.isIdentifier(callee)) {
-          const binding = p.scope.getBindingIdentifier(callee.name);
+        const trueIdentifier = unwrapNode(callee, t.isIdentifier);
+        if (trueIdentifier) {
+          const binding = p.scope.getBindingIdentifier(trueIdentifier.name);
           if (binding) {
-            if (ctx.identifiers.effect.has(binding)) {
+            if (ctx.identifiers.$.has(binding)) {
               const dependencies = getDependencies(p, identifiers);
               transformTracking(
                 ctx,
                 p,
+                instanceID,
                 dependencies,
                 TRUE_EFFECT,
               );
             }
-            if (ctx.identifiers.sync.has(binding)) {
+            if (ctx.identifiers.$sync.has(binding)) {
               const dependencies = getDependencies(p, identifiers);
               transformTracking(
                 ctx,
                 p,
+                instanceID,
                 dependencies,
                 TRUE_SYNC,
               );
+            }
+            if (ctx.identifiers.onMount.has(binding)) {
+              p.node.callee = getHookIdentifier(ctx, p, TRUE_ON_MOUNT);
+              p.node.arguments = [
+                instanceID,
+                ...p.node.arguments,
+              ];
+            }
+            if (ctx.identifiers.onDestroy.has(binding)) {
+              p.node.callee = getHookIdentifier(ctx, p, TRUE_ON_DESTROY);
+              p.node.arguments = [
+                instanceID,
+                ...p.node.arguments,
+              ];
             }
           }
         }
@@ -429,46 +453,26 @@ function transformReads(
 function transformSetup(
   ctx: StateContext,
   path: NodePath<t.CallExpression>,
-  type: '$$' | '$composable' | '$' | '$sync',
+  type: SilmarilTopLevel | SilmarilEffects,
 ) {
   // Check arguments
   if (path.node.arguments.length !== 1) {
     throw new Error(`${type} can only accept a single argument`);
   }
-  const isTopLevel = type === SETUP || type === COMPOSABLE;
+  const isTopLevel = type === '$$' || type === '$composable';
   const arg = path.node.arguments[0];
-  if (!(t.isArrowFunctionExpression(arg) || t.isFunctionExpression(arg))) {
+  const trueArg =
+    unwrapNode(arg, t.isArrowFunctionExpression)
+    || unwrapNode(arg, t.isFunctionExpression);
+  if (!trueArg) {
     if (isTopLevel) {
       throw new Error(`${type} argument must be ArrowFunctionExpression or FunctionExpression`);
     }
     return;
   }
-  if (t.isBlockStatement(arg.body)) {
-    path.traverse({
-      CallExpression(p) {
-        const { callee } = p.node;
-
-        if (t.isIdentifier(callee)) {
-          const binding = p.scope.getBindingIdentifier(callee.name);
-          if (binding) {
-            if (ctx.identifiers.setup.has(binding)) {
-              transformSetup(ctx, p, SETUP);
-            }
-            if (ctx.identifiers.composable.has(binding)) {
-              transformSetup(ctx, p, COMPOSABLE);
-            }
-            if (ctx.identifiers.effect.has(binding)) {
-              transformSetup(ctx, p, EFFECT);
-            }
-            if (ctx.identifiers.sync.has(binding)) {
-              transformSetup(ctx, p, SYNC);
-            }
-          }
-        }
-      },
-    });
+  if (t.isBlockStatement(trueArg.body)) {
     const instanceID = path.scope.generateUidIdentifier('ctx');
-    arg.body.body.unshift(
+    trueArg.body.body.unshift(
       t.variableDeclaration(
         'let',
         [
@@ -482,11 +486,35 @@ function transformSetup(
         ],
       ),
     );
-    const identifiers = traverseIdentifiers(ctx, path, arg);
+    path.traverse({
+      CallExpression(p) {
+        const { callee } = p.node;
+
+        const trueIdentifier = unwrapNode(callee, t.isIdentifier);
+        if (trueIdentifier) {
+          const binding = p.scope.getBindingIdentifier(trueIdentifier.name);
+          if (binding) {
+            if (ctx.identifiers.$$.has(binding)) {
+              transformSetup(ctx, p, '$$');
+            }
+            if (ctx.identifiers.$composable.has(binding)) {
+              transformSetup(ctx, p, '$composable');
+            }
+            if (ctx.identifiers.$.has(binding)) {
+              transformSetup(ctx, p, '$');
+            }
+            if (ctx.identifiers.$sync.has(binding)) {
+              transformSetup(ctx, p, '$sync');
+            }
+          }
+        }
+      },
+    });
+    const identifiers = traverseIdentifiers(ctx, path, instanceID, trueArg);
     // Crawl again to re-register bindings
     path.scope.crawl();
     // Transform all reads
-    transformReads(ctx, path, arg, identifiers, instanceID);
+    transformReads(ctx, path, trueArg, identifiers, instanceID);
   }
 }
 
@@ -501,11 +529,13 @@ export default function silmarilPlugin(): PluginObj<State> {
       this.ctx = {
         hooks: new Map(),
         identifiers: {
-          setup: new Set(),
-          effect: new Set(),
-          sync: new Set(),
-          store: new Set(),
-          composable: new Set(),
+          $: new Set(),
+          $$: new Set(),
+          $composable: new Set(),
+          $store: new Set(),
+          $sync: new Set(),
+          onDestroy: new Set(),
+          onMount: new Set(),
         },
       };
     },
@@ -516,14 +546,15 @@ export default function silmarilPlugin(): PluginObj<State> {
       CallExpression(path, state) {
         const { callee } = path.node;
 
-        if (t.isIdentifier(callee)) {
-          const binding = path.scope.getBindingIdentifier(callee.name);
+        const trueIdentifier = unwrapNode(callee, t.isIdentifier);
+        if (trueIdentifier) {
+          const binding = path.scope.getBindingIdentifier(trueIdentifier.name);
           if (binding) {
-            if (state.ctx.identifiers.setup.has(binding)) {
-              transformSetup(state.ctx, path, SETUP);
+            if (state.ctx.identifiers.$$.has(binding)) {
+              transformSetup(state.ctx, path, '$');
             }
-            if (state.ctx.identifiers.composable.has(binding)) {
-              transformSetup(state.ctx, path, COMPOSABLE);
+            if (state.ctx.identifiers.$composable.has(binding)) {
+              transformSetup(state.ctx, path, '$composable');
             }
           }
         }

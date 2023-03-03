@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { unwrap, pcall } from './pcall';
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 function forEach<T>(arr: T[], cb: (item: T) => void) {
   for (let i = 0, len = arr.length; i < len; i += 1) {
     cb(arr[i]);
@@ -25,9 +23,11 @@ let CURRENT: Instance | undefined;
 function runWithInstance(instance: Instance | undefined, callback: () => void) {
   const parent = CURRENT;
   CURRENT = instance;
-  const result = pcall(callback);
-  CURRENT = parent;
-  return unwrap(result);
+  try {
+    return callback();
+  } finally {
+    CURRENT = parent;
+  }
 }
 
 function createInstance(): Instance {
@@ -127,11 +127,11 @@ export function $$update<T>(instance: Instance, value: T): T {
  * @private
  */
 export function $$sync(
+  instance: Instance,
   next: () => any[],
   callback: () => void,
 ) {
-  if (CURRENT && CURRENT.alive) {
-    const instance = CURRENT;
+  if (instance.alive) {
     const index = instance.count;
     instance.count += 1;
     const cb = () => {
@@ -152,11 +152,11 @@ export function $$sync(
  * @private
  */
 export function $$effect(
+  instance: Instance,
   next: () => any[],
   callback: () => void,
 ) {
-  if (CURRENT && CURRENT.alive) {
-    const instance = CURRENT;
+  if (instance.alive) {
     const index = instance.count;
     instance.count += 1;
     instance.effects.push(() => {
@@ -181,16 +181,36 @@ export function $$context(): Instance {
   throw new Error('Unexpected missing reactive boundary.');
 }
 
-export function onMount(callback: () => void): void {
-  if (CURRENT && CURRENT.alive) {
-    CURRENT.mounts.push(callback);
+/**
+ * @private
+ */
+export function $$mount(instance: Instance, callback: () => void): void {
+  if (instance.alive) {
+    if (instance.mounted) {
+      callback();
+    } else {
+      instance.mounts.push(callback);
+    }
   }
 }
 
-export function onDestroy(callback: () => void): void {
-  if (CURRENT && CURRENT.alive) {
-    CURRENT.destroys.push(callback);
+/**
+ * @private
+ */
+export function $$destroy(instance: Instance, callback: () => void): void {
+  if (instance.alive) {
+    instance.destroys.push(callback);
+  } else {
+    callback();
   }
+}
+
+export function onMount(_callback: () => void): void {
+  throw new Error('onMount is meant to be compile-time only.');
+}
+
+export function onDestroy(_callback: () => void): void {
+  throw new Error('onDestroy is meant to be compile-time only.');
 }
 
 export function $$(setup: () => void): () => void {
@@ -204,15 +224,15 @@ export function $composable<T extends((...args: any) => any)>(setup: T): T {
   return setup;
 }
 
-export function $<T>(value: T): void {
+export function $<T>(_value: T): void {
   throw new Error('$ is meant to be compile-time only.');
 }
 
-export function $sync<T>(value: T): void {
+export function $sync<T>(_value: T): void {
   throw new Error('$sync is meant to be compile-time only.');
 }
 
-export function $skip<T>(value: T): T {
+export function $skip<T>(_value: T): T {
   throw new Error('$skip is meant to be compile-time only.');
 }
 
@@ -222,7 +242,7 @@ export interface Store<T> {
   subscribe(callback: () => void): () => void;
 }
 
-export function $store<T>(store: Store<T>): T {
+export function $store<T>(_store: Store<T>): T {
   throw new Error('$store is meant to be compile-time only.');
 }
 
@@ -230,13 +250,18 @@ export function $store<T>(store: Store<T>): T {
  * @private
  */
 export function $$subscribe<T>(
+  instance: Instance,
   store: Store<T>,
   listen: () => void,
   dependencies?: () => any[],
   update?: () => void,
 ) {
-  if (dependencies && update) {
-    $$sync(dependencies, update);
+  if (instance.alive) {
+    if (dependencies && update) {
+      $$sync(instance, dependencies, update);
+    }
+    $$destroy(instance, store.subscribe(listen));
+  } else if (update) {
+    update();
   }
-  onDestroy(store.subscribe(listen));
 }
