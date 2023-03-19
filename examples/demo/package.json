@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "name": "demo",
   "license": "MIT",
   "scripts": {
@@ -8,14 +8,14 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "silmaril": "0.3.2"
+    "silmaril": "0.3.3"
   },
   "devDependencies": {
     "eslint": "^8.36.0",
     "eslint-config-lxsmnsyc": "^0.5.1",
     "typescript": "^4.9.5",
     "vite": "^4.2.0",
-    "vite-plugin-silmaril": "0.3.2"
+    "vite-plugin-silmaril": "0.3.3"
   },
   "private": true,
   "publishConfig": {
