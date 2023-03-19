@@ -11,10 +11,10 @@
     "silmaril": "0.3.2"
   },
   "devDependencies": {
-    "eslint": "^8.35.0",
-    "eslint-config-lxsmnsyc": "^0.4.8",
+    "eslint": "^8.36.0",
+    "eslint-config-lxsmnsyc": "^0.5.1",
     "typescript": "^4.9.5",
-    "vite": "^4.1.4",
+    "vite": "^4.2.0",
     "vite-plugin-silmaril": "0.3.2"
   },
   "private": true,
