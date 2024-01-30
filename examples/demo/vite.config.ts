@@ -1,8 +1,8 @@
-import silmaril from 'vite-plugin-silmaril';
+import silmaril from 'unplugin-silmaril';
 
 export default {
   plugins: [
-    silmaril({
+    silmaril.vite({
       filter: {
         include: 'src/**/*.ts',
         exclude: 'node_modules/**/*.{ts,js}',

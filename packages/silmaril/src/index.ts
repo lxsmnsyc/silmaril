@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 function forEach<T>(arr: T[], cb: (item: T) => void) {
   for (let i = 0, len = arr.length; i < len; i += 1) {
     cb(arr[i]);
@@ -47,14 +46,14 @@ function createInstance(): Instance {
 function flushSync(instance: Instance) {
   if (instance.alive) {
     runWithInstance(instance, () => {
-      forEach(instance.syncs, (item) => item());
+      forEach(instance.syncs, item => item());
     });
   }
 }
 
 function flushEffects(instance: Instance) {
   if (instance.alive) {
-    forEach(instance.effects, (item) => item());
+    forEach(instance.effects, item => item());
   }
 }
 
@@ -75,7 +74,7 @@ function mount(instance: Instance) {
   if (instance.alive) {
     instance.mounted = true;
 
-    forEach(instance.mounts, (item) => item());
+    forEach(instance.mounts, item => item());
     scheduleFlush(instance);
   }
 }
@@ -84,7 +83,7 @@ function destroy(instance: Instance) {
   if (instance.alive) {
     instance.alive = false;
     forEach(instance.instances, destroy);
-    forEach(instance.destroys, (item) => item());
+    forEach(instance.destroys, item => item());
   }
 }
 
@@ -220,7 +219,7 @@ export function $$(setup: () => void): () => void {
   };
 }
 
-export function $composable<T extends((...args: any) => any)>(setup: T): T {
+export function $composable<T extends (...args: any) => any>(setup: T): T {
   return setup;
 }
 
@@ -261,7 +260,5 @@ export function $$subscribe<T>(
       $$sync(instance, dependencies, update);
     }
     $$destroy(instance, store.subscribe(listen));
-  } else if (update) {
-    update();
   }
 }

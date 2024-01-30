@@ -1,5 +1,6 @@
 {
   "version": "0.3.3",
+  "type": "module",
   "name": "solid-demo",
   "license": "MIT",
   "scripts": {
@@ -9,16 +10,14 @@
   },
   "dependencies": {
     "silmaril": "0.3.3",
-    "solid-js": "^1.5.5",
+    "solid-js": "^1.8.12",
     "solid-silmaril": "0.3.3"
   },
   "devDependencies": {
-    "eslint": "^8.36.0",
-    "eslint-config-lxsmnsyc": "^0.5.1",
-    "typescript": "^4.9.5",
-    "vite": "^4.2.0",
-    "vite-plugin-silmaril": "0.3.3",
-    "vite-plugin-solid": "^2.6.1"
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "unplugin-silmaril": "0.3.3",
+    "vite-plugin-solid": "^2.9.1"
   },
   "private": true,
   "publishConfig": {

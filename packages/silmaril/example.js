@@ -1,19 +1,8 @@
-const code = `
-import { $$, $, onDestroy } from 'silmaril';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { compile } from 'silmaril/babel';
 
-$$(() => {
-  let y = 0;
-  $(() => {
-    let x = 0;
+const target = path.join(process.cwd(), 'input.js');
+const result = await compile(target, await fs.readFile(target, 'utf-8'));
 
-    $(console.log(x + y));
-
-    onDestroy(() => {
-      console.log('This will be cleaned up when \`y\` changes');
-    });
-
-    x += 100;
-  });
-  y += 100;
-});
-`;
+await fs.writeFile(path.join(process.cwd(), 'output.js'), result.code);
