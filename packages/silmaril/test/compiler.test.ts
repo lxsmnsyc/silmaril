@@ -40,36 +40,6 @@ describe('let', () => {
 
     expect(result).toMatchSnapshot();
   });
-  it('should compile when accessing owned variables', async () => {
-    const result = await compile(
-      ID,
-      `
-    import { $$ } from 'silmaril';
-
-    $$(() => {
-      let greeting = 'Hello';
-      let receiver = 'World';
-      const message = greeting + ' ' + receiver;
-    });
-    `,
-    );
-
-    expect(result).toMatchSnapshot();
-  });
-  it('should not compile when not accessing owned variables', async () => {
-    const result = await compile(
-      ID,
-      `
-    import { $$ } from 'silmaril';
-
-    $$(() => {
-      const message = Math.random();
-    });
-    `,
-    );
-
-    expect(result).toMatchSnapshot();
-  });
 });
 describe('$', () => {
   it('should compile to $$effect', async () => {
@@ -87,7 +57,7 @@ describe('$', () => {
 
     expect(result).toMatchSnapshot();
   });
-  it('should subscribe to owned variables', async () => {
+  it('should subscribe to variables', async () => {
     const result = await compile(
       ID,
       `
@@ -95,22 +65,6 @@ describe('$', () => {
 
     $$(() => {
       let x = 0;
-      $(console.log(x));
-      $(() => console.log(x));
-    });
-    `,
-    );
-
-    expect(result).toMatchSnapshot();
-  });
-  it('should not subscribe to unowned variables', async () => {
-    const result = await compile(
-      ID,
-      `
-    import { $$, $ } from 'silmaril';
-
-    let x = 0;
-    $$(() => {
       $(console.log(x));
       $(() => console.log(x));
     });
@@ -136,7 +90,7 @@ describe('$sync', () => {
 
     expect(result).toMatchSnapshot();
   });
-  it('should subscribe to owned variables', async () => {
+  it('should subscribe to variables', async () => {
     const result = await compile(
       ID,
       `
@@ -144,22 +98,6 @@ describe('$sync', () => {
 
     $$(() => {
       let x = 0;
-      $sync(console.log(x));
-      $sync(() => console.log(x));
-    });
-    `,
-    );
-
-    expect(result).toMatchSnapshot();
-  });
-  it('should not subscribe to unowned variables', async () => {
-    const result = await compile(
-      ID,
-      `
-    import { $$, $sync } from 'silmaril';
-
-    let x = 0;
-    $$(() => {
       $sync(console.log(x));
       $sync(() => console.log(x));
     });
