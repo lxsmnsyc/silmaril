@@ -252,7 +252,7 @@ describe('$store', () => {
     const result = await compile(
       ID,
       `
-    import { $$, $store } from 'silmaril';
+    import { $$, $, $store } from 'silmaril';
 
     $$(() => {
       let example = $store(someStore);

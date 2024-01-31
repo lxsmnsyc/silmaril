@@ -195,6 +195,7 @@ function transformVariableDeclarator(
       path.scope.generateUidIdentifier('computed'),
       t.callExpression(getImportIdentifier(ctx, path, HIDDEN_IMPORTS.sync), [
         instance,
+        t.numericLiteral(dependencies.length),
         t.arrowFunctionExpression([], t.arrayExpression(dependencies)),
         t.arrowFunctionExpression(
           [],
@@ -233,6 +234,82 @@ function transformComputeds(
   });
 }
 
+function isArrayPatternOwned(
+  owner: babel.NodePath<t.ArrowFunctionExpression | t.FunctionExpression>,
+  lval: babel.NodePath<t.ArrayPattern>,
+): boolean {
+  const els = lval.get('elements');
+  for (let i = 0, len = els.length; i < len; i++) {
+    const el = els[i];
+    if (isPathValid(el, t.isLVal) && !isLvalOwned(owner, el)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isObjectPatternOwned(
+  owner: babel.NodePath<t.ArrowFunctionExpression | t.FunctionExpression>,
+  lval: babel.NodePath<t.ObjectPattern>,
+): boolean {
+  const els = lval.get('properties');
+  for (let i = 0, len = els.length; i < len; i++) {
+    const el = els[i];
+    if (isPathValid(el, t.isRestElement) && !isLvalOwned(owner, el)) {
+      return false;
+    }
+    if (isPathValid(el, t.isObjectProperty)) {
+      const value = el.get('value');
+      if (isPathValid(value, t.isLVal) && !isLvalOwned(owner, value)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function isLvalOwned(
+  owner: babel.NodePath<t.ArrowFunctionExpression | t.FunctionExpression>,
+  lval: babel.NodePath<t.LVal | t.OptionalMemberExpression>,
+): boolean {
+  if (isPathValid(lval, t.isIdentifier)) {
+    const binding = lval.scope.getBinding(lval.node.name);
+    return !!binding && binding.scope.path === owner;
+  }
+  if (isPathValid(lval, t.isMemberExpression)) {
+    const object = lval.get('object');
+    return isPathValid(object, t.isLVal) && isLvalOwned(owner, object);
+  }
+  if (isPathValid(lval, t.isArrayPattern)) {
+    return isArrayPatternOwned(owner, lval);
+  }
+  if (isPathValid(lval, t.isObjectPattern)) {
+    return isObjectPatternOwned(owner, lval);
+  }
+  if (isPathValid(lval, t.isRestElement)) {
+    return isLvalOwned(owner, lval.get('argument'));
+  }
+  return false;
+}
+
+function transformAssignmentExpression(
+  ctx: StateContext,
+  parent: babel.NodePath<t.ArrowFunctionExpression | t.FunctionExpression>,
+  child: babel.NodePath<t.AssignmentExpression>,
+  instance: t.Identifier,
+): void {
+  const lval = child.get('left');
+  if (isLvalOwned(parent, lval)) {
+    child.replaceWith(
+      t.callExpression(getImportIdentifier(ctx, child, HIDDEN_IMPORTS.update), [
+        instance,
+        child.node,
+      ]),
+    );
+    child.skip();
+  }
+}
+
 function transformUpdates(
   ctx: StateContext,
   path: babel.NodePath<t.ArrowFunctionExpression | t.FunctionExpression>,
@@ -242,24 +319,24 @@ function transformUpdates(
     // Transform all assignments
     AssignmentExpression: {
       exit(child) {
-        child.replaceWith(
-          t.callExpression(
-            getImportIdentifier(ctx, child, HIDDEN_IMPORTS.update),
-            [instance, child.node],
-          ),
-        );
-        child.skip();
+        transformAssignmentExpression(ctx, path, child, instance);
       },
     },
     UpdateExpression: {
       exit(child) {
-        child.replaceWith(
-          t.callExpression(
-            getImportIdentifier(ctx, child, HIDDEN_IMPORTS.update),
-            [instance, child.node],
-          ),
-        );
-        child.skip();
+        const lval = child.get('argument');
+        if (isPathValid(lval, t.isIdentifier)) {
+          const binding = child.scope.getBinding(lval.node.name);
+          if (binding && binding.scope.path === path) {
+            child.replaceWith(
+              t.callExpression(
+                getImportIdentifier(ctx, child, HIDDEN_IMPORTS.update),
+                [instance, child.node],
+              ),
+            );
+            child.skip();
+          }
+        }
       },
     },
   });
@@ -349,6 +426,7 @@ function transformEffect(
         ),
         [
           parent,
+          t.numericLiteral(dependencies.length),
           t.arrowFunctionExpression([], t.arrayExpression(dependencies)),
           trueArg.node,
         ],

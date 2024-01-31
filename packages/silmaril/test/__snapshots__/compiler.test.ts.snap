@@ -7,18 +7,18 @@ import { $$context as _$$context } from "silmaril";
 import { $$, $ } from 'silmaril';
 $$(() => {
   let /*$skip*/_context = _$$context();
-  _$$effect(_context, () => [_$$context], () => {
+  _$$effect(_context, 1, () => [_$$context], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log('Example');
   });
-  _$$effect(_context, () => [_$$context], () => {
+  _$$effect(_context, 1, () => [_$$context], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log('Example');
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,SAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EACxBH,SAAA,CAAAF,QAAA,SAAAC,UAAA,GAAE;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AAChC,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,YAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EACxBH,SAAA,CAAAF,QAAA,YAAAC,UAAA,GAAE;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AAChC,CAAC,CAAC",
     "names": [
       "$$",
       "$",
@@ -57,18 +57,18 @@ import { $$, $ } from 'silmaril';
 let x = 0;
 $$(() => {
   let /*$skip*/_context = _$$context();
-  _$$effect(_context, () => [_$$context, x], () => {
+  _$$effect(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log(x);
   });
-  _$$effect(_context, () => [_$$context, x], () => {
+  _$$effect(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log(x);
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EAChBG,SAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA,GAAE;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EAChBG,SAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA,GAAE;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
     "names": [
       "$$",
       "$",
@@ -109,18 +109,18 @@ import { $$, $ } from 'silmaril';
 $$(() => {
   let /*$skip*/_context = _$$context();
   let x = 0;
-  _$$effect(_context, () => [_$$context, x], () => {
+  _$$effect(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log(x);
   });
-  _$$effect(_context, () => [_$$context, x], () => {
+  _$$effect(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log(x);
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,SAAA,CAAAH,QAAA,SAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAEI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EAChBC,SAAA,CAAAH,QAAA,SAAAC,UAAA,EAAAC,CAAA,GAAE;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,SAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAEI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EAChBC,SAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA,GAAE;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
     "names": [
       "$$",
       "$",
@@ -155,22 +155,27 @@ $$(() => {
 
 exports[`$store > should allow tracking for stores 1`] = `
 {
-  "code": "import { $$update as _$$update } from "silmaril";
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$update as _$$update } from "silmaril";
 import { $$subscribe as _$$subscribe } from "silmaril";
 import { $$context as _$$context } from "silmaril";
-import { $$, $store } from 'silmaril';
+import { $$, $, $store } from 'silmaril';
 $$(() => {
   let /*$skip*/_context = _$$context();
   let _store = someStore,
     example = _store.get(),
     _subscribe = _$$subscribe(_context, _store, () => _$$update(_context, example = _store.get()), () => [example], () => _store.get(example));
-  $(console.log(example));
+  _$$effect(_context, 2, () => [_$$context, example], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(example);
+  });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;;AACI,SAASA,EAAE,EAAEC,MAAM,QAAQ,UAAU;AAErCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAqBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;EAEXK,CAAC,CAACC,OAAO,CAACC,GAAG,CAACP,OAAO,CAAC,CAAC;AACzB,CAAC,CAAC",
+    "mappings": ";;;;AACI,SAASA,EAAE,EAAEC,CAAC,EAAEC,MAAM,QAAQ,UAAU;AAExCF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAqBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;EAEXK,SAAA,CAAAT,QAAA,YAAAC,UAAA,EAAAG,OAAA;IAAA,aAAAM,SAAA,GAAAT,UAAA;IAAA,OAAEU,OAAO,CAACC,GAAG,CAACR,OAAO,CAAC;EAAA;AACxB,CAAC,CAAC",
     "names": [
       "$$",
+      "$",
       "$store",
       "_context",
       "_$$context",
@@ -181,7 +186,8 @@ $$(() => {
       "_subscribe",
       "_$$subscribe",
       "_$$update",
-      "$",
+      "_$$effect",
+      "_context2",
       "console",
       "log",
     ],
@@ -191,7 +197,7 @@ $$(() => {
     ],
     "sourcesContent": [
       "
-    import { $$, $store } from 'silmaril';
+    import { $$, $, $store } from 'silmaril';
 
     $$(() => {
       let example = $store(someStore);
@@ -359,18 +365,18 @@ import { $$context as _$$context } from "silmaril";
 import { $$, $sync } from 'silmaril';
 $$(() => {
   let /*$skip*/_context = _$$context();
-  _$$sync(_context, () => [_$$context], () => {
+  _$$sync(_context, 1, () => [_$$context], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log('Example');
   });
-  _$$sync(_context, () => [_$$context], () => {
+  _$$sync(_context, 1, () => [_$$context], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log('Example');
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,SAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EAC5BH,OAAA,CAAAF,QAAA,SAAAC,UAAA,GAAM;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AACpC,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,YAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EAC5BH,OAAA,CAAAF,QAAA,YAAAC,UAAA,GAAM;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AACpC,CAAC,CAAC",
     "names": [
       "$$",
       "$sync",
@@ -409,18 +415,18 @@ import { $$, $sync } from 'silmaril';
 let x = 0;
 $$(() => {
   let /*$skip*/_context = _$$context();
-  _$$sync(_context, () => [_$$context, x], () => {
+  _$$sync(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log(x);
   });
-  _$$sync(_context, () => [_$$context, x], () => {
+  _$$sync(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log(x);
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EACpBG,OAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA,GAAM;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EACpBG,OAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA,GAAM;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
     "names": [
       "$$",
       "$sync",
@@ -461,18 +467,18 @@ import { $$, $sync } from 'silmaril';
 $$(() => {
   let /*$skip*/_context = _$$context();
   let x = 0;
-  _$$sync(_context, () => [_$$context, x], () => {
+  _$$sync(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context2 = _$$context();
     return console.log(x);
   });
-  _$$sync(_context, () => [_$$context, x], () => {
+  _$$sync(_context, 2, () => [_$$context, x], () => {
     let /*$skip*/_context3 = _$$context();
     return console.log(x);
   });
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,OAAA,CAAAH,QAAA,SAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EACpBC,OAAA,CAAAH,QAAA,SAAAC,UAAA,EAAAC,CAAA,GAAM;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,OAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EACpBC,OAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA,GAAM;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
     "names": [
       "$$",
       "$sync",
@@ -606,11 +612,11 @@ $$(() => {
   let greeting = 'Hello';
   let receiver = 'World';
   let message,
-    _computed = _$$sync(_context, () => [greeting, receiver], () => _$$update(_context, message = greeting + ' ' + receiver));
+    _computed = _$$sync(_context, 2, () => [greeting, receiver], () => _$$update(_context, message = greeting + ' ' + receiver));
 });",
   "map": {
     "file": undefined,
-    "mappings": ";;;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAMC,OAAmC;IAAAC,SAAA,GAAAC,OAAA,CAAAN,QAAA,SAAAE,QAAA,EAAAC,QAAA,SAAAI,SAAA,CAAAP,QAAA,EAAnCI,OAAO,GAAGF,QAAQ,GAAG,GAAG,GAAGC,QAAQ;AAC3C,CAAC,CAAC",
+    "mappings": ";;;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAMC,OAAmC;IAAAC,SAAA,GAAAC,OAAA,CAAAN,QAAA,YAAAE,QAAA,EAAAC,QAAA,SAAAI,SAAA,CAAAP,QAAA,EAAnCI,OAAO,GAAGF,QAAQ,GAAG,GAAG,GAAGC,QAAQ;AAC3C,CAAC,CAAC",
     "names": [
       "$$",
       "_context",

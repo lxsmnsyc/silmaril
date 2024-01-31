@@ -1,8 +1,7 @@
-import { $$, $sync } from 'silmaril';
+import { $, $$, $store } from 'silmaril';
 
 $$(() => {
-  let y = 0;
-  $sync(console.log('Count', y));
+  let example = $store(someStore);
 
-  y += 100;
+  $(console.log(example));
 });

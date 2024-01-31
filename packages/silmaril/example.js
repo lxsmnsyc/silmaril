@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { compile } from 'silmaril/babel';
+import { compile } from 'silmaril/compiler';
 
 const target = path.join(process.cwd(), 'input.js');
 const result = await compile(target, await fs.readFile(target, 'utf-8'));
