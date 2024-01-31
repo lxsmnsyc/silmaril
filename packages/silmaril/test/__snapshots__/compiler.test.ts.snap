@@ -49,7 +49,59 @@ $$(() => {
 }
 `;
 
-exports[`$ > should subscribe to variables 1`] = `
+exports[`$ > should not subscribe to unowned variables 1`] = `
+{
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$context as _$$context } from "silmaril";
+import { $$, $ } from 'silmaril';
+let x = 0;
+$$(() => {
+  let /*$skip*/_context = _$$context();
+  _$$effect(_context, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$effect(_context, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EAChBG,SAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA,GAAE;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$",
+      "x",
+      "_context",
+      "_$$context",
+      "_$$effect",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $ } from 'silmaril';
+
+    let x = 0;
+    $$(() => {
+      $(console.log(x));
+      $(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
+`;
+
+exports[`$ > should subscribe to owned variables 1`] = `
 {
   "code": "import { $$effect as _$$effect } from "silmaril";
 import { $$context as _$$context } from "silmaril";
@@ -349,7 +401,59 @@ $$(() => {
 }
 `;
 
-exports[`$sync > should subscribe to variables 1`] = `
+exports[`$sync > should not subscribe to unowned variables 1`] = `
+{
+  "code": "import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
+import { $$, $sync } from 'silmaril';
+let x = 0;
+$$(() => {
+  let /*$skip*/_context = _$$context();
+  _$$sync(_context, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$sync(_context, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EACpBG,OAAA,CAAAF,QAAA,SAAAC,UAAA,EAAAF,CAAA,GAAM;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$sync",
+      "x",
+      "_context",
+      "_$$context",
+      "_$$sync",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $sync } from 'silmaril';
+
+    let x = 0;
+    $$(() => {
+      $sync(console.log(x));
+      $sync(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
+`;
+
+exports[`$sync > should subscribe to owned variables 1`] = `
 {
   "code": "import { $$sync as _$$sync } from "silmaril";
 import { $$context as _$$context } from "silmaril";
@@ -483,6 +587,90 @@ $$(() => {
       function increment() {
         x++;
       }
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
+`;
+
+exports[`let > should compile when accessing owned variables 1`] = `
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
+import { $$ } from 'silmaril';
+$$(() => {
+  let /*$skip*/_context = _$$context();
+  let greeting = 'Hello';
+  let receiver = 'World';
+  let message,
+    _computed = _$$sync(_context, () => [greeting, receiver], () => _$$update(_context, message = greeting + ' ' + receiver));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAMC,OAAmC;IAAAC,SAAA,GAAAC,OAAA,CAAAN,QAAA,SAAAE,QAAA,EAAAC,QAAA,SAAAI,SAAA,CAAAP,QAAA,EAAnCI,OAAO,GAAGF,QAAQ,GAAG,GAAG,GAAGC,QAAQ;AAC3C,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "greeting",
+      "receiver",
+      "message",
+      "_computed",
+      "_$$sync",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      let greeting = 'Hello';
+      let receiver = 'World';
+      const message = greeting + ' ' + receiver;
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
+`;
+
+exports[`let > should not compile when not accessing owned variables 1`] = `
+{
+  "code": "import { $$context as _$$context } from "silmaril";
+import { $$ } from 'silmaril';
+$$(() => {
+  let /*$skip*/_context = _$$context();
+  let message = Math.random();
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAMC,OAAO,GAAGC,IAAI,CAACC,MAAM,CAAC,CAAC;AAC/B,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "message",
+      "Math",
+      "random",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      const message = Math.random();
     });
     ",
     ],
