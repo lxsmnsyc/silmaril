@@ -4,8 +4,7 @@
   "type": "module",
   "files": [
     "dist",
-    "babel",
-    "core"
+    "src"
   ],
   "engines": {
     "node": ">=10"
@@ -15,30 +14,25 @@
     "pridepack"
   ],
   "devDependencies": {
-    "@types/babel__core": "^7.20.0",
-    "@types/node": "^18.15.3",
-    "eslint": "^8.36.0",
-    "eslint-config-lxsmnsyc": "^0.5.1",
-    "pridepack": "2.4.2",
-    "rollup": "^2.79.0",
+    "@types/node": "^20.11.10",
+    "pridepack": "2.6.0",
     "silmaril": "0.3.3",
-    "tslib": "^2.5.0",
-    "typescript": "^4.9.5",
-    "vitest": "^0.29.2"
-  },
-  "dependencies": {
-    "@babel/core": "^7.21.0",
-    "@rollup/pluginutils": "^5.0.2"
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "rollup": "^4.9.6",
+    "vitest": "^1.2.2"
   },
   "peerDependencies": {
-    "rollup": "^2",
-    "silmaril": "^0.1"
+    "silmaril": "^0.3",
+    "rollup": "^2 || ^3 || ^4"
+  },
+  "dependencies": {
+    "unplugin-silmaril": "^0.3.3"
   },
   "scripts": {
     "prepublishOnly": "pridepack clean && pridepack build",
     "build": "pridepack build",
     "type-check": "pridepack check",
-    "lint": "pridepack lint",
     "clean": "pridepack clean",
     "watch": "pridepack watch",
     "start": "pridepack start",

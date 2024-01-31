@@ -25,10 +25,6 @@ pnpm add silmaril
 - Auto-memoization
 - Stores
 
-## Requirement
-
-Due to the compile-time nature of this library, it requires the use of [Babel](https://babeljs.io/). `silmaril` provides a Babel plugin under `silmaril/babel`.
-
 ## Usage
 
 ### Basic reactivity

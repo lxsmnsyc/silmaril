@@ -13,7 +13,7 @@ export default class Store<T> {
     return this.value;
   }
 
-  set(value: T) {
+  set(value: T): T {
     if (this.alive && !Object.is(this.value, value)) {
       this.value = value;
 
@@ -23,6 +23,7 @@ export default class Store<T> {
         }
       }
     }
+    return value;
   }
 
   subscribe(callback: () => void): () => void {

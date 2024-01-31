@@ -1,196 +1,764 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`$ > should compile to $$effect 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
-  _$$effect(_ctx, () => [], () => console.log('Example'));
-  _$$effect(_ctx, () => [], () => console.log('Example'));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$effect(_context, 1, () => [_$$context], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log('Example');
+  });
+  _$$effect(_context, 1, () => [_$$context], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log('Example');
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,YAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EACxBH,SAAA,CAAAF,QAAA,YAAAC,UAAA,GAAE;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AAChC,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$",
+      "_context",
+      "_$$context",
+      "_$$effect",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $ } from 'silmaril';
+
+    $$(() => {
+      $(console.log('Example'));
+      $(() => console.log('Example'));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$ > should not subscribe to unowned variables 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $ } from 'silmaril';
 let x = 0;
 $$(() => {
-  let _ctx = _$$context();
-  _$$effect(_ctx, () => [], () => console.log(x));
-  _$$effect(_ctx, () => [], () => console.log(x));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$effect(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$effect(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,SAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAEG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EAChBG,SAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA,GAAE;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$",
+      "x",
+      "_context",
+      "_$$context",
+      "_$$effect",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $ } from 'silmaril';
+
+    let x = 0;
+    $$(() => {
+      $(console.log(x));
+      $(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$ > should subscribe to owned variables 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let x = 0;
-  _$$effect(_ctx, () => [x], () => console.log(x));
-  _$$effect(_ctx, () => [x], () => console.log(x));
-});"
+  _$$effect(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$effect(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,CAAC,QAAQ,UAAU;AAEhCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,SAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAEI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EAChBC,SAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA,GAAE;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$",
+      "_context",
+      "_$$context",
+      "x",
+      "_$$effect",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $ } from 'silmaril';
+
+    $$(() => {
+      let x = 0;
+      $(console.log(x));
+      $(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$store > should allow tracking for stores 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $store } from 'silmaril';
+{
+  "code": "import { $$effect as _$$effect } from "silmaril";
+import { $$update as _$$update } from "silmaril";
+import { $$subscribe as _$$subscribe } from "silmaril";
+import { $$context as _$$context } from "silmaril";
+import { $$, $, $store } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let _store = someStore,
     example = _store.get(),
-    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
-  $(console.log(example));
-});"
+    _subscribe = _$$subscribe(_context, _store, () => _$$update(_context, example = _store.get()), () => [example], () => _store.get(example));
+  _$$effect(_context, 2, () => [_$$context, example], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(example);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;;AACI,SAASA,EAAE,EAAEC,CAAC,EAAEC,MAAM,QAAQ,UAAU;AAExCF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAqBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;EAEXK,SAAA,CAAAT,QAAA,YAAAC,UAAA,EAAAG,OAAA;IAAA,aAAAM,SAAA,GAAAT,UAAA;IAAA,OAAEU,OAAO,CAACC,GAAG,CAACR,OAAO,CAAC;EAAA;AACxB,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$",
+      "$store",
+      "_context",
+      "_$$context",
+      "_store",
+      "someStore",
+      "example",
+      "get",
+      "_subscribe",
+      "_$$subscribe",
+      "_$$update",
+      "_$$effect",
+      "_context2",
+      "console",
+      "log",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $, $store } from 'silmaril';
+
+    $$(() => {
+      let example = $store(someStore);
+
+      $(console.log(example));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$store > should allow updates for mutable stores 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$subscribe as _$$subscribe } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $store } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let _store = someStore,
     example = _store.get(),
-    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
+    _subscribe = _$$subscribe(_context, _store, () => _$$update(_context, example = _store.get()), () => [example], () => _store.get(example));
   function mutate() {
-    _$$update(_ctx, example = newValue);
+    _$$update(_context, example = newValue);
   }
-});"
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;AACI,SAASA,EAAE,EAAEC,MAAM,QAAQ,UAAU;AAErCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAqBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;EAEX,SAASK,MAAMA,CAAA,EAAG;IAChBD,SAAA,CAAAR,QAAA,EAAAI,OAAO,GAAGM,QAAQ;EACpB;AACF,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$store",
+      "_context",
+      "_$$context",
+      "_store",
+      "someStore",
+      "example",
+      "get",
+      "_subscribe",
+      "_$$subscribe",
+      "_$$update",
+      "mutate",
+      "newValue",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $store } from 'silmaril';
+
+    $$(() => {
+      let example = $store(someStore);
+
+      function mutate() {
+        example = newValue;
+      }
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$store > should compile $store with const 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$subscribe as _$$subscribe } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $store } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let _store = someStore,
     example = _store.get(),
-    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()));
-});"
+    _subscribe = _$$subscribe(_context, _store, () => _$$update(_context, example = _store.get()), () => [example], () => _store.get(example));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;AACI,SAASA,EAAE,EAAEC,MAAM,QAAQ,UAAU;AAErCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAuBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;AACf,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$store",
+      "_context",
+      "_$$context",
+      "_store",
+      "someStore",
+      "example",
+      "get",
+      "_subscribe",
+      "_$$subscribe",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $store } from 'silmaril';
+
+    $$(() => {
+      const example = $store(someStore);
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$store > should compile $store with let 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$subscribe as _$$subscribe } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $store } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let _store = someStore,
     example = _store.get(),
-    /*$skip*/_subscribe = _$$subscribe(_ctx, _store, () => _$$update(_ctx, example = _store.get()), () => [example], () => _store.set(example));
-});"
+    _subscribe = _$$subscribe(_context, _store, () => _$$update(_context, example = _store.get()), () => [example], () => _store.get(example));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;AACI,SAASA,EAAE,EAAEC,MAAM,QAAQ,UAAU;AAErCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAAC,MAAA,GAAqBC,SAAS;IAA1BC,OAAO,GAAAF,MAAA,CAAAG,GAAA,EAAoB;IAAAC,UAAA,GAAAC,YAAA,CAAAP,QAAA,EAAAE,MAAA,QAAAM,SAAA,CAAAR,QAAA,EAA3BI,OAAO,GAAAF,MAAA,CAAAG,GAAA,YAAPD,OAAO,SAAAF,MAAA,CAAAG,GAAA,CAAPD,OAAO;AACb,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$store",
+      "_context",
+      "_$$context",
+      "_store",
+      "someStore",
+      "example",
+      "get",
+      "_subscribe",
+      "_$$subscribe",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $store } from 'silmaril';
+
+    $$(() => {
+      let example = $store(someStore);
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$sync > should compile to $$sync 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $sync } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
-  _$$sync(_ctx, () => [], () => console.log('Example'));
-  _$$sync(_ctx, () => [], () => console.log('Example'));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$sync(_context, 1, () => [_$$context], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log('Example');
+  });
+  _$$sync(_context, 1, () => [_$$context], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log('Example');
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,YAAAC,UAAA;IAAA,aAAAE,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;EAC5BH,OAAA,CAAAF,QAAA,YAAAC,UAAA,GAAM;IAAA,aAAAK,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC;EAAA;AACpC,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$sync",
+      "_context",
+      "_$$context",
+      "_$$sync",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $sync } from 'silmaril';
+
+    $$(() => {
+      $sync(console.log('Example'));
+      $sync(() => console.log('Example'));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$sync > should not subscribe to unowned variables 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $sync } from 'silmaril';
 let x = 0;
 $$(() => {
-  let _ctx = _$$context();
-  _$$sync(_ctx, () => [], () => console.log(x));
-  _$$sync(_ctx, () => [], () => console.log(x));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$sync(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$sync(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpC,IAAIC,CAAC,GAAG,CAAC;AACTF,EAAE,CAAC,MAAM;EAAA,aAAAG,QAAA,GAAAC,UAAA;EACPC,OAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA;IAAA,aAAAI,SAAA,GAAAF,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;EACpBG,OAAA,CAAAF,QAAA,YAAAC,UAAA,EAAAF,CAAA,GAAM;IAAA,aAAAO,SAAA,GAAAL,UAAA;IAAA,OAAMG,OAAO,CAACC,GAAG,CAACN,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$sync",
+      "x",
+      "_context",
+      "_$$context",
+      "_$$sync",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $sync } from 'silmaril';
+
+    let x = 0;
+    $$(() => {
+      $sync(console.log(x));
+      $sync(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`$sync > should subscribe to owned variables 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, $sync } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let x = 0;
-  _$$sync(_ctx, () => [x], () => console.log(x));
-  _$$sync(_ctx, () => [x], () => console.log(x));
-});"
+  _$$sync(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context2 = _$$context();
+    return console.log(x);
+  });
+  _$$sync(_context, 2, () => [_$$context, x], () => {
+    let /*$skip*/_context3 = _$$context();
+    return console.log(x);
+  });
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,KAAK,QAAQ,UAAU;AAEpCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EACTC,OAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA;IAAA,aAAAE,SAAA,GAAAH,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;EACpBC,OAAA,CAAAH,QAAA,YAAAC,UAAA,EAAAC,CAAA,GAAM;IAAA,aAAAK,SAAA,GAAAN,UAAA;IAAA,OAAMI,OAAO,CAACC,GAAG,CAACJ,CAAC,CAAC;EAAA;AAC5B,CAAC,CAAC",
+    "names": [
+      "$$",
+      "$sync",
+      "_context",
+      "_$$context",
+      "x",
+      "_$$sync",
+      "_context2",
+      "console",
+      "log",
+      "_context3",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, $sync } from 'silmaril';
+
+    $$(() => {
+      let x = 0;
+      $sync(console.log(x));
+      $sync(() => console.log(x));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`let > should compile on AssignmentExpression 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let x = 0;
   function increment() {
-    _$$update(_ctx, x += 1);
+    _$$update(_context, x += 1);
   }
-});"
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EAET,SAASC,SAASA,CAAA,EAAG;IACnBC,SAAA,CAAAJ,QAAA,EAAAE,CAAC,IAAI,CAAC;EACR;AACF,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "x",
+      "increment",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      let x = 0;
+
+      function increment() {
+        x += 1;
+      }
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`let > should compile on UpdateExpression 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let x = 0;
   function increment() {
-    _$$update(_ctx, x++);
+    _$$update(_context, x++);
   }
-});"
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,CAAC,GAAG,CAAC;EAET,SAASC,SAASA,CAAA,EAAG;IACnBC,SAAA,CAAAJ,QAAA,EAAAE,CAAC,EAAE;EACL;AACF,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "x",
+      "increment",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      let x = 0;
+
+      function increment() {
+        x++;
+      }
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`let > should compile when accessing owned variables 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$update as _$$update } from "silmaril";
+import { $$sync as _$$sync } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let greeting = 'Hello';
   let receiver = 'World';
   let message,
-    /*$skip*/_computed = _$$sync(_ctx, () => [greeting, receiver], () => _$$update(_ctx, message = greeting + ' ' + receiver));
-});"
+    _computed = _$$sync(_context, 2, () => [greeting, receiver], () => _$$update(_context, message = greeting + ' ' + receiver));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;;AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAIC,QAAQ,GAAG,OAAO;EACtB,IAAMC,OAAmC;IAAAC,SAAA,GAAAC,OAAA,CAAAN,QAAA,YAAAE,QAAA,EAAAC,QAAA,SAAAI,SAAA,CAAAP,QAAA,EAAnCI,OAAO,GAAGF,QAAQ,GAAG,GAAG,GAAGC,QAAQ;AAC3C,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "greeting",
+      "receiver",
+      "message",
+      "_computed",
+      "_$$sync",
+      "_$$update",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      let greeting = 'Hello';
+      let receiver = 'World';
+      const message = greeting + ' ' + receiver;
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`let > should not compile when not accessing owned variables 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$context as _$$context } from "silmaril";
 import { $$ } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
+  let /*$skip*/_context = _$$context();
   let message = Math.random();
-});"
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";AACI,SAASA,EAAE,QAAQ,UAAU;AAE7BA,EAAE,CAAC,MAAM;EAAA,aAAAC,QAAA,GAAAC,UAAA;EACP,IAAMC,OAAO,GAAGC,IAAI,CAACC,MAAM,CAAC,CAAC;AAC/B,CAAC,CAAC",
+    "names": [
+      "$$",
+      "_context",
+      "_$$context",
+      "message",
+      "Math",
+      "random",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$ } from 'silmaril';
+
+    $$(() => {
+      const message = Math.random();
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`onDestroy > should compile to $$destroy 1`] = `
-"import { $$destroy as _$$destroy } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$destroy as _$$destroy } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, onDestroy } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
-  _$$destroy(_ctx, () => console.log('Example'));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$destroy(_context, () => console.log('Example'));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,SAAS,QAAQ,UAAU;AAExCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,UAAA,CAAAF,QAAA,EAAU,MAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC,CAAC;AACzC,CAAC,CAAC",
+    "names": [
+      "$$",
+      "onDestroy",
+      "_context",
+      "_$$context",
+      "_$$destroy",
+      "console",
+      "log",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, onDestroy } from 'silmaril';
+
+    $$(() => {
+      onDestroy(() => console.log('Example'));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;
 
 exports[`onMount > should compile to $$mount 1`] = `
-"import { $$mount as _$$mount } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
+{
+  "code": "import { $$mount as _$$mount } from "silmaril";
+import { $$context as _$$context } from "silmaril";
 import { $$, onMount } from 'silmaril';
 $$(() => {
-  let _ctx = _$$context();
-  _$$mount(_ctx, () => sconsole.log('Example'));
-});"
+  let /*$skip*/_context = _$$context();
+  _$$mount(_context, () => console.log('Example'));
+});",
+  "map": {
+    "file": undefined,
+    "mappings": ";;AACI,SAASA,EAAE,EAAEC,OAAO,QAAQ,UAAU;AAEtCD,EAAE,CAAC,MAAM;EAAA,aAAAE,QAAA,GAAAC,UAAA;EACPC,QAAA,CAAAF,QAAA,EAAQ,MAAMG,OAAO,CAACC,GAAG,CAAC,SAAS,CAAC,CAAC;AACvC,CAAC,CAAC",
+    "names": [
+      "$$",
+      "onMount",
+      "_context",
+      "_$$context",
+      "_$$mount",
+      "console",
+      "log",
+    ],
+    "sourceRoot": undefined,
+    "sources": [
+      "/path/to/example.ts",
+    ],
+    "sourcesContent": [
+      "
+    import { $$, onMount } from 'silmaril';
+
+    $$(() => {
+      onMount(() => console.log('Example'));
+    });
+    ",
+    ],
+    "version": 3,
+  },
+}
 `;

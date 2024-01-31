@@ -1,10 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-function forEach<T>(arr: T[], cb: (item: T) => void) {
-  for (let i = 0, len = arr.length; i < len; i += 1) {
-    cb(arr[i]);
-  }
-}
-
 interface Instance {
   alive: boolean;
   mounted: boolean;
@@ -47,14 +40,20 @@ function createInstance(): Instance {
 function flushSync(instance: Instance) {
   if (instance.alive) {
     runWithInstance(instance, () => {
-      forEach(instance.syncs, (item) => item());
+      for (let i = 0, len = instance.syncs.length; i < len; i++) {
+        instance.syncs[i]();
+      }
     });
   }
 }
 
 function flushEffects(instance: Instance) {
   if (instance.alive) {
-    forEach(instance.effects, (item) => item());
+    runWithInstance(instance, () => {
+      for (let i = 0, len = instance.effects.length; i < len; i++) {
+        instance.effects[i]();
+      }
+    });
   }
 }
 
@@ -75,7 +74,9 @@ function mount(instance: Instance) {
   if (instance.alive) {
     instance.mounted = true;
 
-    forEach(instance.mounts, (item) => item());
+    for (let i = 0, len = instance.mounts.length; i < len; i++) {
+      instance.mounts[i]();
+    }
     scheduleFlush(instance);
   }
 }
@@ -83,8 +84,12 @@ function mount(instance: Instance) {
 function destroy(instance: Instance) {
   if (instance.alive) {
     instance.alive = false;
-    forEach(instance.instances, destroy);
-    forEach(instance.destroys, (item) => item());
+    for (let i = 0, len = instance.instances.length; i < len; i++) {
+      destroy(instance.instances[i]);
+    }
+    for (let i = 0, len = instance.destroys.length; i < len; i++) {
+      instance.destroys[i]();
+    }
   }
 }
 
@@ -97,15 +102,19 @@ function create(setup: () => void) {
   return instance;
 }
 
-function changed(signals: any[][], index: number, next: any[]) {
+function isEqual(a: unknown, b: unknown): boolean {
+  return a === b || (a !== a && b !== b);
+}
+
+function changed(signals: any[][], index: number, size: number, next: any[]) {
   const current = signals[index];
 
   signals[index] = next;
   if (!current) {
     return true;
   }
-  for (let i = 0, len = next.length; i < len; i += 1) {
-    if (!Object.is(current[i], next[i])) {
+  for (let i = 0; i < size; i += 1) {
+    if (!isEqual(current[i], next[i])) {
       return true;
     }
   }
@@ -128,6 +137,7 @@ export function $$update<T>(instance: Instance, value: T): T {
  */
 export function $$sync(
   instance: Instance,
+  size: number,
   next: () => any[],
   callback: () => void,
 ) {
@@ -135,7 +145,7 @@ export function $$sync(
     const index = instance.count;
     instance.count += 1;
     const cb = () => {
-      if (instance.alive && changed(instance.signals, index, next())) {
+      if (instance.alive && changed(instance.signals, index, size, next())) {
         const prev = instance.instances[index];
         if (prev) {
           destroy(prev);
@@ -153,6 +163,7 @@ export function $$sync(
  */
 export function $$effect(
   instance: Instance,
+  size: number,
   next: () => any[],
   callback: () => void,
 ) {
@@ -160,7 +171,7 @@ export function $$effect(
     const index = instance.count;
     instance.count += 1;
     instance.effects.push(() => {
-      if (instance.alive && changed(instance.signals, index, next())) {
+      if (instance.alive && changed(instance.signals, index, size, next())) {
         const prev = instance.instances[index];
         if (prev) {
           destroy(prev);
@@ -220,7 +231,7 @@ export function $$(setup: () => void): () => void {
   };
 }
 
-export function $composable<T extends((...args: any) => any)>(setup: T): T {
+export function $composable<T extends (...args: any) => any>(setup: T): T {
   return setup;
 }
 
@@ -253,15 +264,13 @@ export function $$subscribe<T>(
   instance: Instance,
   store: Store<T>,
   listen: () => void,
-  dependencies?: () => any[],
-  update?: () => void,
+  dependencies: () => any[],
+  update: () => void,
 ) {
   if (instance.alive) {
-    if (dependencies && update) {
-      $$sync(instance, dependencies, update);
-    }
+    $$sync(instance, 1, dependencies, update);
     $$destroy(instance, store.subscribe(listen));
-  } else if (update) {
+  } else {
     update();
   }
 }

@@ -1,44 +1,58 @@
 {
-  "name": "vite-plugin-silmaril",
   "version": "0.3.3",
   "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "main": "./dist/cjs/production/index.cjs",
+  "module": "./dist/esm/production/index.mjs",
+  "exports": {
+    ".": {
+      "development": {
+        "require": "./dist/cjs/development/index.cjs",
+        "import": "./dist/esm/development/index.mjs"
+      },
+      "require": "./dist/cjs/production/index.cjs",
+      "import": "./dist/esm/production/index.mjs",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
   "files": [
     "dist",
-    "babel",
-    "core"
+    "src"
   ],
   "engines": {
     "node": ">=10"
   },
   "license": "MIT",
   "keywords": [
-    "pridepack"
+    "pridepack",
+    "babel"
   ],
+  "name": "unplugin-silmaril",
   "devDependencies": {
-    "@types/node": "^20.11.10",
+    "@types/node": "^20.11.3",
     "pridepack": "2.6.0",
     "silmaril": "0.3.3",
     "tslib": "^2.6.2",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12",
-    "vitest": "^1.2.2"
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "silmaril": "^0.3",
     "vite": "^3 || ^4 || ^5"
   },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "unplugin-silmaril": "^0.3.3"
+    "@rollup/pluginutils": "^5.1.0",
+    "unplugin": "^1.6.0"
   },
   "scripts": {
-    "prepublishOnly": "pridepack clean && pridepack build",
+    "prepublish": "pridepack clean && pridepack build",
     "build": "pridepack build",
     "type-check": "pridepack check",
-    "clean": "pridepack clean",
-    "watch": "pridepack watch",
-    "start": "pridepack start",
-    "dev": "pridepack dev",
-    "test": "vitest"
+    "clean": "pridepack clean"
   },
   "description": "Compile-time reactivity for JS",
   "repository": {
@@ -54,20 +68,6 @@
   },
   "author": "Alexis Munsayac",
   "private": false,
-  "types": "./dist/types/index.d.ts",
-  "main": "./dist/cjs/production/index.cjs",
-  "module": "./dist/esm/production/index.mjs",
-  "exports": {
-    ".": {
-      "development": {
-        "require": "./dist/cjs/development/index.cjs",
-        "import": "./dist/esm/development/index.mjs"
-      },
-      "require": "./dist/cjs/production/index.cjs",
-      "import": "./dist/esm/production/index.mjs",
-      "types": "./dist/types/index.d.ts"
-    }
-  },
   "typesVersions": {
     "*": {}
   }
