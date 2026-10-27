@@ -37,6 +37,9 @@ depends_on:
   - on: fix-babel-plugin
     kind: hard
     why: deletes and rewrites the files the 0.4.1 fix edits; the fix must merge first so it is not lost.
+  - on: fix-nested-setup
+    kind: hard
+    why: deletes the Babel plugin this fix edits; the fix must merge first so it is not lost.
 ---
 
 # Switch silmaril to the new compiler and runtime
