@@ -5,7 +5,7 @@
 - `website/`, a private workspace package (`pnpm-workspace.yaml` lists it) built with brumate 0.3.0, based on the website of brumate. It prerenders to static files in `website/dist/client`.
 - Layout, header with a theme switch, sidebar, table of contents, previous and next links, search, link previews and a 404 page. Code highlighting uses twinkleplop (js, jsx, ts, tsx, css, json, bash).
 - The README is split into 10 pages in `website/docs/*.md`: introduction (`index.md`), getting started, bundler setup, basic reactivity, computed variables, lifecycles, synchronous tracking, composition, stores, SolidJS. Every README section has a page. The sidebar order is in `website/src/docs.ts`.
-- `website/vercel.json`: static output `dist/client`, clean URLs, deploys only `main`, build command `pnpm --filter "website^..." build && pnpm build` (builds the `silmaril` workspace package first).
+- `website/vercel.json`: static output `dist/client`, clean URLs, an ignored build step (`website/scripts/vercel-ignore.sh`: `main` always builds, other branches only when they have an open pull request that changes `website/`), build command `pnpm --filter "website^..." build && pnpm build` (builds the `silmaril` workspace package first).
 - `README.md` and `packages/silmaril/README.md` (still byte-identical) link to the `website` folder. They say the address goes there once the site is deployed.
 - CI: a "Build website" step in `.github/workflows/ci.yml`.
 - Scripts: `pnpm --filter website dev` (port 5180), `build`, `preview` (port 4180), `type-check` (`brumate-tsc`, so the root `pnpm type-check` covers it).
@@ -54,7 +54,7 @@
 2. Set the root directory to `website`. Turn on "Include source files outside of the Root Directory", because the build needs `packages/silmaril`.
 3. Leave the framework as Other. `vercel.json` sets the build command, output directory and clean URLs. Install runs `pnpm install` from the workspace root.
 4. Use Node.js 24 in the project settings.
-5. Deploy. Only `main` deploys, per `vercel.json`.
+5. Deploy. `main` always deploys. A pull request gets a preview only when it changes `website/`; `vercel.json` runs `scripts/vercel-ignore.sh` as the ignored build step. A branch pushed before its pull request is opened gets no preview until the next push, because Vercel sets `VERCEL_GIT_PULL_REQUEST_ID` only when the pull request exists.
 6. Optional: set `SITE_URL` (for example `https://silmaril.dev`) in the project environment if you use a custom domain. Without it, link previews use `VERCEL_PROJECT_PRODUCTION_URL`.
 7. After the first deploy, put the site address into the line "Documentation: ..." in `README.md` and `packages/silmaril/README.md` (keep them identical).
 
