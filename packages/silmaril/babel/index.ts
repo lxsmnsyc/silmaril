@@ -10,14 +10,17 @@ type SilmarilTopLevel = '$$' | '$composable';
 type SilmarilEffects = '$' | '$sync';
 type SilmarilLifecycles = 'onMount' | 'onDestroy';
 type SilmarilStores = '$store';
+type SilmarilSkips = '$skip';
 
 type SilmarilCTFS =
   | SilmarilTopLevel
   | SilmarilEffects
   | SilmarilLifecycles
-  | SilmarilStores;
+  | SilmarilStores
+  | SilmarilSkips;
 
 const TRACKED_IMPORTS: Record<SilmarilCTFS, boolean> = {
+  $skip: true,
   $$: true,
   $: true,
   $sync: true,
@@ -123,7 +126,20 @@ function unwrapLVal(
   }
 }
 
+function isSkipCall(ctx: StateContext, path: NodePath): boolean {
+  if (!t.isCallExpression(path.node)) {
+    return false;
+  }
+  const callee = unwrapNode(path.node.callee, t.isIdentifier);
+  if (!callee) {
+    return false;
+  }
+  const binding = path.scope.getBindingIdentifier(callee.name);
+  return !!binding && ctx.identifiers.$skip.has(binding);
+}
+
 function getDependencies(
+  ctx: StateContext,
   path: NodePath,
   identifiers: Set<t.Identifier>,
 ): Set<t.Identifier> {
@@ -131,6 +147,11 @@ function getDependencies(
   const dependencies = new Set<t.Identifier>();
   path.traverse({
     Expression(p) {
+      // Everything inside $skip(...) is left out of tracking
+      if (isSkipCall(ctx, p)) {
+        p.skip();
+        return;
+      }
       if (t.isIdentifier(p.node) && !canSkip(p.node)) {
         const binding = p.scope.getBindingIdentifier(p.node.name);
         if (binding && identifiers.has(binding)) {
@@ -186,7 +207,7 @@ function transformComputed(
   id: AssignmentTarget,
   init: t.Expression,
 ) {
-  const dependencies = getDependencies(path, identifiers);
+  const dependencies = getDependencies(ctx, path, identifiers);
   if (dependencies.size) {
     path.insertAfter(
       t.addComment(
@@ -390,11 +411,11 @@ function transformReads(
           const binding = p.scope.getBindingIdentifier(trueIdentifier.name);
           if (binding) {
             if (ctx.identifiers.$.has(binding)) {
-              const dependencies = getDependencies(p, identifiers);
+              const dependencies = getDependencies(ctx, p, identifiers);
               transformTracking(ctx, p, instanceID, dependencies, TRUE_EFFECT);
             }
             if (ctx.identifiers.$sync.has(binding)) {
-              const dependencies = getDependencies(p, identifiers);
+              const dependencies = getDependencies(ctx, p, identifiers);
               transformTracking(ctx, p, instanceID, dependencies, TRUE_SYNC);
             }
             if (ctx.identifiers.onMount.has(binding)) {
@@ -493,6 +514,7 @@ export default function silmarilPlugin(): PluginObject {
           $$: new Set(),
           $composable: new Set(),
           $store: new Set(),
+          $skip: new Set(),
           $sync: new Set(),
           onDestroy: new Set(),
           onMount: new Set(),
@@ -519,6 +541,31 @@ export default function silmarilPlugin(): PluginObject {
             }
           }
         }
+      },
+      Program: {
+        exit(path, state) {
+          const ctx = getContext(state);
+          if (!ctx.identifiers.$skip.size) {
+            return;
+          }
+          // Dependencies are collected by now, so $skip(expr) becomes expr
+          path.traverse({
+            CallExpression: {
+              exit(p) {
+                if (isSkipCall(ctx, p)) {
+                  if (p.node.arguments.length !== 1) {
+                    throw new Error('$skip can only accept a single argument');
+                  }
+                  const [arg] = p.node.arguments;
+                  if (!t.isExpression(arg)) {
+                    throw new Error('$skip can only accept an expression');
+                  }
+                  p.replaceWith(arg);
+                }
+              },
+            },
+          });
+        },
       },
     },
   };

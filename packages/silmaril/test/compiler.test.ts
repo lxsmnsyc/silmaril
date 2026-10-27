@@ -224,6 +224,55 @@ describe('$store', () => {
   });
 });
 
+describe('$skip', () => {
+  it('should leave skipped identifiers out of tracking', async () => {
+    const result = await compile(`
+    import { $$, $, $skip } from 'silmaril';
+
+    $$(() => {
+      let a = 0;
+      let b = 0;
+
+      $(console.log(a, $skip(b)));
+    });
+    `);
+
+    expect(result).not.toContain('$skip(');
+    expect(result).toMatchInlineSnapshot(`
+      "import { $$, $, $skip, $$context as _$$context, $$effect as _$$effect } from 'silmaril';
+      $$(() => {
+        let _ctx = _$$context();
+        let a = 0;
+        let b = 0;
+        _$$effect(_ctx, () => [a], () => console.log(a, b));
+      });"
+    `);
+  });
+  it('should leave skipped identifiers out of computed values', async () => {
+    const result = await compile(`
+    import { $$, $skip } from 'silmaril';
+
+    $$(() => {
+      let a = 0;
+      let b = 0;
+      const sum = a + $skip(b + 1);
+    });
+    `);
+
+    expect(result).not.toContain('$skip(');
+    expect(result).toMatchInlineSnapshot(`
+      "import { $$, $skip, $$context as _$$context, $$sync as _$$sync, $$update as _$$update } from 'silmaril';
+      $$(() => {
+        let _ctx = _$$context();
+        let a = 0;
+        let b = 0;
+        let sum,
+          /*$skip*/_computed = _$$sync(_ctx, () => [a], () => _$$update(_ctx, sum = a + (b + 1)));
+      });"
+    `);
+  });
+});
+
 describe('$$ argument', () => {
   it('should throw on a literal argument', async () => {
     await expect(
