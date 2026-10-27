@@ -20,7 +20,6 @@ type SilmarilCTFS =
   | SilmarilSkips;
 
 const TRACKED_IMPORTS: Record<SilmarilCTFS, boolean> = {
-  $skip: true,
   $$: true,
   $: true,
   $sync: true,
@@ -28,6 +27,7 @@ const TRACKED_IMPORTS: Record<SilmarilCTFS, boolean> = {
   $composable: true,
   onMount: true,
   onDestroy: true,
+  $skip: true,
 };
 
 const TRUE_CONTEXT = '$$context';
