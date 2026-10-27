@@ -1,79 +1,47 @@
 {
   "name": "rollup-plugin-silmaril",
   "version": "0.3.3",
-  "type": "module",
-  "files": [
-    "dist",
-    "babel",
-    "core"
-  ],
-  "engines": {
-    "node": ">=10"
-  },
-  "license": "MIT",
-  "keywords": [
-    "pridepack"
-  ],
-  "devDependencies": {
-    "@types/babel__core": "^7.20.0",
-    "@types/node": "^18.15.3",
-    "eslint": "^8.36.0",
-    "eslint-config-lxsmnsyc": "^0.5.1",
-    "pridepack": "2.4.2",
-    "rollup": "^2.79.0",
-    "silmaril": "0.3.3",
-    "tslib": "^2.5.0",
-    "typescript": "^4.9.5",
-    "vitest": "^0.29.2"
-  },
-  "dependencies": {
-    "@babel/core": "^7.21.0",
-    "@rollup/pluginutils": "^5.0.2"
-  },
-  "peerDependencies": {
-    "rollup": "^2",
-    "silmaril": "^0.1"
-  },
-  "scripts": {
-    "prepublishOnly": "pridepack clean && pridepack build",
-    "build": "pridepack build",
-    "type-check": "pridepack check",
-    "lint": "pridepack lint",
-    "clean": "pridepack clean",
-    "watch": "pridepack watch",
-    "start": "pridepack start",
-    "dev": "pridepack dev",
-    "test": "vitest"
-  },
-  "description": "Compile-time reactivity for JS",
-  "repository": {
-    "url": "https://github.com/lxsmnsyc/silmaril.git",
-    "type": "git"
-  },
-  "homepage": "https://github.com/lxsmnsyc/silmaril/packages/rollup",
+  "description": "Deprecated: use silmaril/unplugin instead. Rollup plugin for silmaril.",
+  "homepage": "https://github.com/lxsmnsyc/silmaril/tree/main/packages/rollup",
   "bugs": {
     "url": "https://github.com/lxsmnsyc/silmaril/issues"
+  },
+  "license": "MIT",
+  "author": "Alexis Munsayac",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lxsmnsyc/silmaril.git",
+    "directory": "packages/rollup"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
-  "author": "Alexis Munsayac",
-  "private": false,
-  "types": "./dist/types/index.d.ts",
-  "main": "./dist/cjs/production/index.cjs",
-  "module": "./dist/esm/production/index.mjs",
-  "exports": {
-    ".": {
-      "development": {
-        "require": "./dist/cjs/development/index.cjs",
-        "import": "./dist/esm/development/index.mjs"
-      },
-      "require": "./dist/cjs/production/index.cjs",
-      "import": "./dist/esm/production/index.mjs",
-      "types": "./dist/types/index.d.ts"
-    }
+  "scripts": {
+    "build": "tsdown",
+    "type-check": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm build"
   },
-  "typesVersions": {
-    "*": {}
+  "dependencies": {
+    "silmaril": "workspace:^"
+  },
+  "devDependencies": {
+    "rollup": "^4.65.0",
+    "tsdown": "^0.23.2",
+    "typescript": "^7.0.2"
+  },
+  "peerDependencies": {
+    "rollup": "^3 || ^4"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
   }
 }

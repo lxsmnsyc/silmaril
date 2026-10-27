@@ -1,14 +1,6 @@
-import {
-  $$,
-  $store,
-  $,
-} from 'silmaril';
-import {
-  createEffect,
-  JSX,
-  onCleanup,
-} from 'solid-js';
-import { fromSignal, fromStore } from 'solid-silmaril';
+import { $$, $store, $ } from 'silmaril';
+import { createEffect, type JSX, onCleanup } from 'solid-js';
+import { fromSignal, fromStore } from 'silmaril/solid';
 import { countSignal, countStore } from './count';
 
 function createInterval(callback: () => void, timeout: number) {
@@ -40,11 +32,13 @@ function CountFromSignal() {
 
   let ref: HTMLHeadingElement | undefined;
 
-  onCleanup($$(() => {
-    const value = $store(store);
+  onCleanup(
+    $$(() => {
+      const value = $store(store);
 
-    $(ref!.innerText = `fromSignal: ${value}`);
-  }));
+      $((ref!.innerText = `fromSignal: ${value}`));
+    }),
+  );
 
   return <h1 ref={ref}>{`fromSignal: ${store.get()}`}</h1>;
 }

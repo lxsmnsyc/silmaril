@@ -1,6 +1,5 @@
-import { PluginObj, PluginPass } from '@babel/core';
+import type { NodePath, PluginObject, PluginPass } from '@babel/core';
 import { addNamed } from '@babel/helper-module-imports';
-import { NodePath } from '@babel/traverse';
 import * as t from '@babel/types';
 import { getImportSpecifierName } from './checks';
 import unwrapNode from './unwrap-node';
@@ -39,7 +38,7 @@ const TRUE_ON_DESTROY = '$$destroy';
 const SKIP = '$skip';
 const CAN_SKIP = /^\s*\$skip\s*$/;
 
-function canSkip(node: t.Node) {
+function canSkip(node: t.Node): boolean {
   if (node.leadingComments) {
     for (let i = 0, len = node.leadingComments.length; i < len; i += 1) {
       if (CAN_SKIP.test(node.leadingComments[i].value)) {
@@ -50,9 +49,9 @@ function canSkip(node: t.Node) {
   return false;
 }
 
-type ImportIdentifiers =  {
+type ImportIdentifiers = {
   [key in SilmarilCTFS]: Set<t.Identifier>;
-}
+};
 
 interface StateContext {
   hooks: Map<string, t.Identifier>;
@@ -90,7 +89,12 @@ function extractImportIdentifiers(
   }
 }
 
-function unwrapLVal(identifiers: Set<t.Identifier>, value: t.LVal) {
+type AssignmentTarget = t.AssignmentExpression['left'];
+
+function unwrapLVal(
+  identifiers: Set<t.Identifier>,
+  value: t.PatternLike | AssignmentTarget,
+): void {
   if (canSkip(value)) {
     return;
   }
@@ -112,7 +116,7 @@ function unwrapLVal(identifiers: Set<t.Identifier>, value: t.LVal) {
       const el = value.properties[i];
       if (t.isRestElement(el)) {
         unwrapLVal(identifiers, el.argument);
-      } else if (t.isLVal(el.value)) {
+      } else if (t.isPatternLike(el.value)) {
         unwrapLVal(identifiers, el.value);
       }
     }
@@ -154,26 +158,23 @@ function transformTracking(
   let result: t.Expression;
 
   if (
-    unwrapNode(arg, t.isArrowFunctionExpression)
-    || unwrapNode(arg, t.isFunctionExpression)
+    unwrapNode(arg, t.isArrowFunctionExpression) ||
+    unwrapNode(arg, t.isFunctionExpression)
   ) {
     result = arg;
   } else {
-    result = t.arrowFunctionExpression(
-      [],
-      arg,
-    );
+    result = t.arrowFunctionExpression([], arg);
   }
 
   path.replaceWith(
-    t.callExpression(
-      getHookIdentifier(ctx, path, type),
-      [
-        instanceID,
-        t.arrowFunctionExpression([], t.arrayExpression(Array.from(dependencies))),
-        result,
-      ],
-    ),
+    t.callExpression(getHookIdentifier(ctx, path, type), [
+      instanceID,
+      t.arrowFunctionExpression(
+        [],
+        t.arrayExpression(Array.from(dependencies)),
+      ),
+      result,
+    ]),
   );
 }
 
@@ -182,7 +183,7 @@ function transformComputed(
   path: NodePath<t.VariableDeclarator>,
   identifiers: Set<t.Identifier>,
   instanceID: t.Identifier,
-  id: t.LVal,
+  id: AssignmentTarget,
   init: t.Expression,
 ) {
   const dependencies = getDependencies(path, identifiers);
@@ -191,20 +192,17 @@ function transformComputed(
       t.addComment(
         t.variableDeclarator(
           path.scope.generateUidIdentifier('computed'),
-          t.callExpression(
-            getHookIdentifier(ctx, path, TRUE_SYNC),
-            [
-              instanceID,
-              t.arrowFunctionExpression(
-                [],
-                t.arrayExpression(Array.from(dependencies)),
-              ),
-              t.arrowFunctionExpression(
-                [],
-                t.assignmentExpression('=', id, init),
-              ),
-            ],
-          ),
+          t.callExpression(getHookIdentifier(ctx, path, TRUE_SYNC), [
+            instanceID,
+            t.arrowFunctionExpression(
+              [],
+              t.arrayExpression(Array.from(dependencies)),
+            ),
+            t.arrowFunctionExpression(
+              [],
+              t.assignmentExpression('=', id, init),
+            ),
+          ]),
         ),
         'leading',
         SKIP,
@@ -218,7 +216,7 @@ function transformStore(
   ctx: StateContext,
   path: NodePath<t.VariableDeclarator>,
   instanceID: t.Identifier,
-  id: t.LVal,
+  id: AssignmentTarget,
   init: t.CallExpression,
   kind: t.VariableDeclaration['kind'],
 ) {
@@ -233,52 +231,34 @@ function transformStore(
     throw new Error('$store is only limited to identifiers.');
   }
   const storeIdentifier = path.scope.generateUidIdentifier('store');
-  path.insertBefore(
-    t.variableDeclarator(storeIdentifier, storeArg),
-  );
+  path.insertBefore(t.variableDeclarator(storeIdentifier, storeArg));
   const read = t.callExpression(
-    t.memberExpression(
-      storeIdentifier,
-      t.identifier('get'),
-    ),
+    t.memberExpression(storeIdentifier, t.identifier('get')),
     [],
   );
-  const args: t.Expression[] = kind === 'const' ? [] : [
-    t.arrowFunctionExpression(
-      [],
-      t.arrayExpression([id]),
-    ),
-    t.arrowFunctionExpression(
-      [],
-      t.callExpression(
-        t.memberExpression(
-          storeIdentifier,
-          t.identifier('set'),
-        ),
-        [id],
-      ),
-    ),
-  ];
+  const args: t.Expression[] =
+    kind === 'const'
+      ? []
+      : [
+          t.arrowFunctionExpression([], t.arrayExpression([id])),
+          t.arrowFunctionExpression(
+            [],
+            t.callExpression(
+              t.memberExpression(storeIdentifier, t.identifier('set')),
+              [id],
+            ),
+          ),
+        ];
   path.insertAfter(
     t.addComment(
       t.variableDeclarator(
         path.scope.generateUidIdentifier('subscribe'),
-        t.callExpression(
-          getHookIdentifier(ctx, path, TRUE_SUBSCRIBE),
-          [
-            instanceID,
-            storeIdentifier,
-            t.arrowFunctionExpression(
-              [],
-              t.assignmentExpression(
-                '=',
-                id,
-                read,
-              ),
-            ),
-            ...args,
-          ],
-        ),
+        t.callExpression(getHookIdentifier(ctx, path, TRUE_SUBSCRIBE), [
+          instanceID,
+          storeIdentifier,
+          t.arrowFunctionExpression([], t.assignmentExpression('=', id, read)),
+          ...args,
+        ]),
       ),
       'leading',
       SKIP,
@@ -302,19 +282,25 @@ function traverseIdentifiers(
         p.traverse({
           VariableDeclarator(child) {
             if (child.parentPath === p) {
-              if (canSkip(child.node)) {
+              const { id } = child.node;
+              if (canSkip(child.node) || t.isVoidPattern(id)) {
                 return;
               }
-              unwrapLVal(identifiers, child.node.id);
+              unwrapLVal(identifiers, id);
               if (child.node.init) {
-                if (t.isCallExpression(child.node.init) && t.isIdentifier(child.node.init.callee)) {
-                  const binding = child.scope.getBindingIdentifier(child.node.init.callee.name);
+                if (
+                  t.isCallExpression(child.node.init) &&
+                  t.isIdentifier(child.node.init.callee)
+                ) {
+                  const binding = child.scope.getBindingIdentifier(
+                    child.node.init.callee.name,
+                  );
                   if (binding && ctx.identifiers.$store.has(binding)) {
                     transformStore(
                       ctx,
                       child,
                       instanceID,
-                      child.node.id,
+                      id,
                       child.node.init,
                       kind,
                     );
@@ -326,7 +312,7 @@ function traverseIdentifiers(
                   child,
                   identifiers,
                   instanceID,
-                  child.node.id,
+                  id,
                   child.node.init,
                 );
               }
@@ -371,13 +357,10 @@ function transformReads(
         const binding = p.scope.getBindingIdentifier(argument.name);
         if (binding && identifiers.has(binding)) {
           p.replaceWith(
-            t.callExpression(
-              getHookIdentifier(ctx, p, TRUE_UPDATE),
-              [
-                instanceID,
-                p.node,
-              ],
-            ),
+            t.callExpression(getHookIdentifier(ctx, p, TRUE_UPDATE), [
+              instanceID,
+              p.node,
+            ]),
           );
           p.skip();
         }
@@ -388,13 +371,10 @@ function transformReads(
       unwrapLVal(marked, p.node.left);
       if (checkValidAssignment(p, identifiers, marked)) {
         p.replaceWith(
-          t.callExpression(
-            getHookIdentifier(ctx, p, TRUE_UPDATE),
-            [
-              instanceID,
-              p.node,
-            ],
-          ),
+          t.callExpression(getHookIdentifier(ctx, p, TRUE_UPDATE), [
+            instanceID,
+            p.node,
+          ]),
         );
         p.skip();
       }
@@ -411,37 +391,19 @@ function transformReads(
           if (binding) {
             if (ctx.identifiers.$.has(binding)) {
               const dependencies = getDependencies(p, identifiers);
-              transformTracking(
-                ctx,
-                p,
-                instanceID,
-                dependencies,
-                TRUE_EFFECT,
-              );
+              transformTracking(ctx, p, instanceID, dependencies, TRUE_EFFECT);
             }
             if (ctx.identifiers.$sync.has(binding)) {
               const dependencies = getDependencies(p, identifiers);
-              transformTracking(
-                ctx,
-                p,
-                instanceID,
-                dependencies,
-                TRUE_SYNC,
-              );
+              transformTracking(ctx, p, instanceID, dependencies, TRUE_SYNC);
             }
             if (ctx.identifiers.onMount.has(binding)) {
               p.node.callee = getHookIdentifier(ctx, p, TRUE_ON_MOUNT);
-              p.node.arguments = [
-                instanceID,
-                ...p.node.arguments,
-              ];
+              p.node.arguments = [instanceID, ...p.node.arguments];
             }
             if (ctx.identifiers.onDestroy.has(binding)) {
               p.node.callee = getHookIdentifier(ctx, p, TRUE_ON_DESTROY);
-              p.node.arguments = [
-                instanceID,
-                ...p.node.arguments,
-              ];
+              p.node.arguments = [instanceID, ...p.node.arguments];
             }
           }
         }
@@ -462,29 +424,25 @@ function transformSetup(
   const isTopLevel = type === '$$' || type === '$composable';
   const arg = path.node.arguments[0];
   const trueArg =
-    unwrapNode(arg, t.isArrowFunctionExpression)
-    || unwrapNode(arg, t.isFunctionExpression);
+    unwrapNode(arg, t.isArrowFunctionExpression) ||
+    unwrapNode(arg, t.isFunctionExpression);
   if (!trueArg) {
     if (isTopLevel) {
-      throw new Error(`${type} argument must be ArrowFunctionExpression or FunctionExpression`);
+      throw new Error(
+        `${type} argument must be ArrowFunctionExpression or FunctionExpression`,
+      );
     }
     return;
   }
   if (t.isBlockStatement(trueArg.body)) {
     const instanceID = path.scope.generateUidIdentifier('ctx');
     trueArg.body.body.unshift(
-      t.variableDeclaration(
-        'let',
-        [
-          t.variableDeclarator(
-            instanceID,
-            t.callExpression(
-              getHookIdentifier(ctx, path, TRUE_CONTEXT),
-              [],
-            ),
-          ),
-        ],
-      ),
+      t.variableDeclaration('let', [
+        t.variableDeclarator(
+          instanceID,
+          t.callExpression(getHookIdentifier(ctx, path, TRUE_CONTEXT), []),
+        ),
+      ]),
     );
     path.traverse({
       CallExpression(p) {
@@ -518,15 +476,17 @@ function transformSetup(
   }
 }
 
-interface State extends PluginPass {
-  ctx: StateContext;
+const STATE_KEY = 'silmaril';
+
+function getContext(state: PluginPass): StateContext {
+  return state.get(STATE_KEY) as StateContext;
 }
 
-export default function silmarilPlugin(): PluginObj<State> {
+export default function silmarilPlugin(): PluginObject {
   return {
     name: 'silmaril',
     pre() {
-      this.ctx = {
+      this.set(STATE_KEY, {
         hooks: new Map(),
         identifiers: {
           $: new Set(),
@@ -537,24 +497,25 @@ export default function silmarilPlugin(): PluginObj<State> {
           onDestroy: new Set(),
           onMount: new Set(),
         },
-      };
+      } satisfies StateContext);
     },
     visitor: {
       ImportDeclaration(path, state) {
-        extractImportIdentifiers(state.ctx, path);
+        extractImportIdentifiers(getContext(state), path);
       },
       CallExpression(path, state) {
+        const ctx = getContext(state);
         const { callee } = path.node;
 
         const trueIdentifier = unwrapNode(callee, t.isIdentifier);
         if (trueIdentifier) {
           const binding = path.scope.getBindingIdentifier(trueIdentifier.name);
           if (binding) {
-            if (state.ctx.identifiers.$$.has(binding)) {
-              transformSetup(state.ctx, path, '$');
+            if (ctx.identifiers.$$.has(binding)) {
+              transformSetup(ctx, path, '$');
             }
-            if (state.ctx.identifiers.$composable.has(binding)) {
-              transformSetup(state.ctx, path, '$composable');
+            if (ctx.identifiers.$composable.has(binding)) {
+              transformSetup(ctx, path, '$composable');
             }
           }
         }

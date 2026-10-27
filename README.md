@@ -2,7 +2,7 @@
 
 > Compile-time reactivity for JS
 
-[![NPM](https://img.shields.io/npm/v/silmaril.svg)](https://www.npmjs.com/package/silmaril) [![JavaScript Style Guide](https://badgen.net/badge/code%20style/airbnb/ff5a5f?icon=airbnb)](https://github.com/airbnb/javascript) [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/github/LXSMNSYC/silmaril/tree/main/examples/demo)
+[![NPM](https://img.shields.io/npm/v/silmaril.svg)](https://www.npmjs.com/package/silmaril) [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/github/LXSMNSYC/silmaril/tree/main/examples/demo)
 
 ## Install
 
@@ -29,6 +29,37 @@ pnpm add silmaril
 
 Due to the compile-time nature of this library, it requires the use of [Babel](https://babeljs.io/). `silmaril` provides a Babel plugin under `silmaril/babel`.
 
+`silmaril` requires Node.js `^22.18.0 || >=24.11.0` and is published as ESM only.
+
+### Bundler plugin
+
+`silmaril/unplugin` provides the compiler as an [unplugin](https://unplugin.unjs.io/), so it works with Vite, Rollup, Rolldown, esbuild, webpack, Rspack, Rsbuild, Farm and Bun.
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import silmaril from 'silmaril/unplugin';
+
+export default defineConfig({
+  plugins: [
+    silmaril.vite({
+      filter: {
+        include: 'src/**/*.{ts,tsx}',
+      },
+    }),
+  ],
+});
+```
+
+Use `silmaril.rollup`, `silmaril.rolldown`, `silmaril.esbuild`, `silmaril.webpack`, `silmaril.rspack`, `silmaril.rsbuild`, `silmaril.farm` or `silmaril.bun` for the other bundlers.
+
+Options:
+
+- `filter.include` and `filter.exclude`: glob patterns or regular expressions for the modules to compile. By default, every `.js`, `.jsx`, `.ts` and `.tsx` file (including `.mjs`, `.cjs`, `.mts` and `.cts`) that contains `silmaril` is compiled.
+- `babel`: extra [Babel options](https://babeljs.io/docs/options) passed to the transform.
+
+`rollup-plugin-silmaril` and `vite-plugin-silmaril` are deprecated in favor of `silmaril/unplugin`.
+
 ## Usage
 
 ### Basic reactivity
@@ -46,7 +77,6 @@ $$(() => {
 
   // Log count for changes
   $(console.log('Count: ', count));
-
 
   function multiply() {
     // Update count
@@ -225,7 +255,7 @@ $$(() => {
   let current = $store(count);
   // `const` can also be used as an alternative
   // for enforcing one-way binding
-  
+
   // Tracking the bound variable
   $sync(console.log('Sync Count:', current));
   $(console.log('Async Count:', current));
@@ -324,6 +354,67 @@ $$(() => {
   });
   y += 100;
 });
+```
+
+## SolidJS
+
+`silmaril/solid` connects `silmaril` stores with [SolidJS](https://www.solidjs.com/) signals. It requires `solid-js` to be installed. This replaces the deprecated `solid-silmaril` package.
+
+### `fromSignal`
+
+Turns a Solid signal into a store that `$store` can bind.
+
+```js
+import { createSignal, createEffect } from 'solid-js';
+import { fromSignal } from 'silmaril/solid';
+import { $$, $sync, $store } from 'silmaril';
+
+const [count, setCount] = createSignal(0);
+
+const countStore = fromSignal([count, setCount]);
+
+createEffect(() => {
+  console.log('SolidJS Count:', count());
+});
+
+$$(() => {
+  let counter = $store(countStore);
+
+  $sync(console.log('Silmaril Count:', counter));
+
+  setInterval(() => {
+    counter += 1;
+  }, 1000);
+});
+```
+
+### `fromStore`
+
+Turns a store into a Solid signal.
+
+```js
+import { createEffect } from 'solid-js';
+import { fromStore } from 'silmaril/solid';
+import { $$, $sync, $store } from 'silmaril';
+import Store from 'silmaril/store';
+
+const countStore = new Store(0);
+
+const [count, setCount] = fromStore(countStore);
+
+$$(() => {
+  let counter = $store(countStore);
+
+  $sync(console.log('Silmaril Count:', counter));
+});
+
+createEffect(() => {
+  console.log('SolidJS Count:', count());
+});
+
+setInterval(() => {
+  setCount((current) => current + 1);
+}, 1000);
 ```
 
 ## Inspirations/Prior Art

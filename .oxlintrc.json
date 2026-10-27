@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "builtin": true,
+    "browser": true
+  },
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**"],
+  "rules": {
+    "typescript/no-explicit-any": "off",
+    "import/no-cycle": "error"
+  },
+  "overrides": [
+    {
+      "files": ["examples/solid/**/*.tsx"],
+      "plugins": ["typescript", "unicorn", "oxc", "import", "jsx-a11y"],
+      "rules": {
+        "no-unassigned-vars": "off"
+      }
+    }
+  ]
+}

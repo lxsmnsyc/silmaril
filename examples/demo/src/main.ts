@@ -7,12 +7,12 @@ const count = document.getElementById('count')!;
 $$(() => {
   let value = 0;
 
-  $(count.innerHTML = `Count: ${value}`);
+  $((count.innerHTML = `Count: ${value}`));
 
-  increment.onclick = () => {
+  increment.addEventListener('click', () => {
     value += 1;
-  };
-  decrement.onclick = () => {
+  });
+  decrement.addEventListener('click', () => {
     value -= 1;
-  };
+  });
 });
