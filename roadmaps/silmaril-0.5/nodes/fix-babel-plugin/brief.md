@@ -1,7 +1,7 @@
 ---
 id: fix-babel-plugin
 title: Fix the $$ argument check and compile $skip calls
-status: todo
+status: active
 priority: must
 type: fix
 milestone: 0.4.1

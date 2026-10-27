@@ -1,7 +1,7 @@
 ---
 id: reactivity-adr
 title: Decide and freeze the static-graph runtime
-status: todo
+status: active
 priority: must
 type: contract
 milestone: 0.5.0

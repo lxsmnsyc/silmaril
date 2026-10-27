@@ -1,7 +1,7 @@
 ---
 id: behavior-tests
 title: Behavior test suite for any compiler and runtime
-status: todo
+status: active
 priority: must
 type: chore
 milestone: 0.5.0

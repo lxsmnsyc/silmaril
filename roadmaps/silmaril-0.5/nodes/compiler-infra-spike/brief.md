@@ -1,7 +1,7 @@
 ---
 id: compiler-infra-spike
 title: Spike oxc-parser, scope analysis and magic-string
-status: todo
+status: active
 priority: must
 type: spike
 milestone: 0.5.0
