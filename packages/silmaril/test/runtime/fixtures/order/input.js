@@ -1,4 +1,4 @@
-import { $$, $, $sync } from 'silmaril';
+import { $$, $, $sync, tick } from 'silmaril';
 
 function trace(label, value) {
   log(label, value);

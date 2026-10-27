@@ -2,53 +2,78 @@
 
 ## Built
 
-- `roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md`: the decision record. It answers each item of the contract's Behavior list, with the rejected alternatives, and lists the breaking changes from 0.4 and the questions for the gate.
-- `roadmaps/silmaril-0.5/nodes/reactivity-adr/proposed-reactivity-runtime.md`: the full replacement for `contracts/reactivity-runtime.md` (version 2), ready to set to `frozen`. It has exact signatures, the graph format, a table of compiled forms, the ordering rules and the fixture runner protocol.
-- `packages/silmaril/test/runtime/fixtures/<name>/{input.js,output.js,expected.json}`: 17 fixtures, one per construct: `let-write`, `memo`, `memo-writable`, `memo-destructure`, `order`, `effect-batch`, `effect-scope`, `nested-scope`, `local-function`, `skip`, `lifecycle`, `nested-root`, `store-const`, `store-let`, `composable`, `update-expression`, `error`.
-- `roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js` and `run-fixtures.mjs`: a reference runtime and a runner that implement the runner protocol. Every fixture passes. Not shipped. It shows that the expected logs follow from the rules and gives the size estimate.
+- `roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md`: the decision record. It records the gate decisions, each design decision with the alternatives rejected, the answer to the nested `$$` question, the breaking changes from 0.4 and what is still open.
+- `roadmaps/silmaril-0.5/nodes/reactivity-adr/proposed-reactivity-runtime.md`: the full replacement for `contracts/reactivity-runtime.md` (version 3), ready to set to `frozen`. It has the exports, exact signatures, the graph format, the compiler rules (slots, entry ids, reads, names, temps, compiled forms, imports, compile errors), the runtime rules (order, phases, registration, runs, the `$` flush and `tick`, lifecycles, stores, composables, errors, limits) and the fixture protocol.
+- `packages/silmaril/test/runtime/fixtures/<name>/`: 45 fixtures. 41 have `input.js`, `output.js` and `expected.json` with logs. 4 are compile errors, with `input.js` and an `expected.json` that holds `compileError`.
+- `roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js` and `run-fixtures.mjs`: a reference runtime and a runner that implement the contract. Every fixture passes. Not shipped.
 
 Key decisions:
 
-- Helpers come from `'silmaril'`: `$$root`, `$$composable`, `$$get`, `$$set`, `$$update`, `$$memo`, `$$sync`, `$$effect`, `$$store`, `$$mount`, `$$destroy`. The user-facing names throw when called without the compiler.
-- Values live in slots. A graph per setup body is a module-level `readonly (readonly Ref[])[]`, where a `Ref` is an entry id or a path `[e1, ..., id]` into the child scopes of entries.
-- Entry ids: memos, then `$sync` and store write-backs, then `$`, each in declaration order. Queues run lowest depth first, then lowest id.
-- A write runs memos and `$sync` before it returns, and memos stay fresh even for writes inside entries. `$` runs in one `queueMicrotask` flush per batch of writes.
-- `$sync` stays a synchronous effect. It is not folded into memos.
-- Every entry run gets a child scope, disposed before the next run. Nested entries track outer slots through paths, so outer bodies no longer rebuild for reads inside nested entries.
-- Size target: at most 1.5 kB min+gzip for `src/v2/index.ts`, aim 1.2 kB. The sketch measures 1278 B. 0.4 measures 770 B.
+- Gate: outer bodies do not run again for reads inside nested entries; a queued `$` runs after its values are restored; 1.5 kB gzip cap with a 1.2 kB target; public `tick()`; the other breaking changes are accepted.
+- Nested `$$` does not track outer variables. It reads their current value and its writes run outer entries. Reason: it has its own lifetime and can have any number of live instances, which a static path cannot name (decision 20).
+- Order is total: lower depth first, then by rank of the branches under the closest common ancestor (entry id, then composables in call order, then roots by creation order). The runtime does not depend on graph list order.
+- An entry whose ancestor entry is queued does not run. A running entry is never queued, at any depth.
+- `$sync` registration runs the body as a running `$sync` body. Inside a running body, writes run memos at once and defer `$sync` bodies until the outermost body returns.
+- Store write-backs are numbered with the memos and run in the memo phase.
+- A run that throws disposes its new child scope. A root or composable setup that throws is disposed. A memo that throws keeps its old value. The first held error is thrown by the outermost drain.
+- A write to a slot in a memo initializer is a compile error. The `/* $skip */` comment is a compile error.
+- A body that reads a memo of its own child scope gets that memo's reads (found while writing the fixtures, fixture `body-memo`).
+- Compiled forms: parenthesized compound and logical assignments, in-place destructuring with per-site temps, `for-of`/`for-in` slot targets, chained writes, top-level `var` follows `let`, graph constants after the imports, unique generated names.
+
+## Fixtures
+
+- From the first version (17): `composable`, `effect-batch`, `effect-scope`, `error`, `let-write`, `lifecycle`, `local-function`, `memo`, `memo-destructure`, `memo-writable`, `nested-root`, `nested-scope`, `order`, `skip`, `store-const`, `store-let`, `update-expression`. Changed: graphs moved after the imports, `tick` imported from `'silmaril'`, the new destructuring and logical forms in `update-expression`, write-back numbering notes.
+- From the review's adversarial set (14, adapted with an `input.js`): `child-memo-wasted`, `composable-glitch`, `dispose-queued`, `effect-parent-child`, `error-in-rerun`, `memo-throws`, `memo-writes-slot` (compile error), `parent-child-cycle`, `self-write`, `setup-throws`, `sibling-order-a`, `sibling-order-b`, `store-writeback-batch`, `sync-first-vs-rerun`. Plus `memo-write-runtime`, for the memo write the compiler cannot see.
+- New (13): `tick`, `chained-write`, `compound-assignment`, `destructure-assign`, `for-of-slot`, `var-slot`, `memo-local-call`, `nested-composable`, `nested-root-write`, `body-memo`, `loop-entry` (compile error), `entry-in-function` (compile error), `skip-comment` (compile error).
+
+Some adversarial fixtures expect other logs than the review wrote, because the review left those rules open:
+
+- `sync-first-vs-rerun`: both runs log `body`, `inner 0`, `body end`, `inner 1`. The review's draft expected `inner 1` before `body end`. Deferring is the review's own fix 2(a), and it keeps the drain from being re-entrant.
+- `parent-child-cycle`: the outer body runs once, as the review's text says. The draft expected 2.
+- `error-in-rerun`: `destroy 1` comes before `caught boom`, because the child is disposed before the error leaves the write.
+- `memo-throws`: the graph now lists the `$sync` for `x` too, as the source requires.
+- `composable-glitch`: the torn read is the documented behavior.
 
 ## Deviations
 
-- The draft's `$$scope(parent, graph, size)` is replaced by `$$root` and `$$composable`. Compiled code never makes a scope on its own, and the slot count is the graph length.
-- `$$memo`, `$$sync` and `$$effect` take an entry id, and `$$sync` and `$$effect` take an optional child graph. The draft did not have these.
+- The fixture runner no longer passes a free `tick`. Fixtures import the runtime's `tick` from `'silmaril'`, and the runner waits one macrotask after the body.
+- `expected.json` has a second shape for compile errors: `{ "description", "compileError" }`, with no `output.js`.
 - The contract is not edited. The orchestrator copies `proposed-reactivity-runtime.md` over it after the gate.
 
 ## Stubs left
 
 - The fixtures are the stub for `runtime-v2` and the codegen nodes. `runtime-v2` replaces the sketch with `src/v2/index.ts` and writes `test/runtime/*.test.ts` that runs the fixtures. The sketch can be deleted after that.
+- No fixture throws from a `$` body, because the error leaves a microtask. `runtime-v2` tests that case in vitest.
+
+## Still open
+
+- Size: the sketch measures 1434 B gzip, 66 B under the 1.5 kB cap. The 1.2 kB target is not reached. The maintainer can accept that or ask runtime-v2 for a size pass.
+- `/* $skip */` is a compile error. Ignoring it is the alternative, with a silent change of meaning for 0.4 code.
+- Write cycles between different entries still do not end.
+- The compiler-api contract (PR #9) needs the slot, entry, reads and graph rules of this contract.
 
 ## Gotchas
 
-- Fixtures are `.js` modules with top-level `await`, and they use the free names `log` and `tick`. tsc ignores them because `tsconfig.base.json` has no `allowJs`. vitest ignores them because it only collects `test/**/*.test.ts`. They pass oxlint and oxfmt. Do not rename them to `.ts`: tsc would check them and fail on the free names.
-- oxlint warns on `_`-prefixed names (`no-underscore-dangle`). The fixtures name generated variables `$s`, `$c0`, `$g0` and `$t`. The compiler can pick any names.
+- Fixtures are `.js` modules with top-level `await`, and they use the free name `log`. tsc ignores them because `tsconfig.base.json` has no `allowJs`. vitest ignores them because it only collects `test/**/*.test.ts`. They pass oxlint and oxfmt. Do not rename them to `.ts`.
+- oxlint rejects unused sequence expressions, so the statement form of destructuring writes is split into statements in the fixtures. The contract allows both.
+- `var-slot` disables `block-scoped-var`, because a block-level `var` is what it tests.
+- JSON cannot hold `undefined`. Fixtures log `String(...)` or `typeof` where a value can be `undefined`.
 - The runner replaces only `import { ... } from 'silmaril';`. Fixtures define their stores inline instead of importing `silmaril/store`.
-- `$` errors are thrown from a microtask. A runner that does not catch them crashes Node. No fixture throws from a `$`.
-- Store values that cross scopes are separate writes. The `composable` fixture logs `Value` and `Squared` in separate `$sync` bodies so its logs do not depend on that.
 - The codegen nodes should compare logs, not text. The fixture comments give the expected slot and entry numbers, but other names and layouts are fine.
 
 ## Proposed learnings
 
-- Fixture files under `packages/silmaril/test/runtime/fixtures/` stay `.js` with no `allowJs` | tsc would check the free `log` and `tick` names | packages/silmaril/test/runtime/fixtures | yes (type-check fails)
+- Fixture files under `packages/silmaril/test/runtime/fixtures/` stay `.js` with no `allowJs` | tsc would check the free `log` name | packages/silmaril/test/runtime/fixtures | yes (type-check fails)
 - Compiled code reads and writes slots only through `$$get` and `$$set` | the scope shape stays private to the runtime | packages/silmaril/compiler | no
+- Graph constants go after the imports | a function declaration called before the setup statement would read them in the TDZ | packages/silmaril/compiler | no
 
 ## Verification
 
-- `node roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`: 17 of 17 fixtures pass against the sketch.
-- `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint`: passes. No new lint warnings.
-- `pnpm format:check`: passes.
-- Size: rolldown `minify: true`, gzip level 9, every export kept. 0.4 `dist/index.mjs` is 2064 B and 770 B gzip. The sketch is 2627 B and 1278 B gzip.
+- `node roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`: 45 of 45 pass. Against the PR's first sketch (with a `tick` shim), 36 of 45 pass. It fails `body-memo`, `child-memo-wasted`, `effect-parent-child`, `error-in-rerun`, `parent-child-cycle`, `setup-throws`, `sibling-order-b`, `store-writeback-batch` and `sync-first-vs-rerun`.
+- `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check`: passes.
+- Size: rolldown 1.2.15 `minify: true`, gzip level 9, every export kept. Sketch 3036 B, 1434 B gzip. First sketch 2627 B, 1278 B. 0.4 2064 B, 770 B.
 - No dependencies added. No changeset: nothing published changes.
 
 ## Size
 
-- Estimated L, actual L. The design took most of the time. Writing the sketch caught one ordering problem (decision 12) before the contract was written.
+- Estimated L, actual L.

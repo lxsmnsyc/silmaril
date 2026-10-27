@@ -1,0 +1,10 @@
+{
+  "description": "Parents run before children across phases too. The inner $sync is queued by the write, but its parent $ is queued as well, so it does not run in the old child scope. It runs once, in the new run of the $.",
+  "logs": [
+    ["effect", 0],
+    ["inner", 0],
+    ["after write"],
+    ["effect", 1],
+    ["inner", 1]
+  ]
+}

@@ -1,4 +1,17 @@
-import { $$root, $$get, $$set, $$sync, $$effect, $$store } from 'silmaril';
+import {
+  $$root,
+  $$get,
+  $$set,
+  $$sync,
+  $$effect,
+  $$store,
+  tick,
+} from 'silmaril';
+
+// slot 0: current (bound to count, two way)
+// entries: 0 write-back of current to count (numbered and run with the
+//          memos, no first run), 1 $sync of current, 2 $ of current
+const $g0 = [[0, 1, 2]];
 
 function createStore(value) {
   const listeners = new Set();
@@ -21,11 +34,6 @@ function createStore(value) {
 
 const count = createStore(100);
 count.subscribe(() => log('Raw Count:', count.get()));
-
-// slot 0: current (bound to count, two way)
-// entries: 0 write-back of current to count (a $sync with no first run),
-//          1 $sync of current, 2 $ of current
-const $g0 = [[0, 1, 2]];
 
 $$root($g0, ($s) => {
   $$store($s, 0, count, 0);

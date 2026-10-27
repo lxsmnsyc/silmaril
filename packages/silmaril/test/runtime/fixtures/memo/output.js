@@ -1,14 +1,14 @@
 import { $$root, $$get, $$set, $$memo, $$sync } from 'silmaril';
 
-function add(x, y) {
-  log('compute d');
-  return x + y;
-}
-
 // slots: 0 a, 1 b, 2 c, 3 d, 4 parity
 // entries: 0 memo b, 1 memo c, 2 memo d, 3 memo parity,
 //          4 $sync of d, 5 $sync of parity
 const $g0 = [[0, 1, 3], [2], [2], [4], [5]];
+
+function add(x, y) {
+  log('compute d');
+  return x + y;
+}
 
 $$root($g0, ($s) => {
   $$set($s, 0, 1);

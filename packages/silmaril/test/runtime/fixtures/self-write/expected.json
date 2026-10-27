@@ -1,0 +1,4 @@
+{
+  "description": "An entry is not queued by its own writes. A $sync that clamps the slot it reads moves it one step per outside write, not to the limit.",
+  "logs": [["x", 1]]
+}

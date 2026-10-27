@@ -1,0 +1,4 @@
+{
+  "description": "A $ or $sync inside a nested function is a compile error. It must be a statement of a setup body or of a $ or $sync body.",
+  "compileError": "$sync must be called as a statement of a setup body."
+}

@@ -1,4 +1,4 @@
-import { $$, $ } from 'silmaril';
+import { $$, $, tick } from 'silmaril';
 
 let increment;
 let bounce;

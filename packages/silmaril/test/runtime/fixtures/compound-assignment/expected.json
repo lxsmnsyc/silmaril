@@ -1,0 +1,23 @@
+{
+  "description": "A compound assignment puts the right side in parentheses, so x *= a + b is x * (a + b). A logical assignment is a parenthesized short circuit, so it stays one operand inside a larger expression. A shorthand property becomes a key and a read.",
+  "logs": [
+    ["x", 2],
+    ["x", 10],
+    ["multiply", 10],
+    ["x", 11],
+    ["subtract", 11],
+    ["x", 121],
+    ["power", 121],
+    ["in expression", 6],
+    ["and", 6],
+    ["nullish", "anonymous"],
+    ["nullish again", "anonymous"],
+    [
+      "shorthand",
+      {
+        "x": 121,
+        "name": "anonymous"
+      }
+    ]
+  ]
+}

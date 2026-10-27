@@ -1,4 +1,4 @@
-import { $$root, $$get, $$set, $$effect } from 'silmaril';
+import { $$root, $$get, $$set, $$effect, tick } from 'silmaril';
 
 // slot 0: count
 // entry 0: $ of count

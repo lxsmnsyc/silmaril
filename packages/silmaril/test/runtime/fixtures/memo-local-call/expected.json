@@ -1,0 +1,7 @@
+{
+  "description": "Whether a declaration is a memo uses the same reads as entries: a call by name to a local function adds what it reads, so t is a memo. Reads inside $skip do not count, so u is a plain local computed once.",
+  "logs": [
+    ["t", "a=1", "u", 2],
+    ["t", "a=2", "u", 2]
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "description": "A destructuring write keeps the pattern in place and puts a temp in each reactive target. Defaults, nesting, rest and member targets stay as written, and a default that reads an earlier target reads its temp. After the pattern, each target is written in source order. A destructuring let declaration uses the same form.",
+  "logs": [
+    ["values", 0, 0, []],
+    ["values", 1, 0, []],
+    ["values", 1, 10, []],
+    ["values", 1, 10, [8, 9]],
+    ["result", "1,,7,8,9"],
+    ["target", 7],
+    ["values", 2, 10, [8, 9]],
+    [
+      "values",
+      2,
+      10,
+      {
+        "z": 3
+      }
+    ],
+    ["first", 5, [1]],
+    ["first", 6, [1]],
+    ["first", 6, []]
+  ]
+}

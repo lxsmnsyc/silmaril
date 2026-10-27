@@ -1,4 +1,4 @@
-import { $$, $, $sync, $store } from 'silmaril';
+import { $$, $, $sync, $store, tick } from 'silmaril';
 
 function createStore(value) {
   const listeners = new Set();

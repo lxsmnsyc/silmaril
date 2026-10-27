@@ -1,0 +1,9 @@
+{
+  "description": "A memo whose compute throws keeps its old value. The other entries of the write still run, and the write throws the error after them. The next change computes the memo again.",
+  "logs": [
+    ["y", 0, "x", 0],
+    ["y", 0, "x", 1],
+    ["caught", "memo"],
+    ["y", 4, "x", 2]
+  ]
+}

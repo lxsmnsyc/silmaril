@@ -1,4 +1,4 @@
-import { $$, $, onMount, onDestroy } from 'silmaril';
+import { $$, $, onMount, onDestroy, tick } from 'silmaril';
 
 let setCount;
 

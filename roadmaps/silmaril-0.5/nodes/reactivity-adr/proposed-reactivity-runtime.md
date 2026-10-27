@@ -1,6 +1,6 @@
 ---
 name: reactivity-runtime
-version: 2
+version: 3
 status: draft # the orchestrator sets frozen after the user approves
 defined_by: reactivity-adr
 ---
@@ -9,11 +9,29 @@ defined_by: reactivity-adr
 
 ## Purpose
 
-The interface between the code `silmaril/compiler` emits and the runtime in `silmaril` (`src/`). `runtime-v2` implements it, `codegen-core` and `codegen-extras` emit code against it, and `docs-content` explains it. The reasons for each rule are in `decisions/0001-static-graph-runtime.md`.
+The interface between the code `silmaril/compiler` emits and the runtime in `silmaril` (`src/`). `runtime-v2` implements it, `codegen-core` and `codegen-extras` emit code against it, and `docs-content` explains it. The two sides do not need to talk to each other: this file and the fixtures are the whole agreement. The reasons for each rule are in `decisions/0001-static-graph-runtime.md`.
+
+Words used below:
+
+- **Setup tree**: the function passed to a `$$` or `$composable`, with everything nested in it, except nested `$$` and `$composable` functions. Each of those starts its own setup tree.
+- **Scope body**: a function that receives a scope. These are the setup function of a `$$` or `$composable`, and a function passed to `$` or `$sync` (an entry body).
+- **Top-level declaration**: a `let`, `const` or `var` statement that is a direct child of a scope body's block.
+- **Slot**: a numbered cell of a scope that holds one reactive variable.
+- **Entry**: a memo, a store write-back, a `$sync` or a `$`. Each has an id in its scope.
 
 ## Interface
 
-Compiled code imports these from `'silmaril'`. While the runtime lives in `src/v2/`, tests map `'silmaril'` to the namespace of `src/v2/index.ts`.
+### Exports
+
+Compiled code imports from `'silmaril'`. While the runtime lives in `src/v2/`, tests map `'silmaril'` to the namespace of `src/v2/index.ts`. `src/v2/index.ts` exports exactly these values:
+
+| Export                                                                                                                    | Kind                                        |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `$$root`, `$$composable`, `$$get`, `$$set`, `$$update`, `$$memo`, `$$sync`, `$$effect`, `$$store`, `$$mount`, `$$destroy` | helpers for compiled code                   |
+| `tick`                                                                                                                    | public runtime function                     |
+| `$$`, `$`, `$sync`, `$skip`, `$store`, `$composable`, `onMount`, `onDestroy`                                              | compile-time names; each throws when called |
+
+and the types `Scope`, `Ref`, `Graph` and `Store`.
 
 ```ts
 // Opaque to compiled code. runtime-v2 decides the fields.
@@ -59,17 +77,17 @@ export function $$memo(
 export function $$sync(
   scope: Scope,
   id: number,
-  body: (child: Scope) => void,
+  body: (child: Scope) => unknown,
   graph?: Graph, // graph of the slots declared in the body
 ): void;
 export function $$effect(
   scope: Scope,
   id: number,
-  body: (child: Scope) => void,
+  body: (child: Scope) => unknown,
   graph?: Graph,
 ): void;
 
-// Stores. `id` is given for `let`: the entry id of the write-back.
+// Stores. `id` is given for `let` and `var`: the entry id of the write-back.
 export function $$store<T>(
   scope: Scope,
   slot: number,
@@ -81,7 +99,10 @@ export function $$store<T>(
 export function $$mount(scope: Scope, callback: () => void): void;
 export function $$destroy(scope: Scope, callback: () => void): void;
 
-// User-facing names. Each throws Error('<name> is meant to be compile-time only.').
+// Public. Resolves after the queued $ bodies have run.
+export function tick(): Promise<void>;
+
+// Compile-time names. Each throws Error('<name> is meant to be compile-time only.').
 export function $$(setup: () => void): () => void;
 export function $<T>(value: T): void;
 export function $sync<T>(value: T): void;
@@ -92,117 +113,269 @@ export function onMount(callback: () => void): void;
 export function onDestroy(callback: () => void): void;
 ```
 
+### Graph format
+
+- One graph per scope body. A `$$` or `$composable` setup always has one, `[]` when empty. An entry body has one when it declares slots. Otherwise the `graph` argument of `$$sync` or `$$effect` is left out.
+- `graph[k]` lists every entry that reads slot `k` of that scope: a number for an entry of the same scope, a path for an entry of a nested entry body in the same setup tree. A path never goes through a composable scope or a nested root.
+- A missing list, `undefined` and `[]` all mean that no entry reads the slot. The compiler writes `[]` for a slot inside the array and may leave out trailing slots.
+- The compiler writes each list in canonical order: numbers ascending, then paths in lexicographic order of their numbers. The runtime must not depend on that order (fixtures `sibling-order-a` and `sibling-order-b`).
+- Each graph is a module-level `const` declared after the last `import` declaration of the module, or at the start of the module when it has none. It is never placed before the statement that holds the setup: a function declaration that is called earlier in the module would read it in its temporal dead zone.
+
+## Compiler rules
+
+### Slots
+
+A top-level declaration of a scope body is split into one statement per declarator, in order. A declarator gets slots, one per bound name in source order, when any of these holds:
+
+1. It is a `let` or `var`, and one of its names is written anywhere in the setup tree other than by its own initializer. A write in a nested function counts.
+2. Its initializer reads a slot (see "Reads" below). The declarator is then a **memo**, for `let`, `const` and `var`.
+3. Its initializer is a call to `$store`.
+
+Rule 2 is applied to a fixed point, because a memo makes the names that read it reads of a slot.
+
+- A declarator whose initializer is a function or arrow expression, or a call to `$$` or `$composable`, is never a memo. It gets a slot only by rule 1.
+- If one name of a destructuring declarator gets a slot, all its names do.
+- A `var` follows the same rules as `let`. A second `var` declaration of the same name with an initializer is a write. Without an initializer it compiles to nothing.
+- Declarations that are not top-level, including a `var` inside a block, stay plain JS locals, even if they are written.
+- Slots of a scope are numbered from 0 in source order of the declarators.
+
+### Entry ids
+
+The entries of a scope are numbered from 0, in three groups:
+
+1. memos and store write-backs (`let x = $store(s)` and `var x = $store(s)`), in source order;
+2. `$sync` calls, in source order;
+3. `$` calls, in source order.
+
+Registration happens in source order, so ids are not registration order (fixture `order`).
+
+### Reads
+
+A read is an identifier reference that resolves to a binding with a slot, and that is not a write target. The reads of an entry are:
+
+- for a memo, the reads in its initializer;
+- for a `$sync` or `$` with an expression argument, the reads in the argument;
+- for an entry body, the reads in the body.
+
+From that set:
+
+- Reads inside nested functions count, also when they are never called (decision 13).
+- Reads inside nested entries do not count: nested `$` and `$sync` calls, and the initializers of memos declared in the entry body.
+- Reads inside `$skip(...)` do not count, nor the reads of local functions called inside it.
+- Reads inside a nested `$$` or `$composable` setup do not count, for any entry outside it.
+- A call by name, `f(...)` or `f?.(...)`, to a **local function** adds the reads of that function. A local function is a function declaration in the same setup tree, or a declarator in the same setup tree whose initializer is a function or arrow expression and that has no slot. The reads of a local function are computed the same way, to a fixed point, so recursion ends. A local function used as a value adds nothing.
+- Reads of the entry's own child slots are removed, with one exception: when the entry reads a memo of its own child scope, it gets the reads of that memo instead, to a fixed point (fixture `body-memo`). Reads of the child's `let`, `var` and `$store` slots stay removed: running the body again would reset them.
+
+The same definition decides rule 2 of "Slots": the reads of a declarator are the reads of its initializer, computed as for a memo.
+
+The graph of a scope lists, for each slot, every entry of the same setup tree whose reads include that slot.
+
+### Names
+
+- The compiler picks the names of scope parameters, temps, graph constants and helper imports. A generated name must differ from every identifier written in the module, and must not shadow a generated name that is used inside it.
+- The fixtures use `$s` for a setup scope, `$s1`, `$s2` for further setup scopes nested in it, `$c<n>` for the child scope of entry `n` (`$c0_1` for entry 1 inside the child of entry 0), `$t<n>` for temps and `$g<n>` for graphs. These names are an example, not a requirement.
+- A scope parameter that the body does not use can be left out: `() => expr` instead of `($c0) => expr`.
+
+### Temps
+
+- A destructuring write needs temps. They are declared in one `let $t0, $t1, ...;` statement at the start of the nearest enclosing function body, after its directives. Each write site has its own temps.
+- When that function is an arrow with an expression body, the compiler gives it a block body: `(a) => expr` becomes `(a) => { let $t0, ...; return expr; }`.
+- A destructuring write to a slot directly inside a class field initializer is a compile error (see "Compile errors").
+- Declaring the temps in the nearest function makes them safe when that function runs again while a write is in progress, for example through a default value that calls it.
+
 ### Compiled forms
 
-`$s` is the scope of the setup body, `$c<n>` the child scope of entry `n`'s run, `$g<n>` a module-level graph. Names are free. The shapes are fixed.
+`$s` is the scope of the enclosing scope body that declares the slot, `$c<n>` the child scope of entry `n`, `$g<n>` a graph. `k`, `j` are slot numbers and `n` an entry id. `v` is the compiled right side.
 
-| Source                                   | Compiled                                                                                        |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `$$(() => { body })`                     | `$$root($g0, ($s) => { body })`                                                                 |
-| `$composable((a, b) => { body })`        | `$$composable($g1, ($s, a, b) => { body })`                                                     |
-| `let x = 0` (slot 0)                     | `$$set($s, 0, 0)`                                                                               |
-| read of `x`                              | `$$get($s, 0)`                                                                                  |
-| `x = v`, `x += v`                        | `$$set($s, 0, v)`, `$$set($s, 0, $$get($s, 0) + v)`                                             |
-| `x++`, `--x`                             | `$$update($s, 0, 1, false)`, `$$update($s, 0, -1, true)`                                        |
-| `x \|\|= v`                              | `$$get($s, 0) \|\| $$set($s, 0, v)` (same for `&&=`, `??=`)                                     |
-| `[a, b] = e`                             | `(($t = e), $$set($s, 0, $t[0]), $$set($s, 1, $t[1]), $t)`                                      |
-| `const y = x * 2` (slot 1, memo 0)       | `$$memo($s, 0, 1, () => $$get($s, 0) * 2)`                                                      |
-| `const { p, q } = x` (slots 1, 2)        | `$$memo($s, 0, -1, () => { const { p, q } = $$get($s, 0); $$set($s, 1, p); $$set($s, 2, q); })` |
-| `$sync(expr)` (entry n)                  | `$$sync($s, n, () => expr)`                                                                     |
-| `$sync(() => { body })`                  | `$$sync($s, n, ($cn) => { body }, $g2)` (graph omitted when the body has no slots)              |
-| `$(expr)`, `$(() => { body })`           | `$$effect(...)`, same arguments as `$$sync`                                                     |
-| `const x = $store(s)`                    | `$$store($s, 0, s)`                                                                             |
-| `let x = $store(s)` (write-back entry n) | `$$store($s, 0, s, n)`                                                                          |
-| `onMount(fn)`, `onDestroy(fn)`           | `$$mount($s, fn)`, `$$destroy($s, fn)` with the scope of the enclosing body                     |
-| `$skip(e)`                               | `e`, reads compiled, no edges                                                                   |
+| Source                                                 | Compiled                                                                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `$$(() => { body })`                                   | `$$root($g0, ($s) => { body })`                                                                                           |
+| `$$(() => expr)`                                       | `$$root($g0, ($s) => expr)`                                                                                               |
+| `$composable((a, b) => { body })`                      | `$$composable($g1, ($s, a, b) => { body })`                                                                               |
+| `let x = v` (slot k, not a memo)                       | `$$set($s, k, v)`                                                                                                         |
+| `let x;` (slot k)                                      | nothing                                                                                                                   |
+| read of `x`                                            | `$$get($s, k)`                                                                                                            |
+| `{ x }` (shorthand property)                           | `{ x: $$get($s, k) }`                                                                                                     |
+| `x = v`                                                | `$$set($s, k, v)`                                                                                                         |
+| `x = y = v` (slots k, j)                               | `$$set($s, k, $$set($s, j, v))`                                                                                           |
+| `x op= v`, op one of `+ - * / % ** << >> >>> & \| ^`   | `$$set($s, k, $$get($s, k) op (v))`                                                                                       |
+| `x \|\|= v`, `x &&= v`, `x ??= v`                      | `($$get($s, k) \|\| $$set($s, k, v))`, same with `&&` and `??`                                                            |
+| `x++`, `x--`, `++x`, `--x`                             | `$$update($s, k, 1, false)`, `$$update($s, k, -1, false)`, `$$update($s, k, 1, true)`, `$$update($s, k, -1, true)`        |
+| destructuring assignment `P = e`                       | `(P' = $t0 = e, $$set($s, k1, $t1), ..., $$set($s, kN, $tN), $t0)`                                                        |
+| same, as an expression statement                       | `P' = e;` then `$$set($s, k1, $t1); ... $$set($s, kN, $tN);` (wrap `P' = e` in parentheses when `P` is an object pattern) |
+| `for (x of e) body` (also `for await`, `for (x in e)`) | `for (const $t0 of e) { $$set($s, k, $t0); body }`                                                                        |
+| `for (P of e) body`                                    | `for (const $t0 of e) { P' = $t0; $$set(...) ...; body }`                                                                 |
+| `const y = e` (memo n, slot k)                         | `$$memo($s, n, k, () => e)`                                                                                               |
+| `const { p, q } = e` (memo n, slots k, j)              | `$$memo($s, n, -1, () => { const { p, q } = e; $$set($s, k, p); $$set($s, j, q); })`                                      |
+| `let [a, b] = e` (slots k, j, not a memo)              | statement form of the destructuring assignment `[a, b] = e`                                                               |
+| `$sync(expr)` (entry n)                                | `$$sync($s, n, () => expr)`                                                                                               |
+| `$sync(() => { body })`, `$sync(() => expr)`           | `$$sync($s, n, ($cn) => { body }, $g2)`, `$$sync($s, n, ($cn) => expr)`; `$g2` left out when the body has no slots        |
+| `$(...)`                                               | `$$effect(...)`, same arguments as `$$sync`                                                                               |
+| `const x = $store(s)` (slot k)                         | `$$store($s, k, s)`                                                                                                       |
+| `let x = $store(s)` (slot k, write-back entry n)       | `$$store($s, k, s, n)`                                                                                                    |
+| `onMount(fn)`, `onDestroy(fn)`                         | `$$mount(sc, fn)`, `$$destroy(sc, fn)`                                                                                    |
+| `$skip(e)`                                             | `(e)`; reads in `e` still compile to `$$get`, writes to `$$set`                                                           |
 
-The compiler removes the user-facing names from the user's `import` from `'silmaril'` and adds the helpers it uses. The fixtures under `packages/silmaril/test/runtime/fixtures/` show each form in full.
+Notes on the table:
+
+- `(v)`: the parentheses can be left out when `v` is an identifier, a literal, a call, a member access or another expression that binds at least as tightly as `op`. They are never wrong.
+- The outer parentheses of the logical form can be left out only where the form is a whole argument, a whole statement or a whole initializer.
+- `P'` is the pattern `P` as written, with each slot target replaced by its own temp `$t1`...`$tN`, numbered in source order. Shorthand properties become `key: $tI`. Defaults, computed keys, holes, nesting, rest elements and member targets stay as written. Reads inside defaults and computed keys compile as usual, except that a read of a slot that is a target earlier in the same pattern reads its temp. After the pattern, the slots are written in source order of the targets (fixture `destructure-assign`).
+- A function passed to `$` or `$sync` is the entry body, whatever its body kind: block, expression, `async` or `function`. Any other argument is an expression entry and is wrapped as `() => expr`. The body's return value, including a promise, is ignored.
+- `sc` for `onMount` and `onDestroy` is the scope of the nearest enclosing scope body. Inside a memo initializer or an expression entry, it is the run's child scope: the compute or wrapper takes `($cn)`.
+- A write inside `$skip(...)` is still a write.
+- Assignments and updates of plain locals, and member writes such as `obj.a = 1`, are not changed.
+
+### Imports
+
+- The compiler removes the compile-time names (`$$`, `$`, `$sync`, `$skip`, `$store`, `$composable`, `onMount`, `onDestroy`) from every named `import` from `'silmaril'`, matching each local binding, so an alias such as `import { $sync as sync }` works. It removes the declaration if no specifier is left. Other specifiers, such as `tick` and the `Store` type, stay.
+- It adds one `import { ...helpers } from 'silmaril';` declaration before the first statement of the module with the helpers it uses, aliased when a name is taken.
+- A namespace or default import of `'silmaril'` is left as is, and calls through it are not compiled.
+
+### Compile errors
+
+The compiler throws an error whose message contains the text below. `<name>` is the imported name as written in the source, alias included.
+
+| Case                                                                                                                                                                                                                             | Message                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `$` or `$sync` inside a loop of a scope body (`for`, `for-in`, `for-of`, `while`, `do`)                                                                                                                                          | `<name> cannot be called inside a loop.`                                  |
+| `$` or `$sync` that is not an expression statement of a scope body, or of a block, `if`, `try`, `switch` or labeled statement in one (for example inside a nested function, or `a && $(x)`), or that is outside every setup tree | `<name> must be called as a statement of a setup body.`                   |
+| `$`, `$sync`, `$skip` or `$store` called with other than one argument                                                                                                                                                            | `<name> takes exactly one argument.`                                      |
+| a compile-time name used other than as a call                                                                                                                                                                                    | `<name> can only be called.`                                              |
+| `$store` that is not the whole initializer of a top-level declarator with an identifier binding                                                                                                                                  | `$store must initialize a top-level variable.`                            |
+| `$skip`, `onMount` or `onDestroy` outside every setup tree                                                                                                                                                                       | `<name> must be used inside $$ or $composable.`                           |
+| a write to a slot in a memo initializer, outside nested functions, or in a local function the initializer calls by name (to a fixed point)                                                                                       | `Cannot write a reactive variable in the initializer of a derived value.` |
+| a write to a `const` binding that has a slot                                                                                                                                                                                     | `Cannot assign to a constant.`                                            |
+| a destructuring write to a slot directly inside a class field initializer                                                                                                                                                        | `Cannot destructure into a reactive variable in a class field.`           |
+| a comment whose text is `$skip` with only spaces around it, inside a setup tree                                                                                                                                                  | `The /* $skip */ comment is not supported. Use $skip(expression).`        |
+
+A `$` or `$sync` inside `if`, `try` or `switch` is allowed. An entry that never registered does not run.
 
 ## Behavior
 
-### Slots and graphs
+### Scopes
 
-- Only top-level declarations of a setup body (`$$`, `$composable`, or a function-bodied `$`, `$sync`) can get a slot. One gets a slot when it is a `let` written after its declaration, when its initializer reads a slot (a memo, `let` or `const`), or when it binds `$store`. Other declarations, functions, function-valued initializers and block-level declarations stay plain locals.
-- Slots of a scope are numbered from 0 in declaration order. A graph is a module-level constant, one per setup body, shared by all instances. It can be shorter than the slot count.
-- Entry ids of a scope are numbered from 0: memos in declaration order, then `$sync` bodies and store write-backs in declaration order, then `$` bodies in declaration order. Registration happens in source order.
-- An entry's reads are the slot reads in its argument, including inline nested functions, minus reads inside nested `$`, `$sync` and memo entries and inside `$skip(...)`. Reads of slots declared inside the entry's own body are not its reads.
-- A call by name (`f()`, `f?.()`) to a function declared inside the same root setup tree adds the reads of that function and of the functions it calls, to a fixed point. A function used as a value adds nothing.
-- An inner entry that reads an outer slot is listed in the outer scope's graph through a path. Reads inside a nested `$$` are not listed anywhere: a nested `$$` is a separate root.
-- `$` and `$sync` must be called in a setup body, outside loops and nested functions. The compiler reports other calls as errors.
+- `$$root` makes a root scope at depth 0. A run of an entry makes an entry child scope, and a call of a composable makes a composable scope. Both have the depth of their parent plus 1.
+- Each scope has a rank among its siblings. An entry child scope's rank is its entry id. Composable scopes come after every entry child scope of the parent, in call order. Roots rank among themselves by creation order.
 
-### Writes and order
+### Order
 
-- `$$set` compares with `Object.is`. When equal, it stores nothing, runs nothing, and returns `value`. Otherwise it stores the value and, if the scope is alive, queues the entries listed for the slot. It skips entries that are not registered, are in a dead scope, are already queued, or are the entry that is running.
-- After queuing, `$$set` runs all queued memos, then returns if it was called from inside a memo. Otherwise, if no `$sync` is running, it runs queued `$sync` bodies one at a time, running the memos each one queues right after it. Then it returns `value`.
-- Each queue takes the entry with the lowest scope depth first, then the lowest id within that scope. So memos run in topological order, each at most once per write unless a `$sync` writes their input again, and parents run before children.
-- After `$$set` returns, every memo it reaches holds its new value, also when `$$set` is called inside an entry.
-- `$` bodies are queued, never run inside `$$set`. One `queueMicrotask` flush runs all queued `$` bodies in the same depth-then-id order. A `$` queued during the flush runs in the same flush. Several writes before the flush run a `$` once.
+Two queued entries of the same phase run in this order:
+
+1. The entry whose scope has the lower depth runs first.
+2. At equal depth, walk both scopes up to their closest common ancestor, and compare the ranks of the two branches under it. Two roots compare by creation order. In the same scope, the lower entry id runs first.
+
+Declaration order is a topological order for memos, so memos run in topological order, and parents run before children.
+
+When an entry is taken from a queue and any scope between it and its root belongs to a queued entry, the entry does not run and leaves the queue. That ancestor's run disposes its scope (fixtures `effect-parent-child`, `child-memo-wasted`, `body-memo`).
+
+### Writes and phases
+
+There are three phases: the memo phase (memos and write-backs), the `$sync` phase and the `$` flush.
+
+- `$$set(scope, slot, value)` compares with `Object.is`. When equal, it stores nothing, runs nothing and returns `value`.
+- Otherwise it stores the value. If the scope is dead, it returns `value`. Else it queues each entry listed for the slot. It skips an entry that is not registered, whose scope is missing or dead, that is already queued, or that is running. Running means on the call stack: an entry is never queued by writes made while it runs, including writes by entries nested in it (fixtures `self-write`, `parent-child-cycle`). Then it drains, and returns `value`.
+- Drain:
+  1. If the memo phase is active, return. The active phase takes the new entries.
+  2. Run queued memos and write-backs in order, until none is left.
+  3. If a `$sync` body is running, return. Its queued `$sync` bodies run after the outermost running `$sync` body returns.
+  4. Run queued `$sync` bodies in order, until none is left. Writes in each body run step 2 before they return.
+  5. Throw the held error, if any.
+- After `$$set` returns, every memo it reached holds its new value, unless the call was made while the memo phase was active. Writes inside `$sync` and `$` bodies get fresh memos.
+- A write while the memo phase is active stores the value and queues its entries. They run in the same memo phase, after the running memo returns. So that memo can compute again in the same write (fixture `memo-write-runtime`). The compiler rejects the writes it can see (fixture `memo-writes-slot`).
+- `$` bodies are never run by a write. A queued `$` waits for the flush.
 - A queued `$` runs even if later writes put the old values back.
-- `$$memo`, `$$sync` and `$$store` run at registration: the memo computes, the `$sync` body runs, the store is read and subscribed. `$$effect` queues the first run. A store write-back entry has no first run.
+
+### Registration
+
+- `$$memo` registers the memo and runs it at once in the memo phase, then drains.
+- `$$sync` registers the body and runs it at once as a running `$sync` body, then drains. Inside another `$sync` body, the drain stops at step 3, so a body's effects come in the same order on its first run and on later runs (fixture `sync-first-vs-rerun`).
+- `$$effect` registers the body and queues its first run.
+- `$$store` reads `store.get()` into the slot and subscribes. With `id`, it registers the write-back. The write-back has no first run.
+- An entry that was never registered, for example in an `if` branch that did not run, is skipped by writes.
 
 ### Runs and child scopes
 
-- Every run of a memo, `$sync` or `$` disposes the child scope of the entry's last run, makes a new child scope (with the graph given to `$$sync` or `$$effect`), and calls the function with it. During the call, the child scope is the running scope for `$composable`.
-- A memo with `slot >= 0` writes the returned value to that slot with `$$set` after the run. With `slot === -1`, it returns nothing and writes its slots itself.
+- A run disposes the child scope of the entry's last run, makes a new child scope with the graph given at registration, marks the entry running, and calls the function with the child scope, which is the running scope for `$composable` during the call.
+- After the call, if the entry's scope is mounted, the child scope mounts.
+- A memo with `slot >= 0` writes the returned value with `$$set` after the call. With `slot === -1`, it writes its slots itself.
 - `$$update` reads the slot, applies `++` or `--` (so BigInt works), writes with `$$set`, and returns the new value when `prefix` is true and the old numeric value otherwise.
+
+### The `$` flush and `tick`
+
+- Queuing a `$` when no flush is pending schedules one with `queueMicrotask`. `tick()` also schedules one when none is pending.
+- The flush runs queued `$` bodies one at a time, in order, until none is left, including `$` bodies queued during the flush. No phase is active while a `$` body runs, so its writes drain in full and may throw into the body.
+- When the queue is empty, the flush resolves every pending `tick()` promise, then throws the first error a `$` body threw, from the microtask, so the host reports it.
+- `tick()` returns a promise that resolves at the end of the next flush. It resolves after every `$` queued before that flush ends, including the ones queued after the call. It never rejects (fixture `tick`).
 
 ### Lifecycles
 
-- A scope mounts after its setup or run returns, and only once its parent is mounted. Mounting first mounts its unmounted child scopes (entry children in id order, then composable scopes in call order), then runs its `$$mount` callbacks in registration order.
+- A scope mounts after its setup or run returns, and only once its parent is mounted. Mounting first mounts its unmounted child scopes (entry child scopes in id order, then composable scopes in call order), then runs its `$$mount` callbacks in registration order.
 - `$$mount` on a mounted scope runs the callback at once. On a dead scope it does nothing.
 - `$$destroy` on a dead scope runs the callback at once.
-- A scope is disposed by the function `$$root` returns, by a new run of its entry, or with its parent. Disposing marks it dead and disposes entry child scopes in id order, then composable scopes in call order. Then it runs `$$destroy` callbacks and store unsubscribes in registration order. A second dispose does nothing. A nested `$$root` is not a child: it is disposed only by its own function.
-- A write to a dead scope stores the value and runs nothing.
+- A scope is disposed by the function `$$root` returns, by a new run of its entry, with its parent, or when its setup or run throws. Disposing marks it dead, then disposes entry child scopes in id order, then composable scopes in call order, then runs `$$destroy` callbacks and store unsubscribes in registration order. A second dispose does nothing. A nested root is not a child: only its own function disposes it.
+- A queued entry of a dead scope does not run. A write to a dead scope stores the value and runs nothing.
+- An error thrown by a mount or destroy callback propagates to the caller of the mount or dispose. The remaining callbacks of that scope do not run.
 
 ### Stores
 
-- `$$store` stores `store.get()` in the slot, subscribes with a listener that calls `$$set(scope, slot, store.get())`, and adds the unsubscribe to the scope's destroy list.
-- With `id`, it registers a `$sync` entry with that id that calls `store.set(value)` when `store.get()` differs from the slot's value by `Object.is`. A store without `set` throws a `TypeError` there.
+- The subscription listener calls `$$set(scope, slot, store.get())`. The unsubscribe is added to the scope's destroy list.
+- The write-back runs in the memo phase. It calls `store.set(value)` when `store.get()` differs from the slot's value by `Object.is`. So the store and its other bindings are fresh when the write returns (fixture `store-writeback-batch`). A store without `set` makes it throw a `TypeError`, which the write throws.
 - The store expression is evaluated once and is not tracked.
+- A value that reaches another scope through a store is a new write in that scope. The scopes run in the order above, so an entry that reads values from both sides can see a new value next to an old one, then run again (fixture `composable-glitch`).
+- An entry body that reads a `$store` slot of its own child scope does not run again when the store changes. Entries nested in it do.
 
 ### Composables
 
-- The function `$$composable` returns makes a child scope of the running scope, which is the setup or entry run on the call stack. It calls `setup(child, ...args)` with the child running, mounts the child if the parent is mounted, and returns the setup's result.
-- Called while no scope is running, it throws an `Error`.
+- The function `$$composable` returns makes a composable scope under the running scope (the setup or entry run on the call stack). It calls `setup(child, ...args)` with the child running, mounts the child if the parent is mounted, and returns the setup's result.
+- Called while no scope is running, it throws an `Error`. This includes a call after an `await` in an async body.
 
 ### Errors
 
-- An error in an entry does not stop the other queued entries. The outermost `$$set` throws the first error after its memos and `$sync` bodies ran. The `$` flush throws the first error after all queued bodies ran.
-- Errors in a setup body propagate out of `$$root` or the composable call.
+- An error thrown by a run during a drain or a registration is held. The first held error wins and later ones are dropped. The other queued entries still run. The outermost drain, which is the one that started with no memo phase active and no `$sync` body running, throws it at step 5.
+- When a run throws, its new child scope is disposed before the error is held. The entry stays registered and runs again when what it reads changes. A memo that throws keeps its old value (fixtures `error`, `error-in-rerun`, `memo-throws`).
+- When a `$$root` setup throws, the root is disposed and the error is thrown again from `$$root` (fixture `setup-throws`).
+- When a composable setup throws, its scope is disposed and removed from the parent, and the error is thrown again from the call.
+- Errors thrown by setup code outside entries propagate as usual.
 
 ### Limits
 
-- A read of a slot before its declaration returns `undefined`.
-- Write cycles between `$sync` bodies or `$` bodies do not end. The runtime does not detect them.
+- A read of a slot before its declaration returns the empty slot, `undefined`.
+- A write cycle between different entries does not end. The runtime does not detect it.
+- Each memo runs at most once per write when every memo reads only slots declared before it and no memo writes a slot.
 - Mutating an object in place is not a write.
 
 ### Size
 
-- `src/v2/index.ts` is at most 1.5 kB after rolldown minify and gzip level 9, with every export. The aim is 1.2 kB. The ADR's sketch measures 1278 B. 0.4 measures 770 B.
+- `src/v2/index.ts` is at most 1.5 kB after rolldown `minify: true` and gzip level 9, with every export. The aim is 1.2 kB. The sketch measures 1434 B. 0.4 measures 770 B.
 
 ## Stub
 
 Hand-written compiled output for each construct is in `packages/silmaril/test/runtime/fixtures/<name>/`:
 
 - `input.js`: the source a user writes.
-- `output.js`: the compiled output, written by hand against this contract.
-- `expected.json`: `{ "description": string, "logs": unknown[][] }`.
+- `output.js`: the compiled output, written by hand against this contract. A compile-error fixture has none.
+- `expected.json`: `{ "description": string, "logs": unknown[][] }`, or `{ "description": string, "compileError": string }` when compiling `input.js` must fail.
 
 Runner protocol, for `runtime-v2` and the codegen nodes:
 
 1. Read the module text. Replace each `import { a, b as c } from 'silmaril';` with `const { a, b: c } = runtime;`. No other imports appear.
-2. Run the text as the body of an async function with the parameters `runtime`, `log` and `tick`. `log(...args)` appends `args` to the log list. `tick()` returns `new Promise((resolve) => setTimeout(resolve, 0))`.
-3. After the body resolves, `await tick()` once more, then compare the log list with `logs` using deep equality.
+2. Run the text as the body of an async function with the parameters `runtime` and `log`. `log(...args)` appends `args` to the log list. Fixtures wait for the `$` flush with the runtime's own `tick`.
+3. After the body resolves, wait one macrotask (`setTimeout(resolve, 0)`), then compare the log list with `logs` using deep equality. If the body throws, the fixture fails.
+4. For a `compileError` fixture, the runtime runner skips it. The codegen tests compile `input.js` and pass when the compiler throws an error whose message contains `compileError`.
 
 `output.js` runs against the runtime. The codegen nodes compile `input.js` and run the result the same way. They compare logs, not text. Each fixture's comments give the slot and entry numbering the compiler is expected to produce. `nodes/reactivity-adr/sketch/` holds a reference runtime and runner that pass every fixture.
 
 The fixtures are `.js`. tsc ignores them (no `allowJs` in `tsconfig.base.json`), vitest only collects `test/**/*.test.ts`, and they pass oxlint and oxfmt.
 
+No fixture throws from a `$` body, because the error leaves a microtask. `runtime-v2` tests that case in vitest with its own handler.
+
 ## Contract tests
 
-`packages/silmaril/test/runtime/*.test.ts` (written by `runtime-v2`) runs every fixture's `output.js` against the runtime. The behavior suite (`behavior-suite` contract) runs compiled code end to end.
+`packages/silmaril/test/runtime/*.test.ts` (written by `runtime-v2`) runs every fixture's `output.js` against the runtime. The behavior suite (`behavior-suite` contract) runs compiled code end to end, and its `flush()` can use `tick` on the 0.5 pipeline.
 
 ## Changes
 
 - v1: draft.
 - v2: helpers, graph format, ordering, scheduling, lifecycles, stores, composables and errors decided by `reactivity-adr`. `$$scope` replaced by `$$root` and `$$composable`.
+- v3: gate decisions and design reviews. `tick` added. Total order between sibling scopes. Children of a queued entry do not run. A running entry is never queued, at any depth. `$sync` registration runs as a running body. Store write-backs run in the memo phase. Errors dispose the scope of the failed run or setup. Memo writes are a compile error. Exact compiler rules: slots (including `var`), reads, names, temps, parenthesized compound forms, in-place destructuring, `for-of` and `for-in` targets, imports, graph placement and compile errors. The `/* $skip */` comment is a compile error.

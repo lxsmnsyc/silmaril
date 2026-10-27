@@ -1,4 +1,12 @@
-import { $$root, $$get, $$set, $$effect, $$mount, $$destroy } from 'silmaril';
+import {
+  $$root,
+  $$get,
+  $$set,
+  $$effect,
+  $$mount,
+  $$destroy,
+  tick,
+} from 'silmaril';
 
 // slot 0: count
 // entry 0: $ with a body. Each run gets a new child scope, $c0.

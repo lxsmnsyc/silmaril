@@ -1,0 +1,10 @@
+{
+  "description": "x = y = 1 writes both slots. The inner write runs first and returns its value, so it behaves as y = 1 then x = 1.",
+  "logs": [
+    ["x", 0],
+    ["y", 0],
+    ["y", 1],
+    ["x", 1],
+    ["value", 1]
+  ]
+}

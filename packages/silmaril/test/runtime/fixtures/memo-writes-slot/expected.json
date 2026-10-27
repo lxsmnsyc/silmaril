@@ -1,0 +1,4 @@
+{
+  "description": "A write to a reactive variable inside the initializer of a memo is a compile error. A memo has no side effects.",
+  "compileError": "Cannot write a reactive variable in the initializer of a derived value."
+}

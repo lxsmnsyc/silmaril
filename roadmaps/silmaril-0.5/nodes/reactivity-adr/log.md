@@ -10,3 +10,13 @@
 - Sketch size: 2627 B minified, 1278 B gzip. Target set to 1.5 kB gzip, aim 1.2 kB.
 - Found while writing the composable fixture: ordering parents before children makes a value that crosses scopes through a store show up as two writes. Recorded as decision 12, and the fixture logs the two values separately.
 - Wrote the decision record and the proposed contract. Fast check passes.
+
+## Revision after the gate
+
+- Read the maintainer's gate decisions on PR #8, the runtime review of PR #8 and the "reactivity-runtime" section of the compiler review of PR #9.
+- Ran the review's 14 adversarial fixtures: 10 fail on the first sketch, 6 still fail on the reviewer's patched sketch (some because their expected logs were placeholders).
+- Rewrote the sketch: running flag per entry, skip when an ancestor entry is queued, total order by depth then common-ancestor rank, `$sync` registration as a running body, write-backs in the memo phase, dispose on throw in runs, roots and composables, separate error holding for the `$` flush, `tick`.
+- Found while writing fixtures: a body that reads its own memo never ran again, because its only read was inside the memo. Added the rule that such a body gets the memo's reads (`body-memo`).
+- Changed the runner protocol: fixtures import `tick` from `'silmaril'`, and compile-error fixtures carry `compileError` instead of logs.
+- Moved graph constants after the imports in every fixture.
+- 45 fixtures, all pass. Sketch size 1434 B gzip.

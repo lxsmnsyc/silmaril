@@ -1,14 +1,14 @@
-import { $$root, $$get, $$set, $$memo, $$sync, $$effect } from 'silmaril';
-
-function trace(label, value) {
-  log(label, value);
-  return value;
-}
+import { $$root, $$get, $$set, $$memo, $$sync, $$effect, tick } from 'silmaril';
 
 // slots: 0 count, 1 double
 // Entry ids put memos first, then $sync, then $, whatever the source order:
 // entries: 0 memo double, 1 $sync, 2 $
 const $g0 = [[0, 1, 2], [2]];
+
+function trace(label, value) {
+  log(label, value);
+  return value;
+}
 
 let setCount;
 

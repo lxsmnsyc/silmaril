@@ -1,0 +1,8 @@
+{
+  "description": "A write does not queue any entry that is running, so an inner $sync that writes a slot its parent reads does not run the parent again. The parent keeps the value it read.",
+  "logs": [
+    ["outer", 0],
+    ["outer runs", 1],
+    ["x", 1]
+  ]
+}

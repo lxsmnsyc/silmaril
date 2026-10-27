@@ -1,0 +1,7 @@
+{
+  "description": "A store write-back runs with the memos, so the store and the other bindings of it are fresh when the write returns, also inside a $sync body. The $sync is running, so the changes of v and w do not queue it again.",
+  "logs": [
+    ["store", 5, "v", 5, "w", 5],
+    ["after write", 5]
+  ]
+}

@@ -9,6 +9,15 @@ import {
   $$destroy,
 } from 'silmaril';
 
+// Graphs go right after the imports.
+// Root scope. slots: 0 input (two way), 1 squared (one way)
+// entries: 0 write-back of input (numbered with the memos), 1 $sync of input, 2 $sync of squared
+const $g0 = [[0, 1], [2]];
+
+// Composable scope. slot 0: input. squared is never reassigned: a plain local.
+// entry 0: $sync that writes squared
+const $g1 = [[0]];
+
 function createStore(value) {
   const listeners = new Set();
   return {
@@ -28,10 +37,6 @@ function createStore(value) {
   };
 }
 
-// Composable scope. slot 0: input. squared is never reassigned: a plain local.
-// entry 0: $sync that writes squared
-const $g1 = [[0]];
-
 // The setup takes its scope first, then the caller's arguments.
 const useSquared = $$composable($g1, ($s, store) => {
   $$store($s, 0, store);
@@ -41,10 +46,6 @@ const useSquared = $$composable($g1, ($s, store) => {
   $$sync($s, 0, () => squared.set($$get($s, 0) ** 2));
   return squared;
 });
-
-// Root scope. slots: 0 input (two way), 1 squared (one way)
-// entries: 0 write-back of input, 1 $sync of input, 2 $sync of squared
-const $g0 = [[0, 1], [2]];
 
 let setInput;
 

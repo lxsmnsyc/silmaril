@@ -1,0 +1,19 @@
+{
+  "description": "A for-of or for-in loop whose target is a reactive variable loops over a fresh const temp and writes the slot first in each iteration. A pattern target uses the destructuring form on the temp.",
+  "logs": [
+    ["item", ""],
+    ["key", ""],
+    ["pair", 0, 0],
+    ["item", "a"],
+    ["loop", "a"],
+    ["item", "b"],
+    ["loop", "b"],
+    ["key", "x"],
+    ["key loop", "x"],
+    ["key", "y"],
+    ["key loop", "y"],
+    ["pair", 1, 0],
+    ["pair", 1, 2],
+    ["pair loop"]
+  ]
+}

@@ -5,7 +5,8 @@ import { $$root, $$get, $$set, $$update, $$sync } from 'silmaril';
 const $g0 = [[0], [1], [2], [2]];
 
 $$root($g0, ($s) => {
-  let $t;
+  // Temps of destructuring writes, one per site, declared first.
+  let $t0, $t1, $t2;
   $$set($s, 0, 0);
   $$sync($s, 0, () => log('n', $$get($s, 0)));
   log('postfix', $$update($s, 0, 1, false));
@@ -21,12 +22,13 @@ $$root($g0, ($s) => {
   $$set($s, 2, 1);
   $$set($s, 3, 2);
   $$sync($s, 2, () => log('pair', $$get($s, 2), $$get($s, 3)));
-  // Each target of a destructuring assignment is its own write.
+  // The pattern stays in place with temps as targets. Then each target
+  // is its own write, in source order.
   log(
     'swap',
-    (($t = [$$get($s, 3), $$get($s, 2)]),
-    $$set($s, 2, $t[0]),
-    $$set($s, 3, $t[1]),
-    $t),
+    (([$t1, $t2] = $t0 = [$$get($s, 3), $$get($s, 2)]),
+    $$set($s, 2, $t1),
+    $$set($s, 3, $t2),
+    $t0),
   );
 });

@@ -6,24 +6,32 @@ const MEMO = 0;
 const SYNC = 1;
 const EFFECT = 2;
 const EMPTY = [];
+// Rank of composable scopes: after every entry child scope of the parent.
+const COMPOSABLE = 2 ** 30;
 
 // Scope of the setup or entry run that is executing, for $composable.
 let CURRENT;
-// Entry that is running: its own writes do not queue it again.
-let RUN_SCOPE;
-let RUN_ID;
 // Queues hold pairs: scope, entry id.
 const MEMOS = [];
 const SYNCS = [];
 const EFFECTS = [];
+// Resolvers of tick() promises.
+const WAITERS = [];
+// memoBusy: memos are running. A write only queues.
+// syncBusy: a $sync body is running. A write runs memos, then returns.
 let memoBusy = false;
 let syncBusy = false;
 let scheduled = false;
+let roots = 0;
+// First error of the synchronous batch, as [error].
 let error;
 
-function scope(parent, graph) {
+// rank: entry id for an entry child scope, COMPOSABLE + call index for a
+// composable scope, creation count for a root.
+function scope(parent, graph, rank) {
   return {
     p: parent,
+    x: rank,
     d: parent ? parent.d + 1 : 0,
     g: graph || EMPTY,
     v: [], // slot values
@@ -33,6 +41,7 @@ function scope(parent, graph) {
     w: [], // memo output slot by entry id
     c: [], // child scope of the last run, by entry id
     q: [], // queued flags by entry id
+    r: [], // running flags by entry id
     n: [], // composable scopes
     o: [], // onMount callbacks
     u: [], // onDestroy callbacks and unsubscribes
@@ -41,12 +50,25 @@ function scope(parent, graph) {
   };
 }
 
+// Total order of entries: lower depth first. At the same depth, compare
+// the ranks of the two branches under the closest common ancestor.
+function before(a, i, b, j) {
+  if (a.d !== b.d) {
+    return a.d < b.d;
+  }
+  while (a !== b) {
+    i = a.x;
+    j = b.x;
+    a = a.p;
+    b = b.p;
+  }
+  return i < j;
+}
+
 function take(queue) {
   let best = 0;
   for (let i = 2; i < queue.length; i += 2) {
-    const a = queue[i];
-    const b = queue[best];
-    if (a.d < b.d || (a === b && queue[i + 1] < queue[best + 1])) {
+    if (before(queue[i], queue[i + 1], queue[best], queue[best + 1])) {
       best = i;
     }
   }
@@ -57,6 +79,12 @@ function schedule() {
   if (!scheduled) {
     scheduled = true;
     queueMicrotask(flushEffects);
+  }
+}
+
+function rethrow(held) {
+  if (held) {
+    throw held[0];
   }
 }
 
@@ -73,13 +101,7 @@ function mark(s, slot) {
         }
         id = ref[last];
       }
-      if (
-        t &&
-        t.a &&
-        t.f[id] &&
-        !t.q[id] &&
-        !(t === RUN_SCOPE && id === RUN_ID)
-      ) {
+      if (t && t.a && t.f[id] && !t.q[id] && !t.r[id]) {
         t.q[id] = true;
         const kind = t.k[id];
         (kind === MEMO ? MEMOS : kind === SYNC ? SYNCS : EFFECTS).push(t, id);
@@ -96,25 +118,30 @@ function run(s, id) {
   if (!s.a) {
     return;
   }
+  // A queued ancestor entry will dispose this scope when it runs.
+  for (let t = s; t.p; t = t.p) {
+    if (t.p.q[t.x]) {
+      return;
+    }
+  }
   const old = s.c[id];
   if (old) {
     dispose(old);
   }
-  const child = scope(s, s.h[id]);
+  const child = scope(s, s.h[id], id);
   s.c[id] = child;
-  const prevCurrent = CURRENT;
-  const prevScope = RUN_SCOPE;
-  const prevId = RUN_ID;
+  const prev = CURRENT;
   CURRENT = child;
-  RUN_SCOPE = s;
-  RUN_ID = id;
+  s.r[id] = true;
   let value;
   try {
     value = s.f[id](child);
+  } catch (e) {
+    dispose(child);
+    throw e;
   } finally {
-    CURRENT = prevCurrent;
-    RUN_SCOPE = prevScope;
-    RUN_ID = prevId;
+    CURRENT = prev;
+    s.r[id] = false;
   }
   if (s.m) {
     mount(child);
@@ -132,54 +159,40 @@ function drain(queue) {
     } catch (e) {
       error ||= [e];
     }
-    if (queue === SYNCS) {
-      drainMemos();
-    }
-  }
-}
-
-function drainMemos() {
-  if (!memoBusy) {
-    memoBusy = true;
-    try {
-      drain(MEMOS);
-    } finally {
-      memoBusy = false;
-    }
   }
 }
 
 function flush() {
-  if (memoBusy) {
-    return;
-  }
-  drainMemos();
-  if (!syncBusy) {
-    syncBusy = true;
-    try {
+  if (!memoBusy) {
+    memoBusy = true;
+    drain(MEMOS);
+    memoBusy = false;
+    if (!syncBusy) {
+      syncBusy = true;
       drain(SYNCS);
-    } finally {
       syncBusy = false;
-    }
-    if (error) {
-      const [e] = error;
+      const held = error;
       error = undefined;
-      throw e;
+      rethrow(held);
     }
   }
 }
 
 function flushEffects() {
-  try {
-    drain(EFFECTS);
-  } finally {
-    scheduled = false;
+  let held;
+  while (EFFECTS.length) {
+    const [s, id] = take(EFFECTS);
+    try {
+      run(s, id);
+    } catch (e) {
+      held ||= [e];
+    }
   }
-  if (error) {
-    const [e] = error;
-    error = undefined;
-    throw e;
+  scheduled = false;
+  for (const resolve of WAITERS.splice(0)) {
+    resolve();
   }
+  rethrow(held);
 }
 
 function mount(s) {
@@ -224,12 +237,38 @@ function register(s, id, kind, fn, graph) {
   s.h[id] = graph;
 }
 
+// First run of a memo or $sync, with its phase marked busy, then the
+// rest of the batch if this call is the outermost.
+function enter(s, id, kind) {
+  const memo = kind === MEMO;
+  const busy = memo ? memoBusy : syncBusy;
+  if (memo) {
+    memoBusy = true;
+  } else {
+    syncBusy = true;
+  }
+  try {
+    run(s, id);
+  } catch (e) {
+    error ||= [e];
+  }
+  if (memo) {
+    memoBusy = busy;
+  } else {
+    syncBusy = busy;
+  }
+  flush();
+}
+
 export function $$root(graph, setup) {
-  const s = scope(undefined, graph);
+  const s = scope(undefined, graph, roots++);
   const prev = CURRENT;
   CURRENT = s;
   try {
     setup(s);
+  } catch (e) {
+    dispose(s);
+    throw e;
   } finally {
     CURRENT = prev;
   }
@@ -243,17 +282,23 @@ export function $$composable(graph, setup) {
     if (!parent) {
       throw new Error('A $composable was called outside a reactive scope.');
     }
-    const s = scope(parent, graph);
+    const s = scope(parent, graph, COMPOSABLE + parent.n.length);
     parent.n.push(s);
     CURRENT = s;
+    let result;
     try {
-      return setup(s, ...args);
+      result = setup(s, ...args);
+    } catch (e) {
+      dispose(s);
+      parent.n.pop();
+      throw e;
     } finally {
       CURRENT = parent;
-      if (parent.m) {
-        mount(s);
-      }
     }
+    if (parent.m) {
+      mount(s);
+    }
+    return result;
   };
 }
 
@@ -282,12 +327,12 @@ export function $$update(s, slot, delta, prefix) {
 export function $$memo(s, id, slot, compute) {
   register(s, id, MEMO, compute);
   s.w[id] = slot;
-  run(s, id);
+  enter(s, id, MEMO);
 }
 
 export function $$sync(s, id, body, graph) {
   register(s, id, SYNC, body, graph);
-  run(s, id);
+  enter(s, id, SYNC);
 }
 
 export function $$effect(s, id, body, graph) {
@@ -301,12 +346,15 @@ export function $$store(s, slot, store, id) {
   s.v[slot] = store.get();
   s.u.push(store.subscribe(() => $$set(s, slot, store.get())));
   if (id !== undefined) {
-    register(s, id, SYNC, () => {
+    // The write-back runs with the memos, so the store is fresh when the
+    // write returns. It has no first run.
+    register(s, id, MEMO, () => {
       const value = s.v[slot];
       if (!Object.is(store.get(), value)) {
         store.set(value);
       }
     });
+    s.w[id] = -1;
   }
 }
 
@@ -326,6 +374,13 @@ export function $$destroy(s, callback) {
   } else {
     callback();
   }
+}
+
+export function tick() {
+  return new Promise((resolve) => {
+    WAITERS.push(resolve);
+    schedule();
+  });
 }
 
 function compileTimeOnly(name) {

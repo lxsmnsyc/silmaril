@@ -1,0 +1,4 @@
+{
+  "description": "A root whose setup throws is disposed before the error leaves $$root: stores unsubscribe and onDestroy callbacks run in registration order, and its queued $ never runs.",
+  "logs": [["unsubscribed"], ["destroyed"], ["caught", "setup failed"]]
+}

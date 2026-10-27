@@ -1,15 +1,15 @@
 import { $$root, $$get, $$set, $$sync } from 'silmaril';
 
-function call(fn) {
-  return fn();
-}
-
 // slots: 0 count, 1 prefix. label, format and handler are never
 // reassigned, so they stay plain locals.
 // entries: 0 $sync of format(count), 1 $sync of call(handler)
 // Entry 0 reads prefix through format -> label. Entry 1 reads nothing,
 // so no slot lists it.
 const $g0 = [[0], [0]];
+
+function call(fn) {
+  return fn();
+}
 
 let setCount;
 let setPrefix;

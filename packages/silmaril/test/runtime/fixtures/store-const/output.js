@@ -1,5 +1,9 @@
 import { $$root, $$get, $$sync, $$store } from 'silmaril';
 
+// slot 0: value (bound to counter, one way)
+// entry 0: $sync of value
+const $g0 = [[0]];
+
 function createStore(value) {
   const listeners = new Set();
   return {
@@ -24,10 +28,6 @@ function createStore(value) {
 }
 
 const counter = createStore(1);
-
-// slot 0: value (bound to counter, one way)
-// entry 0: $sync of value
-const $g0 = [[0]];
 
 const stop = $$root($g0, ($s) => {
   $$store($s, 0, counter);
