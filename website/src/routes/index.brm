@@ -10,7 +10,7 @@
 
 <Meta
   title="silmaril: compile-time reactivity for JS"
-  description="A compiler that turns plain variables in JavaScript into reactive state. No signals to create, no hooks to call."
+  description="Compile-time reactivity for JS."
   path=""
 />
 <main class="home">
@@ -18,8 +18,8 @@
     <p class="eyebrow">Compile-time reactivity for JS</p>
     <h1>Write variables. Get <span class="gradient-text">reactivity</span>.</h1>
     <p class="lead">
-      silmaril compiles the variables inside a reactive boundary into state that tracks its own
-      readers. You write plain JavaScript. The compiler does the wiring.
+      <code>$$</code> defines a reactive boundary. Variables declared inside it are reactive, and
+      <code>$</code> reacts when they change.
     </p>
     <div class="actions">
       <a class="button primary" href=(`${base}docs/getting-started`)>Get started</a>

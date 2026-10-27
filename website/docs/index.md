@@ -2,7 +2,7 @@
 
 Compile-time reactivity for JS.
 
-silmaril compiles the variables inside a reactive boundary into state that tracks its own readers. You write plain JavaScript, and the compiler wires the updates.
+`$$` defines a reactive boundary. Variables declared inside it are reactive, and `$` reacts when they change.
 
 ## Features
 
@@ -24,6 +24,10 @@ silmaril compiles the variables inside a reactive boundary into state that track
 - [Malina](https://malinajs.github.io/docs/)
 - [`solid-labels`](https://github.com/LXSMNSYC/solid-labels)
 - [Vue's Reactivity Transform](https://github.com/vuejs/rfcs/discussions/369)
+
+## Sponsors
+
+![Sponsors](https://github.com/lxsmnsyc/sponsors/blob/main/sponsors.svg?raw=true)
 
 ## License
 

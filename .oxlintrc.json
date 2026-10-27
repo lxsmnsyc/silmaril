@@ -9,7 +9,11 @@
     "builtin": true,
     "browser": true
   },
-  "ignorePatterns": ["**/dist/**", "**/node_modules/**"],
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/brumate-routes.d.ts"
+  ],
   "rules": {
     "typescript/no-explicit-any": "off",
     "import/no-cycle": "error"

@@ -84,9 +84,8 @@ function rewriteLink(href: string, base: string): string {
   const page = /^\.\/([\w-]+)\.md(#.*)?$/.exec(href);
   if (page) {
     const name = page[1] === 'index' ? '' : page[1]!;
-    // A document that is not on the site goes to GitHub.
     if (!SITE_PAGES.has(name)) {
-      return `${REPOSITORY}/blob/main/docs/${page[1]}.md${page[2] ?? ''}`;
+      throw new Error(`Link to a page that is not on the site: ${href}`);
     }
     return `${base}docs${name ? `/${name}` : ''}${page[2] ?? ''}`;
   }
