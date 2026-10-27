@@ -1,7 +1,8 @@
-/* oxlint-disable vitest/expect-expect */
+/* oxlint-disable vitest/expect-expect, vitest/valid-expect, vitest/valid-title */
 import { readdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import * as babel from '@babel/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import Store from '../../store';
 
 export interface Pipeline {
@@ -11,6 +12,13 @@ export interface Pipeline {
   compile(code: string, filename: string): string | Promise<string>;
   /** What `import ... from 'silmaril'` resolves to. */
   runtime: Record<string, unknown>;
+  /**
+   * Extra modules by specifier, merged over the defaults (`silmaril` is
+   * `runtime`, `silmaril/store` is the source store). Use it for `silmaril/store`
+   * or a runtime specifier the compiler imports, such as `silmaril/runtime`.
+   * A default import reads the `default` key; named imports read the keys.
+   */
+  modules?: Record<string, unknown>;
 }
 
 export interface RunResult {
@@ -42,49 +50,108 @@ const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
   ...args: string[]
 ) => Entry;
 
-const IMPORT = /^[ \t]*import\s*(?:([^'";]*?)\s*from\s*)?(['"])([^'"]+)\2;?/gm;
+interface Node {
+  type: string;
+  start: number;
+  end: number;
+  [key: string]: unknown;
+}
 
-function bindings(clause: string, table: string): string {
-  const namespace = /^\*\s*as\s+([\w$]+)$/.exec(clause);
-  if (namespace) {
-    return `const ${namespace[1]} = ${table};`;
-  }
-  const lines: string[] = [];
-  let rest = clause;
-  const named = /\{([^}]*)\}/.exec(rest);
-  if (named) {
-    rest = rest.replace(named[0], '');
-    const items: string[] = [];
-    for (const part of named[1].split(',')) {
-      const text = part.trim();
-      if (text) {
-        items.push(text.replace(/\s+as\s+/, ': '));
-      }
+function isNode(value: unknown): value is Node {
+  return typeof value === 'object' && value !== null && 'type' in value;
+}
+
+/** Throws for dynamic `import()` anywhere in the tree. */
+function rejectDynamicImport(value: unknown, id: string): void {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      rejectDynamicImport(item, id);
     }
-    lines.push(`const { ${items.join(', ')} } = ${table};`);
+    return;
   }
-  const def = rest.replace(/,/g, '').trim();
-  if (def) {
-    lines.push(`const ${def} = ${table}.default;`);
+  if (!isNode(value)) {
+    return;
   }
-  if (lines.length === 0) {
-    throw new Error(`Unsupported import clause: ${clause}`);
+  if (
+    value.type === 'ImportExpression' ||
+    (value.type === 'CallExpression' &&
+      isNode(value.callee) &&
+      value.callee.type === 'Import')
+  ) {
+    throw new Error(`Dynamic import() is not supported in ${id}.`);
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (key !== 'loc' && typeof child === 'object') {
+      rejectDynamicImport(child, id);
+    }
+  }
+}
+
+function nameOf(node: Node): string {
+  return node.type === 'StringLiteral'
+    ? (node.value as string)
+    : (node.name as string);
+}
+
+function bindings(node: Node, table: string): string {
+  const lines: string[] = [];
+  const named: string[] = [];
+  for (const spec of node.specifiers as Node[]) {
+    const local = (spec.local as Node).name as string;
+    if (spec.type === 'ImportDefaultSpecifier') {
+      lines.push(`const ${local} = ${table}.default;`);
+    } else if (spec.type === 'ImportNamespaceSpecifier') {
+      lines.push(`const ${local} = ${table};`);
+    } else {
+      const imported = nameOf(spec.imported as Node);
+      named.push(`${JSON.stringify(imported)}: ${local}`);
+    }
+  }
+  if (named.length > 0) {
+    lines.push(`const { ${named.join(', ')} } = ${table};`);
   }
   return lines.join(' ');
 }
 
-/** Replaces static imports with lookups in the module table. */
-function link(source: string, modules: Record<string, unknown>): string {
-  return source.replace(
-    IMPORT,
-    (_, clause: string | undefined, _quote: string, id: string) => {
-      if (!(id in modules)) {
-        throw new Error(`Cannot resolve import '${id}'.`);
-      }
-      const table = `__modules[${JSON.stringify(id)}]`;
-      return clause ? bindings(clause.trim(), table) : '';
-    },
-  );
+/**
+ * Replaces static imports with lookups in the module table. Imports are found
+ * with the Babel parser and replaced by source range, so strings and comments
+ * are never touched. `export` and dynamic `import()` throw.
+ */
+function link(
+  source: string,
+  modules: Record<string, unknown>,
+  id: string,
+): string {
+  const ast = babel.parseSync(source, {
+    filename: id,
+    babelrc: false,
+    configFile: false,
+    sourceType: 'module',
+  }) as unknown as { program: { body: Node[] } } | null;
+  if (!ast) {
+    throw new Error(`Could not parse ${id}.`);
+  }
+  const imports: Node[] = [];
+  for (const node of ast.program.body) {
+    if (node.type === 'ImportDeclaration') {
+      imports.push(node);
+    } else if (node.type.startsWith('Export')) {
+      throw new Error(`'export' is not supported in ${id}.`);
+    }
+  }
+  rejectDynamicImport(ast.program.body, id);
+  let out = source;
+  for (const node of imports.toReversed()) {
+    const specifier = (node.source as Node).value as string;
+    if (!Object.hasOwn(modules, specifier)) {
+      throw new Error(`Cannot resolve import '${specifier}'.`);
+    }
+    const table = `__modules[${JSON.stringify(specifier)}]`;
+    out =
+      out.slice(0, node.start) + bindings(node, table) + out.slice(node.end);
+  }
+  return out;
 }
 
 let counter = 0;
@@ -98,7 +165,8 @@ async function flush(): Promise<void> {
  * The code gets two free identifiers: `log` and `flush`. `silmaril` resolves to
  * `pipeline.runtime`, `silmaril/store` to the store in `packages/silmaril/store`.
  * The code may use top-level `await`. Timers are flushed once after it ends.
- * Call `dispose()` on the result to restore real timers.
+ * Call `dispose()` on the result to restore real timers. Fake timers are global,
+ * so `run` must not be called concurrently.
  */
 export async function run(
   pipeline: Pipeline,
@@ -119,15 +187,16 @@ export async function run(
       code,
       `/behavior/case-${counter}.js`,
     );
-    const modules = {
+    const modules: Record<string, unknown> = {
       silmaril: pipeline.runtime,
       'silmaril/store': { default: Store },
+      ...pipeline.modules,
     };
     const entry = new AsyncFunction(
       'log',
       'flush',
       '__modules',
-      link(compiled, modules),
+      link(compiled, modules, `case-${counter}`),
     );
     await entry((...args: unknown[]) => logs.push(args), flush, modules);
     await flush();
@@ -157,22 +226,38 @@ async function loadPipelines(): Promise<Pipeline[]> {
 /** Every pipeline file in `pipelines/`, loaded in name order. */
 export const pipelines: Pipeline[] = await loadPipelines();
 
-/** Registers each case once per pipeline. A case in `xfail` must fail. */
+/** Runs one case on one pipeline and checks its logs. Throws when it fails. */
+export async function checkCase(
+  pipeline: Pipeline,
+  item: BehaviorCase,
+): Promise<void> {
+  const xfail = item.options?.xfail?.includes(pipeline.name) ?? false;
+  const result = await run(pipeline, item.code);
+  result.dispose();
+  const assertion = expect(
+    result.logs,
+    xfail ? 'now passes: remove the pipeline from xfail' : undefined,
+  );
+  const target = xfail ? assertion.not : assertion;
+  target.toEqual(item.logs);
+}
+
+/**
+ * Registers each case once per pipeline. On a pipeline listed in `xfail` the
+ * case is a normal test that must fail only by a log mismatch: errors from
+ * compiling or running fail it, and so does a case that now passes.
+ */
 export function behaviorCases(suite: string, cases: BehaviorCase[]): void {
   for (const pipeline of pipelines) {
-    describe(`${suite} [${pipeline.name}]`, () => {
+    // Fake timers are shared state, so cases in a suite never run concurrently.
+    describe(`${suite} [${pipeline.name}]`, { concurrent: false }, () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
       for (const item of cases) {
-        const check = async () => {
-          const result = await run(pipeline, item.code);
-          try {
-            expect(result.logs).toEqual(item.logs);
-          } finally {
-            result.dispose();
-          }
-        };
         const xfail = item.options?.xfail?.includes(pipeline.name) ?? false;
-        const register = xfail ? it.fails : it;
-        register(xfail ? `${item.name} (xfail)` : item.name, check);
+        const title = xfail ? `${item.name} (xfail)` : item.name;
+        it(title, () => checkCase(pipeline, item));
       }
     });
   }

@@ -44,6 +44,46 @@ behaviorCases('let', [
     logs: [[9]],
   },
   {
+    name: 'reacts to ++ run from a setter after setup',
+    code: `
+      import { $$, $ } from 'silmaril';
+      let inc;
+      $$(() => {
+        let count = 0;
+        $(log(count));
+        inc = () => {
+          count++;
+        };
+      });
+      await flush();
+      inc();
+      await flush();
+      inc();
+      await flush();
+    `,
+    logs: [[0], [1], [2]],
+  },
+  {
+    name: 'reacts to -- run from a setter after setup',
+    code: `
+      import { $$, $ } from 'silmaril';
+      let dec;
+      $$(() => {
+        let count = 5;
+        $(log(count));
+        dec = () => {
+          --count;
+        };
+      });
+      await flush();
+      dec();
+      await flush();
+      dec();
+      await flush();
+    `,
+    logs: [[5], [4], [3]],
+  },
+  {
     name: 'reacts to a write from a timer',
     code: `
       import { $$, $ } from 'silmaril';

@@ -101,22 +101,32 @@ behaviorCases('$store', [
     ],
   },
   {
-    name: 'unsubscribes from the store when destroyed',
+    name: 'stops listening to the store when destroyed',
     code: `
       import { $$, $sync, $store } from 'silmaril';
-      import Store from 'silmaril/store';
-      const count = new Store(1);
+      let value = 1;
+      const listeners = new Set();
+      const custom = {
+        get: () => value,
+        subscribe: (callback) => {
+          listeners.add(callback);
+          return () => listeners.delete(callback);
+        },
+      };
       const stop = $$(() => {
-        const current = $store(count);
+        const current = $store(custom);
         $sync(log('current', current));
       });
-      count.set(2);
+      log('listeners', listeners.size);
       stop();
-      count.set(3);
+      log('listeners', listeners.size);
+      value = 2;
+      for (const listener of listeners) listener();
     `,
     logs: [
       ['current', 1],
-      ['current', 2],
+      ['listeners', 1],
+      ['listeners', 0],
     ],
   },
   {
