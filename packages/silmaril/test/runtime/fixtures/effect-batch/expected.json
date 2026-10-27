@@ -1,0 +1,12 @@
+{
+  "description": "A $ body runs in a microtask, once for all the writes before it. Its first run is queued too. A write that changes a slot queues the body even when a later write puts the old value back, so bounce runs it with 2 again.",
+  "logs": [
+    ["setup"],
+    ["after $$"],
+    ["effect", 0],
+    ["written"],
+    ["effect", 2],
+    ["effect", 2],
+    ["done"]
+  ]
+}

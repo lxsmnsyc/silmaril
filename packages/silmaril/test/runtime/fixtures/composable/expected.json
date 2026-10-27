@@ -1,0 +1,13 @@
+{
+  "description": "A $composable call makes a child scope of the scope that is running, and returns what the setup returns. It mounts with its parent and is disposed with it. A value that crosses scopes through a store is a new write. Calling a composable outside any scope throws.",
+  "logs": [
+    ["Value", 0],
+    ["Squared", 0],
+    ["squared mounted"],
+    ["root mounted"],
+    ["Value", 3],
+    ["Squared", 9],
+    ["squared destroyed"],
+    ["outside a scope", true]
+  ]
+}

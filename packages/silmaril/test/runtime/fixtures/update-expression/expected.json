@@ -1,0 +1,22 @@
+{
+  "description": "x++ and --x compile to $$update, which returns what the expression returns. Compound and logical assignments read the slot and write it with $$set, which returns the value. A destructuring assignment writes each target in turn, so a $sync that reads two targets runs once per changed target.",
+  "logs": [
+    ["n", 0],
+    ["n", 1],
+    ["postfix", 0],
+    ["n", 2],
+    ["prefix", 2],
+    ["n", 1],
+    ["postfix decrement", 2],
+    ["n", 11],
+    ["compound", 11],
+    ["name", ""],
+    ["name", "anonymous"],
+    ["or", "anonymous"],
+    ["or", "anonymous"],
+    ["pair", 1, 2],
+    ["pair", 2, 2],
+    ["pair", 2, 1],
+    ["swap", [2, 1]]
+  ]
+}

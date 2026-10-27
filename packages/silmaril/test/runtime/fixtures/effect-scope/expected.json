@@ -1,0 +1,11 @@
+{
+  "description": "Each run of a $ body gets a child scope. Before the body runs again, the old child scope is disposed and its onDestroy callbacks run. onMount of the new child runs right after the body. Reads in callbacks read the current value.",
+  "logs": [
+    ["run", 0],
+    ["mounted", 0],
+    ["cleanup", 1],
+    ["run", 1],
+    ["mounted", 1],
+    ["cleanup", 1]
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "A call by name to a function declared in the same $$ adds what the function reads, and what the functions it calls read. A function passed as a value adds nothing, so the second $sync runs once.",
+  "logs": [["Count: 0"], ["handler", 0], ["Count: 1"], ["Total: 1"]]
+}

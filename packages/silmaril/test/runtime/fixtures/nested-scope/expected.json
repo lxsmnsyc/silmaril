@@ -1,0 +1,14 @@
+{
+  "description": "A $sync body with its own declarations is a child scope with its own graph. An inner entry that reads a slot of the parent runs through a path in the parent's graph, so the outer body does not run again. A body that reads the slot itself runs again, after its old child scope is disposed. Parents run before children. Disposing the root disposes child scopes in entry order.",
+  "logs": [
+    ["body"],
+    ["inner", 0, 0],
+    ["inner", 1, 0],
+    ["reads y", 0],
+    ["reads y destroyed"],
+    ["reads y", 1],
+    ["inner", 1, 1],
+    ["body destroyed"],
+    ["reads y destroyed"]
+  ]
+}

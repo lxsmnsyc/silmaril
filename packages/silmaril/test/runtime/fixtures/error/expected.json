@@ -1,0 +1,9 @@
+{
+  "description": "An error in an entry does not stop the other entries of the same write. The first error is thrown from the write that ran it, after the other entries ran. The graph keeps working after.",
+  "logs": [
+    ["after", 0],
+    ["after", 1],
+    ["caught", "boom"],
+    ["after", 2]
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "description": "A scope mounts after its setup returns, children first, then its own onMount callbacks in order. A child created during the parent's setup mounts with the parent. Dispose runs child scopes first, then onDestroy callbacks in order. A second dispose does nothing, and a write after dispose stores the value and runs nothing.",
+  "logs": [
+    ["count", 0],
+    ["setup"],
+    ["mount child"],
+    ["mount root"],
+    ["before stop"],
+    ["destroy child"],
+    ["destroy root"],
+    ["done"]
+  ]
+}
