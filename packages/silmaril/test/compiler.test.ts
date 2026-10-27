@@ -223,3 +223,29 @@ describe('$store', () => {
     expect(result).toMatchSnapshot();
   });
 });
+
+describe('$$ argument', () => {
+  it('should throw on a literal argument', async () => {
+    await expect(
+      compile(`
+      import { $$ } from 'silmaril';
+
+      $$(1);
+      `),
+    ).rejects.toThrow(
+      '$$ argument must be ArrowFunctionExpression or FunctionExpression',
+    );
+  });
+  it('should throw on an identifier argument', async () => {
+    await expect(
+      compile(`
+      import { $$ } from 'silmaril';
+
+      const setup = () => {};
+      $$(setup);
+      `),
+    ).rejects.toThrow(
+      '$$ argument must be ArrowFunctionExpression or FunctionExpression',
+    );
+  });
+});
