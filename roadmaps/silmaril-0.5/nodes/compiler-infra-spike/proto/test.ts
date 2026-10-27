@@ -2,10 +2,18 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
+import { MagicString } from 'magic-string';
 import { babel, babelParse } from './babel-baseline.ts';
-import { compile, parseModule, visit } from './compile.ts';
+import { compile, ready } from './compile.ts';
 import { generate } from './gen.ts';
-import { analyzeScopes, type Node } from './scope.ts';
+import { analyzeModel } from './model.ts';
+import {
+  analyzeScopes,
+  type Node,
+  type Reference,
+  type ScopeInfo,
+} from './scope.ts';
+import { findSilmarilImports, parseModule, visit } from './source.ts';
 
 let failures = 0;
 function check(name: string, fn: () => void): void {
@@ -171,57 +179,329 @@ check('skips types and resolves shadowing', () => {
   assert.deepEqual(lines, ['param', 'let', 'function', 'catch', 'let', 'let']);
 });
 
-function wrapped(code: string): string[] {
-  return [...code.matchAll(/_\$\$update\(_ctx\d*, ([^;]*?)\)(?=[;\n}])/g)].map(
-    (m) => m[1]!,
+function analyze(code: string, filename = 'a.ts') {
+  const parsed = parseModule(code, filename);
+  const info = analyzeScopes(parsed.program);
+  return { parsed, info };
+}
+
+function model(code: string, filename = 'a.js') {
+  const { parsed, info } = analyze(code, filename);
+  return analyzeModel(
+    parsed,
+    info,
+    findSilmarilImports(parsed.program, info.declarationOf),
   );
 }
 
-check('rewrites writes of setup variables only', () => {
-  const result = compile(tricky, { filename: 'tricky.tsx' });
-  const writes = wrapped(result.code);
-  assert.deepEqual(writes, [
-    'count += step',
-    'count++',
-    '--count',
-    '(count as number) = 1',
-    'count! = 2',
-    '[first, second] = [second, first]',
-    '{ first, rest } = { first: 1, rest: {} })',
-    'store = count',
-    'blockVar = 2',
-  ]);
-  // The shadowed names inside shadowed() stay as they are.
-  assert.match(result.code, /let count = 10;\n\s+count \+= 1;/);
-  // The output still parses.
-  parseModule(result.code, 'out.tsx');
+function refsNamed(info: ScopeInfo, name: string): Reference[] {
+  const out: Reference[] = [];
+  for (const ref of info.references) {
+    if (ref.identifier.name === name) {
+      out.push(ref);
+    }
+  }
+  return out;
+}
+
+function compiled(code: string, filename = 'a.js'): string {
+  return compile(code, { filename }).code;
+}
+
+function throwsWith(code: string, message: string): void {
+  assert.throws(
+    () => compile(code, { filename: 'a.js' }),
+    (error: Error) => error.message.includes(message),
+  );
+}
+
+check('parameter defaults do not see body declarations', () => {
+  const { info } = analyze('let x = 1; function f(a = x) { let x = 2; x; }');
+  const [inDefault, inBody] = refsNamed(info, 'x');
+  assert.equal(inDefault!.binding!.scope.kind, 'module');
+  assert.equal(inBody!.binding!.scope.kind, 'function');
+  // Without parameter expressions, parameters and body share one scope.
+  const plain = analyze('function g(a) { let b = a; }').info;
+  assert.equal(refsNamed(plain, 'a')[0]!.binding!.kind, 'param');
 });
 
-check('matches the Babel plugin on the snapshot cases', () => {
-  const result = compile(
-    `import { $$ } from 'silmaril';\n$$(() => {\n  let x = 0;\n  function increment() {\n    x += 1;\n    x++;\n  }\n});\n`,
-    { filename: 'a.js' },
+check('walks qualified namespaces', () => {
+  const { info } = analyze('namespace A.B { export const y = z; }');
+  assert.ok(info.root.bindings.has('A'));
+  assert.equal(refsNamed(info, 'z').length, 1);
+});
+
+check('`<this.Foo />` reads no binding named this', () => {
+  const { info } = analyze('const Foo = 1; <this.Foo />;', 'a.tsx');
+  assert.equal(refsNamed(info, 'this').length, 0);
+});
+
+check('reference context: shorthand, JSX tag, export', () => {
+  const { info } = analyze(
+    'let a = 1; const C = 2; ({ a }); ({ a } = {}); <C />; export { a };',
+    'a.tsx',
   );
-  assert.match(result.code, /let _ctx = _\$\$context\(\);/);
-  assert.match(result.code, /_\$\$update\(_ctx, x \+= 1\)/);
-  assert.match(result.code, /_\$\$update\(_ctx, x\+\+\)/);
+  const contexts: string[] = [];
+  for (const ref of info.references) {
+    contexts.push(`${ref.identifier.name}:${ref.context}`);
+  }
+  assert.deepEqual(contexts, [
+    'a:shorthand',
+    'a:shorthand',
+    'C:jsx',
+    'a:export',
+  ]);
+});
+
+check(
+  'visit is in source order, skips types and visits a shorthand once',
+  () => {
+    const { parsed } = analyze(
+      'let x: Foo<Bar> = y; const o = { x }; @dec class K {}',
+    );
+    const names: string[] = [];
+    visit(parsed.program, (node) => {
+      if (node.type === 'Identifier') {
+        names.push(node.name);
+      }
+    });
+    assert.deepEqual(names, ['x', 'y', 'o', 'x', 'dec', 'K']);
+  },
+);
+
+check('read, write and writeExpression of references', () => {
+  const { info } = analyze(
+    'let x = 0; x = 1; x += 1; x++; [x] = [1]; for (x of []) {} f(x);',
+  );
+  const flags: string[] = [];
+  for (const ref of refsNamed(info, 'x')) {
+    const kind = ref.writeExpression ? ref.writeExpression.type : '-';
+    flags.push(`${ref.read ? 'r' : ''}${ref.write ? 'w' : ''}:${kind}`);
+  }
+  assert.deepEqual(flags, [
+    'w:AssignmentExpression',
+    'rw:AssignmentExpression',
+    'rw:UpdateExpression',
+    'w:AssignmentExpression',
+    'w:ForOfStatement',
+    'r:-',
+  ]);
+});
+
+check('an expression-bodied setup compiles', () => {
+  const out = compiled(
+    "import { $$, onMount } from 'silmaril';\n$$(() => onMount(() => log('m')));\n",
+  );
+  assert.match(
+    out,
+    /\$\$root\(\$g0, \(\$s\) => \$\$mount\(\$s, \(\) => log\('m'\)\)\)/,
+  );
+  assert.match(out, /const \$g0 = \[\];/);
+});
+
+check('compile errors of the runtime contract', () => {
+  const head = "import { $$, $, $sync, $skip, $store } from 'silmaril';\n";
+  // The review's probe: a loop and a nested function.
+  throwsWith(
+    `${head}$$(() => { let x = 0; for (const i of [1]) { $(x); } setTimeout(() => $(x)); x = 2; });`,
+    '$ cannot be called inside a loop.',
+  );
+  throwsWith(
+    `${head}$$(() => { let x = 0; setTimeout(() => $(x)); x = 2; });`,
+    '$ must be called as a statement of a setup body.',
+  );
+  throwsWith(
+    `${head}$$(() => { let x = 0; x && $sync(x); x = 1; });`,
+    '$sync must be called as a statement of a setup body.',
+  );
+  throwsWith(
+    `${head}$(1);`,
+    '$ must be called as a statement of a setup body.',
+  );
+  throwsWith(
+    `${head}$$(() => { $sync(1, 2); });`,
+    '$sync takes exactly one argument.',
+  );
+  throwsWith(`${head}const f = $sync;`, '$sync can only be called.');
+  throwsWith(
+    `${head}$skip(1);`,
+    '$skip must be used inside $$ or $composable.',
+  );
+  throwsWith(
+    `${head}$$(() => { if (a) { const s = $store(t); } });`,
+    '$store must initialize a top-level variable.',
+  );
+  throwsWith(
+    `${head}$$(() => { const s = $store(t); s = 1; });`,
+    'Cannot assign to a constant.',
+  );
+  throwsWith(
+    `${head}$$(() => { let a = 0; let b = 0; function w() { a = 1; } const c = (w(), b); a = 2; b = 2; });`,
+    'Cannot write a reactive variable in the initializer of a derived value.',
+  );
+  throwsWith(
+    `${head}$$(() => { let a = 0; class K { f = ([a] = [1]); } });`,
+    'Cannot destructure into a reactive variable in a class field.',
+  );
+  throwsWith(
+    `${head}$$(() => { let x = 0; $sync(log(/* $skip */ x)); x = 1; });`,
+    'The /* $skip */ comment is not supported.',
+  );
+  // `$` inside if, try, switch and labels is fine.
+  compiled(
+    `${head}$$(() => { let x = 0; if (x) { $(x); } try { $(x); } catch { $(x); } switch (x) { case 1: $(x); } l: { $(x); } x = 1; });`,
+  );
+});
+
+check(
+  'reads through local helpers: transitive, recursive, optional, reassigned',
+  () => {
+    const m = model(`import { $$, $sync } from 'silmaril';
+$$(() => {
+  let a = 0;
+  let b = 0;
+  let c = 0;
+  let d = 0;
+  function one() { return a + two(); }
+  function two() { return b + one(); }
+  const three = () => c;
+  let four = () => d;
+  $sync(one());
+  $sync(three?.());
+  $sync(four());
+  $sync(() => [1].map(() => a));
+  a = b = c = d = 1;
+  four = () => 0;
+});`);
+    const root = m.scopes[0]!;
+    const reads: string[][] = [];
+    for (const entry of root.entries) {
+      const names: string[] = [];
+      for (const binding of entry.reads) {
+        names.push(binding.name);
+      }
+      reads.push(names.toSorted());
+    }
+    // `four` is a written top-level let: a slot, read as a value, not followed.
+    assert.deepEqual(reads, [['a', 'b'], ['c'], ['four'], ['a']]);
+    assert.deepEqual(root.graph, [[0, 3], [0], [1], [], [2]]);
+  },
+);
+
+check('child memos: a body gets the reads of its own memos', () => {
+  const m = model(`import { $$, $sync } from 'silmaril';
+$$(() => {
+  let x = 1;
+  $sync(() => {
+    const a = x * 2;
+    const b = a + 1;
+    log(b);
+  });
+  x = 2;
+});`);
+  const root = m.scopes[0]!;
+  assert.deepEqual(root.graph, [[0, [0, 0]]]);
+  const child = root.entries[0]!.child!;
+  // b is read only by the body itself, which owns it.
+  assert.deepEqual(child.graph, [[1], []]);
+});
+
+check('which scope each lifecycle and composable call binds to', () => {
+  const m =
+    model(`import { $$, $, $sync, $composable, onMount } from 'silmaril';
+const useThing = $composable(() => { onMount(() => {}); });
+$$(() => {
+  let x = 0;
+  onMount(() => {});
+  $sync(() => { onMount(() => {}); useThing(); });
+  $(onMount(() => {}));
+  const y = (useThing(), x);
+  x = 1;
+});`);
+  const bound: string[] = [];
+  for (const binding of m.bindings) {
+    bound.push(`${binding.name}:${binding.scope.kind}:${binding.scope.param}`);
+  }
+  assert.deepEqual(bound.toSorted(), [
+    'composable-call:memo:$c0',
+    'composable-call:sync:$c1',
+    'onMount:composable:$s',
+    'onMount:effect:$c2',
+    'onMount:root:$s',
+    'onMount:sync:$c1',
+  ]);
+});
+
+check('overwrites: compound, logical, chained and destructuring writes', () => {
+  const out = compiled(`import { $$, $sync } from 'silmaril';
+$$(() => {
+  let x = 2;
+  let a = 2;
+  let b = 3;
+  let y = 0;
+  $sync(log(x *= a + b));
+  $sync(log((x ||= a), (x = y = 1)));
+  [a, { b = a }] = [1, {}];
+  a = 0;
+});`);
+  assert.ok(
+    out.includes('$$set($s, 0, $$get($s, 0) * ($$get($s, 1) + $$get($s, 2)))'),
+  );
+  assert.ok(out.includes('($$get($s, 0) || $$set($s, 0, $$get($s, 1)))'));
+  assert.ok(out.includes('$$set($s, 0, $$set($s, 3, 1))'));
+  assert.ok(
+    out.includes(
+      '[$t0, { b: $t1 = $t0 }] = [1, {}]; $$set($s, 1, $t0); $$set($s, 2, $t1);',
+    ),
+  );
+  parseModule(out, 'out.js');
+});
+
+check('magic-string traps the edit rules avoid', () => {
+  const lost = new MagicString('x * 2');
+  lost.appendRight(0, '(');
+  lost.overwrite(0, 1, '$$get($s, 0)');
+  assert.equal(lost.toString(), '$$get($s, 0) * 2');
+  const kept = new MagicString('x * 2');
+  kept.appendRight(0, '(');
+  kept.update(0, 1, '$$get($s, 0)');
+  assert.equal(kept.toString(), '($$get($s, 0) * 2');
+  const nested = new MagicString('abcd');
+  nested.overwrite(0, 4, 'z');
+  assert.throws(() => nested.overwrite(0, 1, 'y'));
+});
+
+check('imports: aliases, kept specifiers, namespace imports', () => {
+  const out = compiled(
+    "import { $$, $sync as sync, tick, type Store } from 'silmaril';\nimport * as s from 'silmaril';\n$$(() => { let x = 0; sync(x); x = 1; s.$sync(x); });\n",
+    'a.ts',
+  );
+  assert.ok(
+    out.startsWith(
+      "import { $$root, $$get, $$set, $$sync, tick, type Store } from 'silmaril';\nimport * as s from 'silmaril';",
+    ),
+  );
+  assert.ok(out.includes('$$sync($s, 0, () => $$get($s, 0));'));
+  assert.ok(out.includes('s.$sync($$get($s, 0));'));
 });
 
 check('generated names do not collide', () => {
-  const result = compile(
-    `import { $$ } from 'silmaril';\nconst _ctx = 1, _$$update = 2;\n$$(() => { let x = 0; x = _ctx; });\n`,
-    { filename: 'a.js' },
+  const out = compiled(
+    "import { $$, $sync } from 'silmaril';\nconst $s = 1, $$get = 2, $t0 = 3;\n$$(() => { let x = 0; $sync(x); [x] = [$s + $$get + $t0]; });\n",
   );
-  assert.match(result.code, /let _ctx2 = /);
-  assert.match(result.code, /\$\$update as _\$\$update2/);
+  assert.match(out, /\$\$root\(\$_g0, \(\$_s\) =>/);
+  assert.match(out, /\$\$get as \$\$get_/);
+  assert.match(out, /let \$t_0;/);
 });
 
 check('offsets are UTF-16, so non-ASCII text does not shift edits', () => {
-  const result = compile(
-    `import { $$ } from 'silmaril';\n// héllo 😀 日本\n$$(() => { let s = '😀'; s = 'é' + s; });\n`,
-    { filename: 'a.ts' },
+  const out = compiled(
+    "import { $$ } from 'silmaril';\n// héllo 😀 日本\n$$(() => { let s = '😀'; s = 'é' + s; });\n",
+    'a.ts',
   );
-  assert.match(result.code, /_\$\$update\(_ctx, s = 'é' \+ s\)/);
+  assert.ok(
+    out.includes("$$set($s, 0, '😀'); $$set($s, 0, 'é' + $$get($s, 0));"),
+  );
 });
 
 check('returns the input when silmaril is not imported', () => {
@@ -243,6 +523,25 @@ check('errors carry a location', () => {
     assert.equal(e.loc.line, 2);
     assert.ok(e.frame.includes('^'));
   }
+});
+
+check('ready() resolves to the same promise every time', () => {
+  assert.equal(ready(), ready());
+});
+
+check('the source map names the generated file', () => {
+  const result = compile("import { $$ } from 'silmaril';\n$$(() => {});\n", {
+    filename: 'src/a.ts',
+  });
+  // magic-string keeps the base name.
+  assert.equal(result.map!.file, 'a.ts');
+  // Sources are relative to `file`, so both are in the same folder.
+  assert.deepEqual(result.map!.sources, ['a.ts']);
+});
+
+check('tricky.tsx and the generated file compile to code that parses', () => {
+  parseModule(compiled(tricky, 'tricky.tsx'), 'out.tsx');
+  parseModule(compiled(generated, 'generated.tsx'), 'out.tsx');
 });
 
 // Every identifier of the output that comes from the input must map back to the same name.
@@ -268,12 +567,24 @@ function checkSourceMap(
   let checked = 0;
   const wrong: string[] = [];
   visit(out.program, (node: Node) => {
-    // Skip the generated names and the import line the compiler adds.
+    // Skip the rewritten imports and the generated names.
+    if (node.type === 'ImportDeclaration') {
+      return false;
+    }
+    // `$$set($s, k, name)` after a destructuring memo is generated text. It maps to
+    // the start of its edit, like any inserted text.
+    if (
+      node.type === 'CallExpression' &&
+      node.callee.name === '$$set' &&
+      node.arguments[2]?.type === 'Identifier'
+    ) {
+      return false;
+    }
     if (
       node.type !== 'Identifier' ||
-      node.start < lineStarts[1]! ||
-      node.name.startsWith('_$$') ||
-      /^_ctx\d*$/.test(node.name)
+      node.name.startsWith('$$') ||
+      /^\$[sctg]\d/.test(node.name) ||
+      /^\$[sc](_|$)/.test(node.name)
     ) {
       return;
     }
@@ -303,7 +614,7 @@ check(
   'source map points every identifier back to its origin (tricky.tsx)',
   () => {
     const { checked, wrong } = checkSourceMap(tricky, 'tricky.tsx');
-    assert.ok(checked > 200, `checked ${checked}`);
+    assert.ok(checked > 100, `checked ${checked}`);
     assert.deepEqual(wrong.slice(0, 10), []);
   },
 );
@@ -312,10 +623,39 @@ check(
   'source map points every identifier back to its origin (generated)',
   () => {
     const { checked, wrong } = checkSourceMap(generated, 'generated.tsx');
-    assert.ok(checked > 3000, `checked ${checked}`);
+    assert.ok(checked > 1000, `checked ${checked}`);
     assert.deepEqual(wrong.slice(0, 10), []);
   },
 );
+
+check('only top-level declarations get slots; functions are not memos', () => {
+  const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  let x = 0;
+  { let inner = 0; inner = 1; }
+  const handler = () => x;
+  const double = x * 2;
+  x = 1;
+});`);
+  const names: string[] = [];
+  for (const slot of m.scopes[0]!.slots) {
+    names.push(`${slot.binding.name}:${slot.declarator.kind}`);
+  }
+  assert.deepEqual(names, ['x:state', 'double:memo']);
+});
+
+check('the compiler files import no node: module', () => {
+  for (const file of [
+    'compile.ts',
+    'source.ts',
+    'scope.ts',
+    'model.ts',
+    'codegen.ts',
+  ]) {
+    const text = readFileSync(new URL(`./${file}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(text, /from ['"]node:/, file);
+  }
+});
 
 if (failures) {
   console.log(`${failures} failed`);

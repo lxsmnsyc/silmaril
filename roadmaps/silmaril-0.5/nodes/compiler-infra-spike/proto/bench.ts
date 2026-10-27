@@ -4,7 +4,9 @@ import { analyze as periscopic } from 'periscopic';
 import { babel, babelCompile, babelParse } from './babel-baseline.ts';
 import { compile, parseModule } from './compile.ts';
 import { generate } from './gen.ts';
+import { analyzeModel } from './model.ts';
 import { analyzeScopes } from './scope.ts';
+import { findSilmarilImports } from './source.ts';
 
 const code = generate(2000);
 const filename = 'generated.tsx';
@@ -55,6 +57,15 @@ measure('oxc: parse + analyzeScopes', () => {
 });
 measure('oxc: parse + periscopic (no TS awareness)', () => {
   periscopic(parseModule(code, filename).program);
+});
+measure('oxc: parse + analyzeScopes + reactive model', () => {
+  const parsed = parseModule(code, filename);
+  const info = analyzeScopes(parsed.program);
+  analyzeModel(
+    parsed,
+    info,
+    findSilmarilImports(parsed.program, info.declarationOf),
+  );
 });
 const { program } = parseModule(code, filename);
 measure('analyzeScopes alone', () => {

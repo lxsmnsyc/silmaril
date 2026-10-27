@@ -1,5 +1,5 @@
 /* oxlint-disable -- a test input full of odd but valid code. */
-import { $$, $, $sync, $store, onMount, type Store } from 'silmaril';
+import { $composable, $, $sync, $store, onMount, type Store } from 'silmaril';
 import * as ns from './ns';
 import Default, { named as alias } from './mod';
 import type { OnlyType } from './types';
@@ -68,7 +68,7 @@ const Named = class Inner extends Base<number> {
   }
 };
 
-export const counter = $$((props: { start: number }) => {
+export const counter = $composable((props: { start: number }) => {
   let count = props.start;
   let [first, { second = count, ...rest }] = [1, { second: 2, third: 3 }];
   const doubled = count * 2;

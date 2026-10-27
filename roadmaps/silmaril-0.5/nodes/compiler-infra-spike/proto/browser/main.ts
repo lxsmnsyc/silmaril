@@ -30,7 +30,7 @@ async function run(): Promise<unknown> {
     crossOriginIsolated: globalThis.crossOriginIsolated,
     loadMs,
     compileMedianMs: times[10],
-    updates: out.code.split('_$$update(').length - 1,
+    writes: out.code.split('$$set(').length - 1,
     mapVersion: out.map ? JSON.parse(out.map.toString()).version : null,
   };
 }

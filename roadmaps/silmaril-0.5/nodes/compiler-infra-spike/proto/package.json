@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node test.ts",
+    "test": "node test.ts && node fixtures.test.ts",
+    "fixtures": "node fixtures.test.ts",
+    "fetch-pr8": "node fetch-pr8.ts",
     "bench": "node bench.ts",
     "browser": "node browser/run.ts"
   },

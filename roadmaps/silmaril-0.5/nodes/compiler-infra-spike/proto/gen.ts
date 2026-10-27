@@ -6,7 +6,7 @@ interface Props${i} {
   label: string;
 }
 
-export const Counter${i} = $$((props: Props${i}) => {
+export const Counter${i} = $composable((props: Props${i}) => {
   let count = props.start;
   let step = 1;
   let history: number[] = [];
@@ -49,7 +49,7 @@ export const Counter${i} = $$((props: Props${i}) => {
 }
 
 export function generate(lines: number): string {
-  let code = `import { $$, $, $sync, onMount } from 'silmaril';\nimport { Display } from './display';\n`;
+  let code = `import { $composable, $, $sync, onMount } from 'silmaril';\nimport { Display } from './display';\n`;
   let i = 0;
   while (code.split('\n').length < lines) {
     code += block(i);

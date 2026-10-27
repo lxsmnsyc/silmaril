@@ -2,108 +2,128 @@
 
 ## Built
 
-- `proto/` holds a throwaway prototype of `silmaril/compiler`. It is outside the pnpm workspace and has its own `package.json`. To run it: `npm install --prefix proto --no-package-lock`, then `node test.ts`, `node bench.ts` and `node browser/run.ts` inside `proto/`. The Babel baseline is loaded from `packages/silmaril/babel/index.ts`, so `pnpm install` must have run at the root.
-  - `proto/scope.ts`: our own scope builder over oxc's ESTree AST (`analyzeScopes`, `createUidGenerator`). About 680 lines with comments.
-  - `proto/compile.ts`: `parseModule`, `unwrap`, `visit`, `findSilmarilImports`, `findSetups`, `compile`, `CompileError`. It rewrites writes of setup variables into `_$$update(_ctx, ...)`, adds `let _ctx = _$$context();` and the hook import, and returns a magic-string map.
-  - `proto/test.ts`: 13 checks, all pass.
-  - `proto/bench.ts`, `proto/gen.ts`: the 2,000-line benchmark.
-  - `proto/browser/`: a Vite page that runs `compile` in Playwright browsers.
-- `proposed-compiler-api.md`: the proposed v2 of `contracts/compiler-api.md`. It has the internal analysis API and the answers to the three open points.
+- `proto/` holds a throwaway prototype of `silmaril/compiler` for the 0.5 runtime. It is outside the pnpm workspace and has its own `package.json`. To run it, inside `proto/`: `npm install --no-package-lock`, then `node fetch-pr8.ts` (copies the PR #8 fixtures and sketch runtime into the ignored `.pr8/`; not needed once PR #8 has merged), then `node test.ts`, `node fixtures.test.ts`, `node bench.ts` and `node browser/run.ts`. The Babel baseline and oxfmt are loaded from the repository root, so `pnpm install` must have run there.
+  - `proto/source.ts`: `CompileError`, `parseModule`, `unwrap`, `visit`, `findSilmarilImports`.
+  - `proto/scope.ts`: the scope builder over oxc's ESTree AST, with `Reference.context` and the fixes of the design review (below).
+  - `proto/model.ts`: the reactive model of `reactivity-runtime` v3: `ReactiveScope` tree, slots, entries, reads, graphs, write sites, `$skip` calls, scope bindings, names and compile errors.
+  - `proto/codegen.ts`: the code generator, from the model only, with the edit rules of the contract.
+  - `proto/compile.ts`: `compile` and `ready`.
+  - `proto/test.ts`: 30 checks. `proto/fixtures.test.ts`: the PR #8 fixtures.
+  - `proto/bench.ts`, `proto/gen.ts`, `proto/browser/`: benchmark and browser run, now on the new compiler.
+- `proposed-compiler-api.md`: the proposed v2 of `contracts/compiler-api.md`, rewritten against `reactivity-runtime` v3 (PR #8, 937424c).
 
-### Scope analysis: our own builder
+## What changed after the design review
 
-- oxc-parser does not expose oxc's scopes or symbols to JS. `showSemanticErrors` only adds errors. So "oxc's own semantic data" is not an option today.
-- periscopic is as fast (5.5 ms against 5.2 ms with parse), but it does not fit. It does not know TS: type names count as references, and enums, namespaces and type parameters are not declared. It also has no per-identifier resolution: it gives name sets per scope, so a second walk is needed to link each identifier to its declaration.
-- Our builder does one walk. It declares bindings, records each reference with its scope, and resolves all references after the walk, so hoisted `var` and `function` resolve correctly. It skips every type-only key (`typeAnnotation`, `typeParameters`, `typeArguments`, `returnType`, `implements`, `superTypeArguments`) and every `TS*` node except the value wrappers, enums, namespaces, `import =` and `export =`.
-- It was checked against Babel's `path.scope.getBinding` for every identifier of `proto/fixtures/tricky.tsx` (shadowing in blocks, catch, for heads, named function and class expressions, hoisting, destructuring defaults, TS wrappers, enums, namespaces, overloads, parameter properties, static blocks, JSX member tags, labels, private names) and of the generated 2,028-line file. The results match. The only differences are TS enums, namespaces and parameter properties: Babel does not register them, ours does. The test also checks that ours records every value reference that Babel sees.
+The design review of PR #9, and where each item went:
 
-### How each Babel feature is replaced
+1. Analysis had no reactivity model (blocking). The contract now has the computed model: `ReactiveScope` (roots, composables, entry bodies, memo and expression children), `Slot`, `SlotDeclarator`, `Entry` (id, kind, output slot, reads, child), graphs with path refs, `slotOf`, and the order of the steps that compute them. Reads follow local helpers (direct, transitive, recursive, `f?.()`), skip nested entries, `$skip` and nested setups, and apply the child-memo rule of `body-memo`. A written top-level `let` helper has a slot, so it is a read, not a helper.
+2. `Setup` was the wrong unit (blocking). Replaced by the `ReactiveScope` tree. Function-bodied `$` and `$sync` own slots, entries and lifecycles. A nested `$$` or `$composable` is a separate tree with `parent: null`, and graph edges stop at it. `ScopeBinding` records which scope parameter each `onMount`/`onDestroy` binds to (the nearest reactive scope node, an expression entry or memo included), and the scope of each local composable call (no edit needed: the runtime uses the running scope).
+3. Compile errors and `$skip` (blocking). `$skip` is a tracked name, its calls are in `model.skips`, and reads inside them are not tracked. Every error of the runtime contract's table is raised in analysis, with the step that raises it. The checks run whenever a compile-time name is imported, even with no setup. The `/* $skip */` comment is an error (decided in PR #8).
+4. Overwrites (should-fix). The wrap rule is replaced by an edit discipline: `update` instead of `overwrite`, no overlapping ranges, each identifier edited once, a write owns its target and operator range, `appendLeft` at a node's start and `prependRight` at its end, `prependLeft`/`appendRight` for a late wrap. Both magic-string traps are reproduced in `test.ts`. `Reference.context` (`plain`, `shorthand`, `jsx`, `export`) tells codegen how to print a replaced read.
+5. Destructuring and for-in/of (should-fix). `WriteSite` has the kind, the pattern node, the slotted targets in source order, the statement flag and the function that declares the temps. The in-place form with per-site temps is prototyped, defaults that read an earlier target included. `for (x of e)` compiles to the runtime contract's form. `for (P of e)` uses an in-place form (change request below).
+6. Public API, wasm and tsdown (should-fix). `ready(): Promise<void>` is exported as a no-op. `SourceMap.file` names the generated file. `oxc-parser` is pinned exactly and the wasm binding is an optional peer at the same version. One tsdown config with `platform: 'node'`, plus a test that `compiler/` has no `node:` import.
+7. Scope builder (should-fix). A `params` scope when parameters have expressions (`function f(a = x) { let x }` now reads the outer `x`; Babel gets it wrong). Qualified namespaces (`namespace A.B`) declare `A` and walk the body. Expression-bodied setups compile (`$$(() => expr)` to `$$root($g0, ($s) => expr)`, as the runtime contract allows). `childNodes` and `visit` skip type keys, visit a shorthand property once and follow source order. `<this.Foo />` records no reference. `test.ts` now checks `read`, `write`, `writeExpression` and `context`, not only resolution.
+8. Nit. `x = y = 1` gives two disjoint edits, `$$set($s, 0, $$set($s, 1, 1))` (fixture `chained-write` matches). The import rewrite follows the runtime contract. Graph constants go after the last import. File names match the owned paths of compiler-core and the codegen nodes.
 
-| Babel                                                  | Replacement                                                                                                                                                                                                                                                                            |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scope.getBindingIdentifier(name)`                     | `info.referenceOf.get(identifierNode)?.binding`. Compare `Binding` objects, not identifier nodes. `resolveName(scope, name)` for lookups without a node.                                                                                                                               |
-| `scope.generateUidIdentifier(hint)`                    | `createUid(info.names)`. `names` holds every declared and referenced name in the module, globals included. It returns `_hint`, `_hint2`... and reserves each one.                                                                                                                      |
-| `scope.crawl()` after edits                            | Not needed. The analysis runs once on the original AST, and magic-string edits only the text. Nothing reads the output back. Babel needed it because it changed `const` to `let` and inserted declarators into the AST.                                                                |
-| `path.skip()`                                          | Not needed for edits, since inserted text is never walked. `visit` lets a callback return `false` to skip the children. The `/*$skip*/` markers on generated nodes go away. The user's `$skip` comment becomes `hasSkipComment(module, node)` over `result.comments` (not prototyped). |
-| `path.replaceWith(f(ctx, node))`                       | `appendLeft(start, 'f(ctx, ')` and `prependRight(end, ')')`, outer nodes first.                                                                                                                                                                                                        |
-| `insertBefore` / `insertAfter` / `unshift` into a body | `appendLeft` / `appendRight` at the right offset, such as `body.start + 1`.                                                                                                                                                                                                            |
-| `addNamed` (helper-module-imports)                     | A map from hook name to a local name from `createUid`, then one `import { ... } from 'silmaril'` added at the top.                                                                                                                                                                     |
-| `getFunctionParent()`                                  | `reference.scope.functionScope`, or comparing with `setup.scope`.                                                                                                                                                                                                                      |
-| `unwrapNode`                                           | `unwrap(node)` over `ParenthesizedExpression` (with `preserveParens: true`) and the TS wrappers.                                                                                                                                                                                       |
+## What the prototype now proves
+
+Against the 45 fixtures of PR #8 (`node fixtures.test.ts`):
+
+- **Model: 41 of 41** fixtures with an `output.js`. For each, the slots, the entries (kind, id, output slot, in source order) and every graph of the model equal the ones `output.js` encodes. Graphs are compared as sets, without trailing empty lists. The comment numbering of each `input.js` is the same numbering.
+- **Compile errors: 4 of 4** (`entry-in-function`, `loop-entry`, `memo-writes-slot`, `skip-comment`) throw the expected message.
+- **Logs: 41 of 41.** The compiled `input.js`, run on the sketch runtime with the contract's runner protocol, logs `expected.json`.
+- **Text: 38 of 41.** The compiled `input.js` equals `output.js` after removing comments, writing graph lists in canonical order without trailing empty lists, and formatting both with oxfmt. This includes the three with the most overwrites: `nested-scope`, `update-expression` and `destructure-assign` (in-place destructuring with defaults that read an earlier target, rest elements, a member target, both the expression and the statement form, and a destructuring declarator), plus `compound-assignment`, `chained-write`, `memo-destructure`, `order`, `var-slot`, `store-let` and the rest. The three that differ:
+  - `composable`, `composable-glitch`: the fixture numbers the composable's graph `$g1` and the root's `$g0`, against source order. Only the names differ.
+  - `for-of-slot`: the pattern loop uses the in-place form (change request below).
+
+Other checks in `node test.ts` (30, all pass): the Babel differential and recorded references on `tricky.tsx` and the 2,028-line file, the scope fixes of finding 7, read and write flags, every compile error of the table, reads through helpers and child memos, scope bindings, the overwrite cases (`x *= a + b`, logical, chained, destructuring with a default), the magic-string traps, the import rewrite (alias, kept `tick` and `type Store`, namespace import left as is), generated names next to user names `$s`, `$$get` and `$t0`, UTF-16 offsets, the source map of every kept identifier, and no `node:` import in the compiler files.
 
 ### Measured numbers
 
-The input is a generated TSX file of 2,028 lines (43 KB) with 45 setups. Apple M2, Node 26.12.1, other agents running (load average 14 to 26), so the absolute times are noisy. Median of 50 runs after 10 warm-up runs, from the last of three runs:
+Generated TSX file of 2,028 lines (43 KB) with 45 `$composable` setups. Apple M2, Node 26.12.1, load average about 2.6. Median of 50 runs after 10 warm-up runs:
 
-| Step                                                     | Median                                |
-| -------------------------------------------------------- | ------------------------------------- |
-| Babel parse                                              | 3.8 ms                                |
-| Babel parse + scope crawl                                | 32.4 ms                               |
-| Babel silmaril plugin (parse, transform, generate, map)  | 221 ms (565 to 583 ms in busier runs) |
-| oxc `parseSync` + reading `program`                      | 3.9 ms                                |
-| oxc parse + `analyzeScopes`                              | 5.2 ms                                |
-| `analyzeScopes` alone                                    | 1.1 ms                                |
-| oxc parse + periscopic                                   | 5.5 ms                                |
-| Prototype `compile` (parse, analysis, magic-string, map) | 7.4 ms                                |
+| Step                                                        | Median  |
+| ----------------------------------------------------------- | ------- |
+| Babel parse + scope crawl                                   | 12.7 ms |
+| Babel silmaril 0.4 plugin (parse, transform, generate, map) | 175 ms  |
+| oxc `parseSync` + reading `program`                         | 3.2 ms  |
+| oxc parse + `analyzeScopes`                                 | 4.1 ms  |
+| oxc parse + `analyzeScopes` + reactive model                | 8.9 ms  |
+| Prototype `compile` (parse, analysis, full v2 codegen, map) | 13.9 ms |
 
-- Parse plus analysis is about 6x faster than Babel's parse plus scope crawl. The full prototype compile is about 30x faster than the Babel plugin. That plugin does less than the full codegen will do, so treat the 30x as an upper bound.
-- The Babel plugin grows faster than linear: 14 ms at 250 lines, 31 ms at 500, 69 ms at 1,000, 255 ms at 2,000.
-- `experimentalRawTransfer: true` parses the same file in 1.0 ms instead of 5.9 ms in Node. It is not available on wasm. It is an option for `compiler-core` later, behind a check of `rawTransferSupported()`.
+- The full 0.5 compile is about 12x faster than the 0.4 Babel plugin, and does more (memos, entries, graphs, temps).
+- The model costs about 4.8 ms here, because the prototype walks each initializer again in every round of the slot fixed point. `compiler-core` can cache the direct reads per node and only redo the reachability.
+- In the browser (Vite 8 build, Playwright 1.64.1), the new compiler runs in Chromium and WebKit with both wasm bindings, with and without cross-origin isolation: 11 to 14 ms per compile of the same file, 26 to 64 ms to load. Firefox still does not launch in this sandbox.
 
-### Browser and wasm result: works
+## What compiler-core and the codegen nodes must know
 
-- `compile` ran in Chromium and WebKit (Playwright 1.64.1) from a Vite 8 production build. It gave the same output as Node (9 wrapped writes on `tricky.tsx`, a v3 map).
-- Both bindings work, with and without cross-origin isolation:
-  - `@oxc-parser/binding-wasm32-wasip1`: the name `oxc-parser`'s `browser` export imports. No alias needed. This is the recommended one.
-  - `@oxc-parser/binding-wasm32-wasi`: the threaded binding the brumate website uses, through an alias under the wasip1 name.
-- Loading took 50 to 140 ms. The compile of the 2,000-line file took 6 to 17 ms (median). The wasm file is 1.48 MB (488 KB gzip). The JS chunk with the compiler, oxc's deserializer and magic-string is 285 KB minified.
-- Firefox could not start in this sandbox ("Could not find profile folder"), so it is not tested.
+- Copy `proto/source.ts`, `scope.ts` and `model.ts` into `compiler/` as laid out in the contract, then type them with `@oxc-project/types`. Copy `codegen.ts` into `codegen/`. Port `test.ts` and `fixtures.test.ts`.
+- Use `!ref.write`, not `ref.read`, for the runtime's reads: `x += 1` is a JS read but not a runtime read.
+- The analysis covers the extras too: `$store` slots and write-backs, lifecycle bindings, `$skip` and their errors. `codegen-extras` only prints them.
+- Always edit with `update`. `overwrite` and `remove` drop the inserts of outer nodes at the same offsets.
+- Edit in one pre-order walk, outer nodes first. Take the right-side temp of a destructuring expression before the target temps, so the numbering matches the fixtures.
+- A destructuring write that is a statement uses the statement form only when its statement is in a statement list. `if (c) [a, b] = e;` needs the expression form, or the writes leave the `if`.
+- A memo initializer or an expression entry that is an object literal or a sequence needs parentheses after `() =>`.
+- magic-string makes `sources` relative to `file`. Pass the module path as both.
+- Compare fixture text after normalizing graph list order and trailing empty lists, or compare logs. The fixtures are not consistent on either (below).
 
-### Answers to the three open points of the contract
+## Change requests for the runtime contract (PR #8)
 
-1. **Async loading of the wasm binding**: no `init()` and no async `compile`. The binding module fetches and instantiates the wasm with a top-level await, so `await import('silmaril/compiler')` (or a static import in an ES module graph) is the async step. `compile` stays synchronous everywhere.
-2. **Source map type**: silmaril exports its own `SourceMap` interface `{ version, file?, sources, sourcesContent?, names, mappings }`. The value is magic-string's `SourceMap` instance, which also has `toString()` and `toUrl()`. It is assignable to unplugin's `SourceMapCompact` without a cast, and the public `.d.ts` does not name magic-string.
-3. **tsdown platform of the `compiler` entry**: `neutral`, with no `node:` imports in `compiler/`. `oxc-parser` stays external so the consumer's bundler picks its `browser` export. Fallback if two tsdown configs do not work with `exports: true`: one config with `platform: 'node'`, which also works as long as `compiler/` has no Node imports.
+None of the contract is impossible to compile. These are gaps and small inconsistencies found while making all 41 fixtures pass:
+
+1. **Rule 1 of "Slots" says "written anywhere in the setup tree".** The setup tree excludes nested `$$`, but `nested-root-write` needs `outer` to get a slot from a write inside a nested `$$`. Say "anywhere in the module" (any write reference of the binding). The prototype does that.
+2. **A write-back reads its own slot.** The graphs list it (`store-let`: `[[0, 1, 2]]`, `composable`: `[[0, 1], [2]]`), but "Reads" does not say so.
+3. **Graph list order in `nested-scope`.** `$g0 = [[[0, 0], 1]]` puts a path before a number, against "numbers ascending, then paths". Write `[[1, [0, 0]]]`.
+4. **Trailing empty lists.** `nested-root` writes `$g0 = [[]]`, while `child-memo-wasted` and `compound-assignment` leave them out. Pick one for the fixtures. The prototype leaves them out.
+5. **`for (P of e)` with a pattern.** The contract's form `for (const $t0 of e) { P' = $t0; ... }` moves the pattern into the body, which needs `MagicString.move`. Allow the in-place form `for (P' of e) { $$set(...); ...; body }` with the targets' temps in the function's `let`. It is equivalent and needs no move.
+6. **Errors missing from the table**: `$$` or `$composable` with an argument that is not one function, and a slot used as a JSX tag (`<Comp />` where `Comp` has a slot). A JSX tag cannot be a call, so the second has no compiled form. The prototype throws `<name> must be called with a function.` and `A reactive variable cannot be used as a JSX tag.`
+7. **Local functions and writes.** "A declarator ... that has no slot" lets a written `let f = () => ...` inside a nested block count as a local function, so the reads of its first value are added. Consider treating any written binding as opaque. The prototype follows the contract as written.
+8. **Merged import.** "Imports" says the compiler adds one new declaration before the first statement, but the fixtures (`order`, `store-let`) merge the helpers into the user's import: `import { $$root, ..., tick } from 'silmaril'`. Allow both. The prototype merges.
+9. **Object literal or sequence initializers.** The table shows `$$memo($s, n, k, () => e)`. Add that `e` is parenthesized when it is an object literal or a sequence.
 
 ## Deviations
 
-- The brief asked for the proposal "in this file" (`contracts/compiler-api.md`). Following the worker instructions and the roadmap rules, it is in `nodes/compiler-infra-spike/proposed-compiler-api.md` instead. The contract is unchanged.
-- The prototype only rewrites writes (`$$update`). `$`, `$sync`, `onMount`, `onDestroy`, `$store`, derived values and `const` to `let` are codegen work and were not prototyped. The `$skip` comment was not prototyped.
-- Nested writes behave differently from Babel: `x = y = 1` wraps both writes. The Babel plugin wrapped only the outer one. codegen should keep the new behavior, or say why not.
+- The brief asked for the proposal in `contracts/compiler-api.md`. It is in `nodes/compiler-infra-spike/proposed-compiler-api.md` instead, following the roadmap rules. The contract is unchanged.
+- The prototype went past the brief: it is a full code generator for the runtime contract, because the review asked to prove the edit pattern with overwrites on real fixtures.
+- `gen.ts` and `fixtures/tricky.tsx` now use `$composable((props) => ...)` instead of `$$((props) => ...)`: a 0.5 root setup takes no arguments.
 
 ## Stubs left
 
-- None in the package. `proto/` is throwaway. `compiler-core` should copy `proto/scope.ts` and the checks in `proto/test.ts` into `packages/silmaril/compiler/` and `packages/silmaril/test/compiler/`, then type them with `@oxc-project/types` (the prototype uses a loose `Node = any`).
+- None in the package. `proto/` is throwaway. The prototype types nodes as `any`.
+- The JSX-tag case throws in codegen. compiler-core should raise it in analysis.
 
 ## Gotchas
 
-- `@napi-rs/wasm-runtime@1.2.6` declares the peers `@emnapi/core` and `@emnapi/runtime` as `^1.7.1 || 2.0.0-beta.2`. The oxc 0.155 bindings pin `2.0.0-alpha.6`, which is outside that range. The package manager then installs emnapi 1.11.3 for the runtime, and the browser load fails with `TypeError: this.bridge.setLastError is not a function`. Fix: an override `"@napi-rs/wasm-runtime": "1.2.5"` (pnpm: `overrides` in `pnpm-workspace.yaml`). This hits every browser page (`website-skeleton`, `runnable-samples`). Verified with and without the override.
-- The browser page must depend on `@oxc-parser/binding-wasm32-wasip1` at the same version as `oxc-parser`. `oxc-parser` does not list any wasm binding as optional. In Vite, add `oxc-parser` and the binding to `optimizeDeps.exclude`, and use a build target that allows top-level await.
+- `@napi-rs/wasm-runtime@1.2.6` declares the peers `@emnapi/core` and `@emnapi/runtime` as `^1.7.1 || 2.0.0-beta.2`. The oxc 0.155 bindings pin `2.0.0-alpha.6`, which is outside that range. The package manager then installs emnapi 1.11.3 for the runtime, and the browser load fails with `TypeError: this.bridge.setLastError is not a function`. Fix: an override `"@napi-rs/wasm-runtime": "1.2.5"` (pnpm: `overrides` in `pnpm-workspace.yaml`). This hits every browser page (`website-skeleton`, `runnable-samples`).
+- The browser page must depend on `@oxc-parser/binding-wasm32-wasip1` at the same version as `oxc-parser`. In Vite, add `oxc-parser` and the binding to `optimizeDeps.exclude`, and use a build target that allows top-level await.
 - `parseSync(...).program` is a lazy getter that builds the JS objects. Benchmarks that do not read it measure only the Rust parse.
-- Pass `sourceType: 'module'`. Without it, a file with no import is parsed as a script.
-- Use `preserveParens: true` so `(x as number) = 1` and `({ a } = b)` have a node to wrap. `unwrap` must then see through `ParenthesizedExpression`.
-- oxc offsets are UTF-16 code units, the same as magic-string. Non-ASCII text does not shift edits (tested).
+- Pass `sourceType: 'module'` and `preserveParens: true`. `unwrap` must then see through `ParenthesizedExpression`.
+- oxc offsets are UTF-16 code units, the same as magic-string.
 - `<T>x` is a type assertion only in `.ts`. In `.tsx` it is a parse error. The language must come from the filename.
-- In oxc's AST, a shorthand property `{ a }` has `key` and `value` as two different objects with the same span. Walk only `value`.
-- A `this` parameter (`function f(this: Window)`) appears as an `Identifier` named `this` in `params`. Skip it.
-- magic-string 1.x exports `MagicString` as a named export (the default export still works, but oxlint warns).
+- In oxc's AST, a shorthand property `{ a }` has `key` and `value` as two objects with the same span. Walk only `value`.
+- `for...in` over an oxc node is not source order for every node type. Sort children by `start`.
+- A `this` parameter appears as an `Identifier` named `this` in `params`. Skip it. `<this.Foo />` has a `JSXIdentifier` named `this`.
+- magic-string's `generateMap` keeps only the base name of `file`, and makes `sources` relative to it.
+- magic-string 1.x exports `MagicString` as a named export.
 - The root `oxlint` run lints `roadmaps/**` too. Test fixtures with odd code need a file-level `oxlint-disable`.
 
 ## Proposed learnings
 
 - Analyze once, edit text, never re-read the output | magic-string does not update the AST, so a second analysis would see stale offsets | `packages/silmaril/compiler/` | no
+- Edit with `update`, never `overwrite` or `remove` | they drop inserts made by outer nodes at the same offsets | `packages/silmaril/compiler/codegen/` | yes (fixture text tests)
+- Runtime reads are references with `!write`, not `read` | `x += 1` is a JS read but not a graph edge | `packages/silmaril/compiler/analysis/` | yes (fixture model tests)
 - `compiler/` must not import `node:*` | it must run in the browser through the wasm binding | `packages/silmaril/compiler/` | yes (grep test)
-- Generated names come from `createUid` over all module names | avoids collisions with locals and globals | `packages/silmaril/compiler/` | yes
 - Browser pages that run the compiler pin `@napi-rs/wasm-runtime` until the oxc bindings and the runtime agree on emnapi | the load fails otherwise | `website/`, samples | yes (a browser smoke test)
 
 ## Verification
 
-- `node test.ts` in `proto/`: 13 checks pass (TS and TSX parse, Babel differential on two files, recorded references, shadowing, writes rewritten, snapshot cases, name collisions, UTF-16 offsets, no-silmaril passthrough, error location, source map round trip of every identifier on two files).
+- `node test.ts` in `proto/`: 30 checks pass.
+- `node fixtures.test.ts` in `proto/`: 45 fixtures, 0 failures (model 41, logs 41, text 38, compile errors 4).
 - `node bench.ts` in `proto/`: the numbers above.
-- `node browser/run.ts` in `proto/`: Chromium and WebKit pass with both bindings, with and without COOP/COEP. Firefox does not launch here.
-- Fast check from `GOAL.md` at the repo root: `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint` passes (20 tests). `pnpm lint` reports nothing in this node folder.
+- `node browser/run.ts` in `proto/`: Chromium and WebKit pass with both bindings, with and without COOP/COEP.
+- At the repository root: `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check` passes.
 - No change to `packages/`, the root `package.json` or `pnpm-lock.yaml`.
 
 ## Size
 
-- Estimated M, actual M. The emnapi version mismatch in the browser took the most time.
+- Estimated M, actual M for the first round. The revision was another M: the model and the code generator.

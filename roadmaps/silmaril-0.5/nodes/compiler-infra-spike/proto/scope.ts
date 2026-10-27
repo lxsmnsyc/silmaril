@@ -7,7 +7,13 @@
 // oxlint-disable-next-line typescript/no-explicit-any
 export type Node = any;
 
-export type ScopeKind = 'module' | 'function' | 'block' | 'class' | 'catch';
+export type ScopeKind =
+  | 'module'
+  | 'function'
+  | 'params'
+  | 'block'
+  | 'class'
+  | 'catch';
 
 export type BindingKind =
   | 'var'
@@ -44,8 +50,18 @@ export interface Binding {
   references: Reference[];
 }
 
+/**
+ * Where a reference sits, for code generators that replace it with an expression.
+ * - plain: an expression position.
+ * - shorthand: the value of a shorthand property, `{ x }` or `{ x = 1 }` in a pattern.
+ * - jsx: a JSX tag name, or the object of a JSX member tag.
+ * - export: the local name of `export { x }`.
+ */
+export type ReferenceContext = 'plain' | 'shorthand' | 'jsx' | 'export';
+
 export interface Reference {
   identifier: Node;
+  context: ReferenceContext;
   scope: Scope;
   binding: Binding | null;
   read: boolean;
@@ -88,9 +104,18 @@ const TS_VALUE_WRAPPERS = new Set([
 
 const SKIP_KEYS = new Set(['type', 'start', 'end', 'range', 'loc', 'parent']);
 
-function* childNodes(node: Node): Generator<Node> {
+/**
+ * The child nodes of a node, in source order. Type-only keys are left out, and a
+ * shorthand property yields only its value (its key is a second node with the same span).
+ */
+export function childNodes(node: Node): Node[] {
+  const children: Node[] = [];
+  const shorthand = node.type === 'Property' && node.shorthand;
   for (const key in node) {
     if (SKIP_KEYS.has(key) || TYPE_KEYS.has(key)) {
+      continue;
+    }
+    if (shorthand && key === 'key') {
       continue;
     }
     const value = node[key];
@@ -104,13 +129,16 @@ function* childNodes(node: Node): Generator<Node> {
           typeof item === 'object' &&
           typeof item.type === 'string'
         ) {
-          yield item;
+          children.push(item);
         }
       }
     } else if (typeof value.type === 'string') {
-      yield value;
+      children.push(value);
     }
   }
+  // Key order is not always source order (decorators, for example).
+  children.sort((a, b) => a.start - b.start);
+  return children;
 }
 
 function isFunction(node: Node): boolean {
@@ -175,10 +203,12 @@ export function analyzeScopes(program: Node): ScopeInfo {
     read: boolean,
     write: boolean,
     writeExpression: Node | null,
+    context: ReferenceContext = 'plain',
   ): void {
     names.add(identifier.name);
     const ref: Reference = {
       identifier,
+      context,
       scope,
       binding: null,
       read,
@@ -255,10 +285,11 @@ export function analyzeScopes(program: Node): ScopeInfo {
     scope: Scope,
     read: boolean,
     writeExpression: Node,
+    context: ReferenceContext = 'plain',
   ): void {
     switch (target.type) {
       case 'Identifier':
-        reference(target, scope, read, true, writeExpression);
+        reference(target, scope, read, true, writeExpression, context);
         break;
       case 'ObjectPattern':
         for (const property of target.properties) {
@@ -268,7 +299,13 @@ export function analyzeScopes(program: Node): ScopeInfo {
             if (property.computed) {
               walk(property.key, scope);
             }
-            walkTarget(property.value, scope, false, writeExpression);
+            walkTarget(
+              property.value,
+              scope,
+              false,
+              writeExpression,
+              property.shorthand ? 'shorthand' : 'plain',
+            );
           }
         }
         break;
@@ -280,7 +317,7 @@ export function analyzeScopes(program: Node): ScopeInfo {
         }
         break;
       case 'AssignmentPattern':
-        walkTarget(target.left, scope, false, writeExpression);
+        walkTarget(target.left, scope, false, writeExpression, context);
         walk(target.right, scope);
         break;
       case 'RestElement':
@@ -323,21 +360,34 @@ export function analyzeScopes(program: Node): ScopeInfo {
       outer = createScope('block', node.id, scope);
       declare(outer, node.id, 'function', node);
     }
-    const fnScope = createScope('function', node, outer);
+    const { body } = node;
+    // With parameter expressions (defaults, computed keys), the parameters get their
+    // own scope, and the body's declarations live in a scope under it. So
+    // `function f(a = x) { let x; }` reads the outer x, as in the engine.
+    const separate =
+      body?.type === 'BlockStatement' && hasParameterExpressions(node.params);
+    const fnScope = createScope(separate ? 'params' : 'function', node, outer);
+    if (separate) {
+      fnScope.functionScope = fnScope;
+    }
     for (const param of node.params) {
       if (param.type === 'Identifier' && param.name === 'this') {
         continue;
       }
       declarePattern(param, fnScope, 'param', node, fnScope);
     }
-    const { body } = node;
     if (!body) {
       return;
     }
     if (body.type === 'BlockStatement') {
-      // The body shares the scope of the parameters.
-      scopes.set(body, fnScope);
-      walkList(body.body, fnScope);
+      if (separate) {
+        const bodyScope = createScope('function', body, fnScope);
+        walkList(body.body, bodyScope);
+      } else {
+        // The body shares the scope of the parameters.
+        scopes.set(body, fnScope);
+        walkList(body.body, fnScope);
+      }
     } else {
       walk(body, fnScope);
     }
@@ -384,15 +434,16 @@ export function analyzeScopes(program: Node): ScopeInfo {
     if (name.type === 'JSXIdentifier') {
       // `div` and `my-tag` are intrinsic elements. `Foo` and `$foo` are references.
       if (!/^[a-z]/.test(name.name) && !name.name.includes('-')) {
-        reference(name, scope, true, false, null);
+        reference(name, scope, true, false, null, 'jsx');
       }
     } else if (name.type === 'JSXMemberExpression') {
       let object = name.object;
       while (object.type === 'JSXMemberExpression') {
         object = object.object;
       }
-      if (object.type === 'JSXIdentifier') {
-        reference(object, scope, true, false, null);
+      // `<this.Foo />` reads `this`, not a binding.
+      if (object.type === 'JSXIdentifier' && object.name !== 'this') {
+        reference(object, scope, true, false, null, 'jsx');
       }
     }
   }
@@ -543,7 +594,7 @@ export function analyzeScopes(program: Node): ScopeInfo {
               specifier.exportKind !== 'type' &&
               specifier.local.type === 'Identifier'
             ) {
-              reference(specifier.local, scope, true, false, null);
+              reference(specifier.local, scope, true, false, null, 'export');
             }
           }
         }
@@ -567,10 +618,16 @@ export function analyzeScopes(program: Node): ScopeInfo {
         return;
       }
       case 'TSModuleDeclaration': {
-        if (node.declare || node.global || node.id.type !== 'Identifier') {
+        // `declare module 'x'` and `declare global` hold only types.
+        if (node.declare || node.global || node.id.type === 'Literal') {
           return;
         }
-        declare(scope, node.id, 'namespace', node);
+        // `namespace A.B {}` declares A. B is a property of it.
+        let id = node.id;
+        while (id.type === 'TSQualifiedName') {
+          id = id.left;
+        }
+        declare(scope, id, 'namespace', node);
         if (node.body) {
           const moduleScope = createScope('function', node, scope);
           if (node.body.type === 'TSModuleBlock') {
@@ -601,7 +658,11 @@ export function analyzeScopes(program: Node): ScopeInfo {
         if (node.computed) {
           walk(node.key, scope);
         }
-        walk(node.value, scope);
+        if (node.shorthand && node.value.type === 'Identifier') {
+          reference(node.value, scope, true, false, null, 'shorthand');
+        } else {
+          walk(node.value, scope);
+        }
         return;
       case 'LabeledStatement':
         walk(node.body, scope);
@@ -678,6 +739,29 @@ export function createUidGenerator(
     names.add(name);
     return name;
   };
+}
+
+function hasParameterExpressions(params: Node[]): boolean {
+  let found = false;
+  function check(node: Node): void {
+    if (found || node === null || typeof node !== 'object') {
+      return;
+    }
+    if (
+      node.type === 'AssignmentPattern' ||
+      (node.type === 'Property' && node.computed)
+    ) {
+      found = true;
+      return;
+    }
+    for (const child of childNodes(node)) {
+      check(child);
+    }
+  }
+  for (const param of params) {
+    check(param);
+  }
+  return found;
 }
 
 export { isFunction };

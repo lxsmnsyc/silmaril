@@ -14,3 +14,10 @@
 - Firefox did not launch in this sandbox ("Could not find profile folder"). Not tested.
 - oxc offsets are UTF-16, so magic-string edits line up with non-ASCII text. Added a test.
 - Lint: the fixture has a file-level `oxlint-disable`. Ran oxfmt on the node folder.
+- Revision after the design review of PR #9. Fetched `origin/feat/reactivity-adr` at 937424c and read the runtime contract v3, ADR 0001 and the 45 fixtures.
+- Split the prototype: `source.ts` (parse, errors, walk, imports), `scope.ts`, `model.ts` (reactive model), `codegen.ts`, `compile.ts`. `compile.ts` importing `model.ts` importing `compile.ts` would be an `import/no-cycle` error, hence `source.ts`.
+- Scope fixes: `params` scope for parameter expressions, qualified namespaces, `<this.Foo />`, `Reference.context`, `childNodes` sorted by start and without shorthand keys.
+- First fixture run: 40 of 41 models matched. `error-in-rerun` failed because `readsOf` exempted its root from the `$skip` check, and the root of `const value = $skip(x)` is the `$skip` call. Fixed.
+- Text compare: oxfmt through `--stdin-filepath`, after removing comments (with their line when the line is left empty). The fixtures disagree on graph list order (`nested-scope`) and trailing empty lists (`nested-root`), so the compare normalizes both.
+- magic-string: `update` is `overwrite` with `contentOnly`, and keeps the inserts at the range's ends. `generateMap` makes `sources` relative to `file`.
+- Final: model 41/41, logs 41/41, text 38/41, compile errors 4/4. Browser run passes in Chromium and WebKit with the new compiler.
