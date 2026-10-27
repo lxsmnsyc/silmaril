@@ -1,7 +1,7 @@
 ---
 id: fix-babel-plugin
 title: Fix the $$ argument check and compile $skip calls
-status: active
+status: done
 priority: must
 type: fix
 milestone: 0.4.1
@@ -53,3 +53,7 @@ Two small visitor changes, tests and a README section.
 ## Notes for the worker
 
 - `codegen-extras` reimplements `$skip` in the new compiler and adds its behavior case. Do not edit `test/behavior/`.
+
+## Pull request
+
+- #5, merged into `roadmap`.
