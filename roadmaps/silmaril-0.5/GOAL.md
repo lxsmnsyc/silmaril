@@ -32,6 +32,7 @@ silmaril 0.5.0 compiles with `silmaril/compiler` (oxc-parser and magic-string, n
 - 0.x may break semantics. 0.5.0 is a `minor` changeset that lists the breaking changes.
 - Node.js `^22.18.0 || >=24.11.0`, ESM only, TypeScript 7 with `isolatedDeclarations`.
 - The public store interface (`get`, `set?`, `subscribe`) and `silmaril/solid` keep their API.
+- Backwards compatibility comes first (maintainer, 2026-10-27). Where a rule is open, or two rules are equally sound, pick the behavior closest to 0.4. Each change from 0.4 needs a reason in the decision record and a line in the 0.5 changeset.
 - Every pull request that changes published behavior adds a changeset.
 
 ## Non-goals
