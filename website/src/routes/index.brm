@@ -1,0 +1,136 @@
+<script>
+  import Meta from '../components/Meta.brm';
+
+  const base = import.meta.env.BASE_URL;
+</script>
+
+#head {
+  <title>silmaril: compile-time reactivity for JS</title>
+}
+
+<Meta
+  title="silmaril: compile-time reactivity for JS"
+  description="A compiler that turns plain variables in JavaScript into reactive state. No signals to create, no hooks to call."
+  path=""
+/>
+<main class="home">
+  <section class="hero">
+    <p class="eyebrow">Compile-time reactivity for JS</p>
+    <h1>Write variables. Get <span class="gradient-text">reactivity</span>.</h1>
+    <p class="lead">
+      silmaril compiles the variables inside a reactive boundary into state that tracks its own
+      readers. You write plain JavaScript. The compiler does the wiring.
+    </p>
+    <div class="actions">
+      <a class="button primary" href=(`${base}docs/getting-started`)>Get started</a>
+      <a class="button" href=(`${base}docs`)>Read the docs</a>
+    </div>
+    <pre class="install"><span class="prompt">$</span> pnpm add silmaril</pre>
+  </section>
+
+  <section class="section">
+    <h2>Plain variables</h2>
+    <p class="section-lead">
+      Inside <code>$$</code>, a variable that changes is reactive. <code>$</code> runs again when
+      the variables it reads change.
+    </p>
+    <pre class="code"><code>{`import { $$, $ } from 'silmaril';
+
+$$(() => {
+  let count = 0;
+  const message = \`Count: \${count}\`;
+
+  $(console.log(message));
+
+  count = 100; // logs "Count: 100"
+});`}</code></pre>
+  </section>
+</main>
+
+<style>
+  .home {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  .hero {
+    padding: 4rem 0 2rem;
+    text-align: center;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.75rem;
+    color: var(--accent-strong);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .hero h1 {
+    margin: 0 0 1rem;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .gradient-text {
+    background: linear-gradient(120deg, var(--accent), var(--cool));
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lead {
+    max-width: 38rem;
+    margin: 0 auto 1.5rem;
+    color: var(--muted);
+    font-size: 1.15rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .install {
+    display: inline-block;
+    margin: 1.75rem 0 0;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    font-size: 0.9rem;
+  }
+
+  .prompt {
+    color: var(--muted);
+  }
+
+  .section {
+    padding-top: 2.5rem;
+  }
+
+  .section h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    letter-spacing: -0.015em;
+  }
+
+  .section-lead {
+    margin: 0 0 1rem;
+    color: var(--muted);
+  }
+
+  .code {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow: auto;
+  }
+</style>

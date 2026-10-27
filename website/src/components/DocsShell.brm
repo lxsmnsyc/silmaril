@@ -1,0 +1,142 @@
+<script>
+  import { $effect, $props, $route } from 'brumate/signals';
+
+  // The sidebar of the docs. It is in a layout, so it stays when a link loads another page,
+  // with its scroll position.
+  const { sections, label, children } = $props<{
+    sections: { title: string; pages: { slug: string; title: string }[] }[];
+    label: string;
+    children?: unknown;
+  }>();
+  const route = $route();
+  const base = import.meta.env.BASE_URL;
+  const link = (target: string): string => `${base}docs${target ? `/${target}` : ''}`;
+
+  /** The page of the section at a path, such as `routing` for `/docs/routing`. */
+  const slugOf = (pathname: string): string =>
+    pathname
+      .slice(`${base}docs`.length)
+      .replace(/^\/|\/$/g, '');
+
+  // On a narrow screen the menu closes when a link loads another page.
+  $effect(() => {
+    void route.url.pathname;
+    document.querySelector<HTMLDetailsElement>('.sidebar-toggle')?.removeAttribute('open');
+  });
+</script>
+
+
+<div class="docs">
+  <details class="sidebar-toggle">
+    <summary>Menu</summary>
+  </details>
+  <nav class="sidebar" aria-label=label>
+    #for (section of sections by section.title) {
+      <p class="sidebar-title">{section.title}</p>
+      #for (item of section.pages by item.slug) {
+        <a
+          href=(link(item.slug))
+          class={ active: item.slug === slugOf(route.url.pathname) }
+          aria-current=(item.slug === slugOf(route.url.pathname) ? 'page' : undefined)
+        >{item.title}</a>
+      }
+    }
+  </nav>
+  {children}
+</div>
+
+<style>
+  /* Docs */
+
+  .docs {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 46rem) 13rem;
+    gap: 2.5rem;
+    justify-content: center;
+    max-width: 82rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: var(--header-height);
+    align-self: start;
+    max-height: calc(100vh - var(--header-height));
+    padding: 1.5rem 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    margin: 1rem 0 0.3rem;
+    padding: 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-title:first-child {
+    margin-top: 0;
+  }
+
+  .sidebar a {
+    display: block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.925rem;
+    text-decoration: none;
+  }
+
+  .sidebar a:hover {
+    color: var(--text);
+  }
+
+  .sidebar a.active {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+
+  @media (max-width: 1100px) {
+    .docs {
+        grid-template-columns: 14rem minmax(0, 1fr);
+      }
+  }
+
+  @media (max-width: 800px) {
+    .docs {
+        display: block;
+      }
+
+    .sidebar-toggle {
+        display: block;
+        margin: 1rem 0 0;
+      }
+
+    .sidebar-toggle summary {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+    .sidebar {
+        display: none;
+        position: static;
+        max-height: none;
+        padding: 0.5rem 0;
+      }
+
+    .sidebar-toggle[open] + .sidebar {
+        display: block;
+      }
+  }
+</style>

@@ -1,0 +1,244 @@
+/* The global styles of the site: the colors of the themes, the base elements, buttons, and
+   the prose and code of the docs, which come from Markdown. Each component keeps its own
+   styles in its <style> block. */
+
+:root {
+  --bg: #fbfaf8;
+  --surface: #f2efea;
+  --surface-strong: #e9e4dc;
+  --text: #1c1917;
+  --muted: #6b635b;
+  --border: #e3ddd4;
+  --accent: #d4612a;
+  --accent-strong: #9f4116;
+  --danger: #b3261e;
+  --warn: #8a5a00;
+  --success: #2da44e;
+  --accent-soft: #fbe7dc;
+  --cool: #2f7fbf;
+  --code-bg: #f6f3ee;
+  --header-height: 3.5rem;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgb(28 25 23 / 6%), 0 8px 24px rgb(28 25 23 / 6%);
+  --font:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #141210;
+    --surface: #1d1a17;
+    --surface-strong: #27231f;
+    --text: #efe9e2;
+    --muted: #a39a90;
+    --border: #2f2a25;
+    --accent: #f08a52;
+    --accent-strong: #f6a679;
+    --danger: #f28b82;
+    --warn: #e3b341;
+    --success: #3fb950;
+    --accent-soft: #3a2116;
+    --cool: #6fb2e6;
+    --code-bg: #1a1714;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #141210;
+  --surface: #1d1a17;
+  --surface-strong: #27231f;
+  --text: #efe9e2;
+  --muted: #a39a90;
+  --border: #2f2a25;
+  --accent: #f08a52;
+  --accent-strong: #f6a679;
+  --danger: #f28b82;
+  --warn: #e3b341;
+  --success: #3fb950;
+  --accent-soft: #3a2116;
+  --cool: #6fb2e6;
+  --code-bg: #1a1714;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: calc(var(--header-height) + 1rem);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent-strong);
+}
+
+code,
+pre {
+  font-family: var(--mono);
+}
+
+/* Buttons */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  border-color: var(--muted);
+}
+
+.button.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+
+.button.primary:hover {
+  background: var(--accent-strong);
+}
+
+.prose {
+  min-width: 0;
+  padding: 1.75rem 0 4rem;
+}
+
+.prose h1 {
+  margin: 0 0 1rem;
+  font-size: 2.4rem;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.prose h2 {
+  margin: 2.75rem 0 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.5rem;
+  letter-spacing: -0.015em;
+}
+
+.prose h3 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.prose p,
+.prose li {
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+}
+
+.prose :not(pre) > code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  background: var(--surface-strong);
+  font-size: 0.875em;
+}
+
+.prose table {
+  display: block;
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+  font-size: 0.925rem;
+}
+
+.prose th,
+.prose td {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  background: var(--surface);
+}
+
+.prose pre,
+.code {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow: auto;
+}
+
+.prose blockquote,
+.alert {
+  margin: 1.25rem 0;
+  padding: 0.6rem 1rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--surface);
+}
+
+.alert-title {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --header-height: 6.5rem;
+  }
+}
+
+/* Highlighted code from twinkleplop is a <pre> of its own. */
+
+.code .twinkleplop {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  overflow: visible;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+
+/* Native boxes, such as those of the demos and the live samples, take the accent of the site. */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent);
+  vertical-align: -0.15em;
+}

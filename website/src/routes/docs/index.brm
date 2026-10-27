@@ -1,0 +1,5 @@
+<script>
+  import DocPage from '../../components/DocPage.brm';
+</script>
+
+<DocPage slug="" />
