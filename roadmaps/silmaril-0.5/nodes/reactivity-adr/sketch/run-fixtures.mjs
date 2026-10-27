@@ -14,12 +14,15 @@ const root = new URL(
 );
 const AsyncFunction = (async () => {}).constructor;
 const IMPORT = /import\s*\{([^}]*)\}\s*from\s*'silmaril';?/g;
+const NAMESPACE = /import\s*\*\s*as\s+([\w$]+)\s+from\s*'silmaril';?/g;
 
 function toModuleBody(code) {
-  return code.replace(
-    IMPORT,
-    (_, names) => `const {${names.replaceAll(' as ', ': ')}} = runtime;`,
-  );
+  return code
+    .replace(
+      IMPORT,
+      (_, names) => `const {${names.replaceAll(' as ', ': ')}} = runtime;`,
+    )
+    .replace(NAMESPACE, (_, name) => `const ${name} = runtime;`);
 }
 
 function macrotask() {

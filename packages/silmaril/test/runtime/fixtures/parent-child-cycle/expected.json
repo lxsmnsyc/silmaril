@@ -1,8 +1,11 @@
 {
-  "description": "A write does not queue any entry that is running, so an inner $sync that writes a slot its parent reads does not run the parent again. The parent keeps the value it read.",
+  "description": "An inner $sync that writes a slot its parent reads queues the parent, as in 0.4. The parent runs again after the inner body returns, which disposes the inner scope and runs a new inner body, until the value settles.",
   "logs": [
     ["outer", 0],
-    ["outer runs", 1],
-    ["x", 1]
+    ["outer", 1],
+    ["outer", 2],
+    ["outer", 3],
+    ["outer runs", 4],
+    ["x", 3]
   ]
 }

@@ -8,6 +8,6 @@
     ["Value", 3],
     ["Squared", 9],
     ["squared destroyed"],
-    ["outside a scope", true]
+    ["outside a scope", "Unexpected missing reactive boundary."]
   ]
 }

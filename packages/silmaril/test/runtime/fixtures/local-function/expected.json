@@ -1,4 +1,10 @@
 {
-  "description": "A call by name to a function declared in the same $$ adds what the function reads, and what the functions it calls read. A function passed as a value adds nothing, so the second $sync runs once.",
-  "logs": [["Count: 0"], ["handler", 0], ["Count: 1"], ["Total: 1"]]
+  "description": "A call by name to a function declared in the same $$ adds what the function reads, and what the functions it calls read. An arrow const that reads a slot is a memo, as in 0.4, so it gets a new function when count changes, and the $sync that passes it runs again.",
+  "logs": [
+    ["Count: 0"],
+    ["handler", 0],
+    ["Count: 1"],
+    ["handler", 1],
+    ["Total: 1"]
+  ]
 }

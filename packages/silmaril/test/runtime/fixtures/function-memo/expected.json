@@ -1,0 +1,8 @@
+{
+  "description": "As in 0.4, a function or arrow initializer that reads a slot is a memo. When count changes, read holds a new function, so an entry that passes read runs again, as well as one that calls it.",
+  "logs": [
+    ["call", 0],
+    ["call", 1],
+    ["functions", 2, false]
+  ]
+}

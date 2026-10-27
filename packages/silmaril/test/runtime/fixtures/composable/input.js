@@ -48,5 +48,5 @@ stop();
 try {
   useSquared(createStore(1));
 } catch (error) {
-  log('outside a scope', error instanceof Error);
+  log('outside a scope', error.message);
 }

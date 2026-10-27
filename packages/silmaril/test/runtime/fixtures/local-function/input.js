@@ -21,7 +21,7 @@ $$(() => {
 
   // Reads count, and prefix through format and label.
   $sync(log(format(count)));
-  // handler is passed, not called by name: its reads are not added.
+  // handler reads count, so it is a memo, as in 0.4. Passing it reads its slot.
   $sync(call(handler));
 
   setCount = (value) => {

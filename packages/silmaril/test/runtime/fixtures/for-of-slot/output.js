@@ -5,7 +5,7 @@ import { $$root, $$get, $$set, $$sync } from 'silmaril';
 const $g0 = [[0], [1], [2], [2]];
 
 $$root($g0, ($s) => {
-  let $t3, $t4;
+  let $t2, $t3;
   $$set($s, 0, '');
   $$set($s, 1, '');
   $$set($s, 2, 0);
@@ -21,10 +21,9 @@ $$root($g0, ($s) => {
     $$set($s, 1, $t1);
     log('key loop', $$get($s, 1));
   }
-  for (const $t2 of [[1, 2]]) {
-    [$t3, $t4] = $t2;
-    $$set($s, 2, $t3);
-    $$set($s, 3, $t4);
+  for ([$t2, $t3] of [[1, 2]]) {
+    $$set($s, 2, $t2);
+    $$set($s, 3, $t3);
     log('pair loop');
   }
 });

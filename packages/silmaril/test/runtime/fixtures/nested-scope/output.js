@@ -5,7 +5,7 @@ import { $$root, $$get, $$set, $$sync, $$destroy } from 'silmaril';
 // A write to y runs entry 0 of the child scope of entry 0 (path [0, 0]),
 // and entry 1. It does not run entry 0 itself: its body reads y only
 // inside the inner $sync.
-const $g0 = [[[0, 0], 1]];
+const $g0 = [[1, [0, 0]]];
 
 // Child scope of entry 0. slot 0: x
 // entry 0: inner $sync

@@ -1,0 +1,4 @@
+{
+  "description": "As in 0.4, disposing a scope disposes the child scopes of its entries in registration order, which is source order, not entry id order. Then its own onDestroy callbacks run.",
+  "logs": [["$ child"], ["$sync child"], ["root"]]
+}

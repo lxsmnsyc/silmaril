@@ -13,7 +13,7 @@ $$root($g0, ($s) => {
     runs += 1;
     log('outer', $$get($s, 0));
     $$sync($c0, 0, () => {
-      if ($$get($s, 0) < 1000) {
+      if ($$get($s, 0) < 3) {
         $$set($s, 0, $$get($s, 0) + 1);
       }
     });

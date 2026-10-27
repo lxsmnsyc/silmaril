@@ -1,4 +1,4 @@
 {
-  "description": "A $ or $sync inside a nested function is a compile error. It must be a statement of a setup body or of a $ or $sync body.",
-  "compileError": "$sync must be called as a statement of a setup body."
+  "description": "A $ or $sync inside a nested function is a compile error. It must be called in a setup body or a $ or $sync body, outside nested functions and loops.",
+  "compileError": "$sync must be called directly in a setup body."
 }

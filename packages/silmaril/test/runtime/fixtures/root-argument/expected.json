@@ -1,0 +1,4 @@
+{
+  "description": "$$ and $composable must be called with a function or arrow expression, as in 0.4, which throws for this too.",
+  "compileError": "$$ must be called with a function."
+}

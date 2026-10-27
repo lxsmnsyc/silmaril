@@ -1,0 +1,9 @@
+{
+  "description": "A destructuring write in a class field initializer works, as in 0.4. The compiler wraps it in an arrow that it calls at once, which declares the temps.",
+  "logs": [
+    ["a", 0, "b", 0],
+    ["a", 1, "b", 0],
+    ["a", 1, "b", 2],
+    ["value", [1, 2]]
+  ]
+}

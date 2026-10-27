@@ -8,6 +8,8 @@ const EFFECT = 2;
 const EMPTY = [];
 // Rank of composable scopes: after every entry child scope of the parent.
 const COMPOSABLE = 2 ** 30;
+// Entry runs per drain or per $ flush before the loop guard stops it.
+const LIMIT = 10_000;
 
 // Scope of the setup or entry run that is executing, for $composable.
 let CURRENT;
@@ -23,6 +25,8 @@ let memoBusy = false;
 let syncBusy = false;
 let scheduled = false;
 let roots = 0;
+// Entry runs of the current synchronous drain, for the loop guard.
+let runs = 0;
 // First error of the synchronous batch, as [error].
 let error;
 
@@ -41,10 +45,10 @@ function scope(parent, graph, rank) {
     w: [], // memo output slot by entry id
     c: [], // child scope of the last run, by entry id
     q: [], // queued flags by entry id
-    r: [], // running flags by entry id
-    n: [], // composable scopes
-    o: [], // onMount callbacks
-    u: [], // onDestroy callbacks and unsubscribes
+    l: [], // entry ids in registration order
+    n: 0, // composable calls
+    o: [], // onMount callbacks, and unmounted composable scopes
+    u: [], // onDestroy callbacks, unsubscribes and composable scopes
     a: true, // alive
     m: false, // mounted
   };
@@ -72,7 +76,9 @@ function take(queue) {
       best = i;
     }
   }
-  return queue.splice(best, 2);
+  const [s, id] = queue.splice(best, 2);
+  s.q[id] = false;
+  return [s, id];
 }
 
 function schedule() {
@@ -101,7 +107,8 @@ function mark(s, slot) {
         }
         id = ref[last];
       }
-      if (t && t.a && t.f[id] && !t.q[id] && !t.r[id]) {
+      // A running entry can be queued: it runs again after it returns.
+      if (t && t.a && t.f[id] && !t.q[id]) {
         t.q[id] = true;
         const kind = t.k[id];
         (kind === MEMO ? MEMOS : kind === SYNC ? SYNCS : EFFECTS).push(t, id);
@@ -114,7 +121,6 @@ function mark(s, slot) {
 }
 
 function run(s, id) {
-  s.q[id] = false;
   if (!s.a) {
     return;
   }
@@ -132,7 +138,6 @@ function run(s, id) {
   s.c[id] = child;
   const prev = CURRENT;
   CURRENT = child;
-  s.r[id] = true;
   let value;
   try {
     value = s.f[id](child);
@@ -141,20 +146,23 @@ function run(s, id) {
     throw e;
   } finally {
     CURRENT = prev;
-    s.r[id] = false;
   }
-  if (s.m) {
-    mount(child);
-  }
+  // As in 0.4, a child scope mounts right after its run.
+  mount(child);
   if (s.k[id] === MEMO && s.w[id] >= 0) {
     $$set(s, s.w[id], value);
   }
 }
 
+// Past the limit, each entry taken from the queue throws in place of
+// running, so the rest of the drain stops and its queue empties.
 function drain(queue) {
   while (queue.length) {
     const [s, id] = take(queue);
     try {
+      if (++runs > LIMIT) {
+        throw new Error('Update loop');
+      }
       run(s, id);
     } catch (e) {
       error ||= [e];
@@ -171,6 +179,8 @@ function flush() {
       syncBusy = true;
       drain(SYNCS);
       syncBusy = false;
+      // The outermost drain ended: the next write starts a new count.
+      runs = 0;
       const held = error;
       error = undefined;
       rethrow(held);
@@ -178,11 +188,18 @@ function flush() {
   }
 }
 
+// The $ flush has its own count. Writes in a $ body drain with the count
+// above, which starts again after each of them.
 function flushEffects() {
   let held;
+  let count = 0;
   while (EFFECTS.length) {
     const [s, id] = take(EFFECTS);
     try {
+      // First runs do not count: only a run again can be part of a loop.
+      if (s.c[id] && ++count > LIMIT) {
+        throw new Error('Update loop');
+      }
       run(s, id);
     } catch (e) {
       held ||= [e];
@@ -195,39 +212,37 @@ function flushEffects() {
   rethrow(held);
 }
 
+// The lists hold callbacks and composable scopes, in call order, as the
+// 0.4 instance shared by a composable and its caller did.
+function each(list, fn) {
+  for (const item of list) {
+    if (typeof item === 'function') {
+      item();
+    } else {
+      fn(item);
+    }
+  }
+}
+
 function mount(s) {
   if (s.a && !s.m) {
     s.m = true;
-    for (const c of s.c) {
-      if (c) {
-        mount(c);
-      }
-    }
-    for (const c of s.n) {
-      mount(c);
-    }
     const callbacks = s.o;
     s.o = [];
-    for (const cb of callbacks) {
-      cb();
-    }
+    each(callbacks, mount);
   }
 }
 
 function dispose(s) {
   if (s.a) {
     s.a = false;
-    for (const c of s.c) {
+    for (const id of s.l) {
+      const c = s.c[id];
       if (c) {
         dispose(c);
       }
     }
-    for (const c of s.n) {
-      dispose(c);
-    }
-    for (const cb of s.u) {
-      cb();
-    }
+    each(s.u, dispose);
   }
 }
 
@@ -235,6 +250,7 @@ function register(s, id, kind, fn, graph) {
   s.f[id] = fn;
   s.k[id] = kind;
   s.h[id] = graph;
+  s.l.push(id);
 }
 
 // First run of a memo or $sync, with its phase marked busy, then the
@@ -280,23 +296,24 @@ export function $$composable(graph, setup) {
   return (...args) => {
     const parent = CURRENT;
     if (!parent) {
-      throw new Error('A $composable was called outside a reactive scope.');
+      throw new Error('Unexpected missing reactive boundary.');
     }
-    const s = scope(parent, graph, COMPOSABLE + parent.n.length);
-    parent.n.push(s);
+    const s = scope(parent, graph, COMPOSABLE + parent.n++);
     CURRENT = s;
     let result;
     try {
       result = setup(s, ...args);
     } catch (e) {
       dispose(s);
-      parent.n.pop();
       throw e;
     } finally {
       CURRENT = parent;
     }
+    parent.u.push(s);
     if (parent.m) {
       mount(s);
+    } else {
+      parent.o.push(s);
     }
     return result;
   };
@@ -344,18 +361,15 @@ export function $$effect(s, id, body, graph) {
 
 export function $$store(s, slot, store, id) {
   s.v[slot] = store.get();
-  s.u.push(store.subscribe(() => $$set(s, slot, store.get())));
   if (id !== undefined) {
-    // The write-back runs with the memos, so the store is fresh when the
-    // write returns. It has no first run.
-    register(s, id, MEMO, () => {
-      const value = s.v[slot];
-      if (!Object.is(store.get(), value)) {
-        store.set(value);
-      }
-    });
+    // As in 0.4, the write-back runs once at registration and after each
+    // change of the slot, with the memos, so the store is fresh when the
+    // write returns.
+    register(s, id, MEMO, () => store.set(s.v[slot]));
     s.w[id] = -1;
+    enter(s, id, MEMO);
   }
+  s.u.push(store.subscribe(() => $$set(s, slot, store.get())));
 }
 
 export function $$mount(s, callback) {
@@ -383,17 +397,25 @@ export function tick() {
   });
 }
 
+// As in 0.4, $$ and $composable work without the compiler, with no
+// reactivity: for namespace calls and modules the compiler skips.
+export function $$(setup) {
+  return $$root(EMPTY, () => setup());
+}
+
+export function $composable(setup) {
+  return setup;
+}
+
 function compileTimeOnly(name) {
   return () => {
     throw new Error(`${name} is meant to be compile-time only.`);
   };
 }
 
-export const $$ = compileTimeOnly('$$');
 export const $ = compileTimeOnly('$');
 export const $sync = compileTimeOnly('$sync');
 export const $skip = compileTimeOnly('$skip');
 export const $store = compileTimeOnly('$store');
-export const $composable = compileTimeOnly('$composable');
 export const onMount = compileTimeOnly('onMount');
 export const onDestroy = compileTimeOnly('onDestroy');

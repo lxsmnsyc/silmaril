@@ -1,0 +1,10 @@
+{
+  "description": "The loop guard. A drain that runs more than 10000 entries stops: the next queued entry throws Error('Update loop') in place of running, and the rest of the drain does not run. The error reaches the caller of the write, or of $$ when the loop starts during setup, which also disposes the root. The count starts again with the next write, so a write after the failed drain runs as usual, and the same loop throws again.",
+  "logs": [
+    ["setup", "Update loop"],
+    ["loop", false],
+    ["caught", "Update loop"],
+    ["loop", false],
+    ["caught again", "Update loop"]
+  ]
+}

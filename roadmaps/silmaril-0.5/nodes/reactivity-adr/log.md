@@ -20,3 +20,11 @@
 - Changed the runner protocol: fixtures import `tick` from `'silmaril'`, and compile-error fixtures carry `compileError` instead of logs.
 - Moved graph constants after the imports in every fixture.
 - 45 fixtures, all pass. Sketch size 1434 B gzip.
+
+## Follow-up pass: loop guard and changes from 0.4
+
+- Read the follow-up maintainer decisions on PR #8 and brumate's `updates.ts` guard (`drain`, `queue`, `stuck`, `failed`).
+- Added the loop guard to the sketch: one count per outermost drain, one per `$` flush that skips first runs. Past 10000 each taken entry throws `Update loop` in place of running.
+- Compared every rule with 0.4 (`src/index.ts`, and `babel/index.ts` with the PR #5 fixes) and sorted the differences into gate-accepted, needed by the model, and free choices. Switched twelve free choices back to 0.4. The largest is dropping the self-skip: with the guard, a running entry can be queued again, as in 0.4.
+- Applied the nine change requests of the PR #9 compiler spike.
+- 61 fixtures, all pass. Sketch 1481 B gzip.
