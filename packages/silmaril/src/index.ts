@@ -130,7 +130,7 @@ export function $$sync(
   instance: Instance,
   next: () => any[],
   callback: () => void,
-) {
+): void {
   if (instance.alive) {
     const index = instance.count;
     instance.count += 1;
@@ -155,7 +155,7 @@ export function $$effect(
   instance: Instance,
   next: () => any[],
   callback: () => void,
-) {
+): void {
   if (instance.alive) {
     const index = instance.count;
     instance.count += 1;
@@ -220,7 +220,7 @@ export function $$(setup: () => void): () => void {
   };
 }
 
-export function $composable<T extends((...args: any) => any)>(setup: T): T {
+export function $composable<T extends (...args: any) => any>(setup: T): T {
   return setup;
 }
 
@@ -255,7 +255,7 @@ export function $$subscribe<T>(
   listen: () => void,
   dependencies?: () => any[],
   update?: () => void,
-) {
+): void {
   if (instance.alive) {
     if (dependencies && update) {
       $$sync(instance, dependencies, update);

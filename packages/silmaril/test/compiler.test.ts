@@ -4,9 +4,7 @@ import plugin from '../babel';
 
 async function compile(code: string) {
   const result = await babel.transformAsync(code, {
-    plugins: [
-      [plugin],
-    ],
+    plugins: [plugin],
   });
   return result?.code;
 }

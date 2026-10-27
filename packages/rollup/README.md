@@ -2,35 +2,30 @@
 
 > Rollup plugin for [`silmaril`](https://github.com/lxsmnsyc/silmaril)
 
-[![NPM](https://img.shields.io/npm/v/rollup-plugin-silmaril.svg)](https://www.npmjs.com/package/rollup-plugin-silmaril) [![JavaScript Style Guide](https://badgen.net/badge/code%20style/airbnb/ff5a5f?icon=airbnb)](https://github.com/airbnb/javascript)
+> [!WARNING]
+> This package is deprecated. Use `silmaril/unplugin` instead. This package now re-exports it and will not get new features.
 
-## Install
+[![NPM](https://img.shields.io/npm/v/rollup-plugin-silmaril.svg)](https://www.npmjs.com/package/rollup-plugin-silmaril)
 
-```bash
-npm install --D rollup-plugin-silmaril
+## Migration
+
+```diff
+- import silmaril from 'rollup-plugin-silmaril';
++ import silmaril from 'silmaril/unplugin';
+
+export default {
+  plugins: [
+-   silmaril({
++   silmaril.rollup({
+      filter: {
+        include: 'src/**/*.ts',
+      },
+    }),
+  ],
+};
 ```
 
-```bash
-yarn add -D rollup-plugin-silmaril
-```
-
-```bash
-pnpm add -D rollup-plugin-silmaril
-```
-
-## Usage
-
-```js
-import silmaril from 'rollup-plugin-silmaril';
-
-///...
-silmaril({
-  filter: {
-    include: 'src/**/*.ts',
-    exclude: 'node_modules/**/*.{ts,js}',
-  },
-})
-```
+The options are the same.
 
 ## Sponsors
 

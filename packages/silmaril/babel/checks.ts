@@ -1,5 +1,5 @@
 import * as t from '@babel/types';
-import * as babel from '@babel/core';
+import type { NodePath } from '@babel/core';
 
 export function getImportSpecifierName(specifier: t.ImportSpecifier): string {
   if (t.isIdentifier(specifier.imported)) {
@@ -13,8 +13,8 @@ type TypeFilter<V extends t.Node> = (node: t.Node) => node is V;
 export function isPathValid<V extends t.Node>(
   path: unknown,
   key: TypeFilter<V>,
-): path is babel.NodePath<V> {
-  return key((path as babel.NodePath).node);
+): path is NodePath<V> {
+  return key((path as NodePath).node);
 }
 
 export type NestedExpression =
@@ -27,11 +27,13 @@ export type NestedExpression =
   | t.TSTypeAssertion;
 
 export function isNestedExpression(node: t.Node): node is NestedExpression {
-  return t.isParenthesizedExpression(node)
-    || t.isTypeCastExpression(node)
-    || t.isTSAsExpression(node)
-    || t.isTSSatisfiesExpression(node)
-    || t.isTSNonNullExpression(node)
-    || t.isTSTypeAssertion(node)
-    || t.isTSInstantiationExpression(node);
+  return (
+    t.isParenthesizedExpression(node) ||
+    t.isTypeCastExpression(node) ||
+    t.isTSAsExpression(node) ||
+    t.isTSSatisfiesExpression(node) ||
+    t.isTSNonNullExpression(node) ||
+    t.isTSTypeAssertion(node) ||
+    t.isTSInstantiationExpression(node)
+  );
 }

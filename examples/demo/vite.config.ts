@@ -1,12 +1,12 @@
-import silmaril from 'vite-plugin-silmaril';
+import { defineConfig } from 'vite';
+import silmaril from 'silmaril/unplugin';
 
-export default {
+export default defineConfig({
   plugins: [
-    silmaril({
+    silmaril.vite({
       filter: {
         include: 'src/**/*.ts',
-        exclude: 'node_modules/**/*.{ts,js}',
       },
     }),
   ],
-};
+});

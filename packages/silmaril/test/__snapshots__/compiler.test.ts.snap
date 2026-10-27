@@ -1,9 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`$ > should compile to $$effect 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $ } from 'silmaril';
+"import { $$, $, $$context as _$$context, $$effect as _$$effect } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   _$$effect(_ctx, () => [], () => console.log('Example'));
@@ -12,9 +10,7 @@ $$(() => {
 `;
 
 exports[`$ > should not subscribe to unowned variables 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $ } from 'silmaril';
+"import { $$, $, $$context as _$$context, $$effect as _$$effect } from 'silmaril';
 let x = 0;
 $$(() => {
   let _ctx = _$$context();
@@ -24,9 +20,7 @@ $$(() => {
 `;
 
 exports[`$ > should subscribe to owned variables 1`] = `
-"import { $$effect as _$$effect } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $ } from 'silmaril';
+"import { $$, $, $$context as _$$context, $$effect as _$$effect } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let x = 0;
@@ -36,10 +30,7 @@ $$(() => {
 `;
 
 exports[`$store > should allow tracking for stores 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $store } from 'silmaril';
+"import { $$, $store, $$context as _$$context, $$subscribe as _$$subscribe, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let _store = someStore,
@@ -50,10 +41,7 @@ $$(() => {
 `;
 
 exports[`$store > should allow updates for mutable stores 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $store } from 'silmaril';
+"import { $$, $store, $$context as _$$context, $$subscribe as _$$subscribe, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let _store = someStore,
@@ -66,10 +54,7 @@ $$(() => {
 `;
 
 exports[`$store > should compile $store with const 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $store } from 'silmaril';
+"import { $$, $store, $$context as _$$context, $$subscribe as _$$subscribe, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let _store = someStore,
@@ -79,10 +64,7 @@ $$(() => {
 `;
 
 exports[`$store > should compile $store with let 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$subscribe as _$$subscribe } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $store } from 'silmaril';
+"import { $$, $store, $$context as _$$context, $$subscribe as _$$subscribe, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let _store = someStore,
@@ -92,9 +74,7 @@ $$(() => {
 `;
 
 exports[`$sync > should compile to $$sync 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $sync } from 'silmaril';
+"import { $$, $sync, $$context as _$$context, $$sync as _$$sync } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   _$$sync(_ctx, () => [], () => console.log('Example'));
@@ -103,9 +83,7 @@ $$(() => {
 `;
 
 exports[`$sync > should not subscribe to unowned variables 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $sync } from 'silmaril';
+"import { $$, $sync, $$context as _$$context, $$sync as _$$sync } from 'silmaril';
 let x = 0;
 $$(() => {
   let _ctx = _$$context();
@@ -115,9 +93,7 @@ $$(() => {
 `;
 
 exports[`$sync > should subscribe to owned variables 1`] = `
-"import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, $sync } from 'silmaril';
+"import { $$, $sync, $$context as _$$context, $$sync as _$$sync } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let x = 0;
@@ -127,9 +103,7 @@ $$(() => {
 `;
 
 exports[`let > should compile on AssignmentExpression 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
+"import { $$, $$context as _$$context, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let x = 0;
@@ -140,9 +114,7 @@ $$(() => {
 `;
 
 exports[`let > should compile on UpdateExpression 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
+"import { $$, $$context as _$$context, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let x = 0;
@@ -153,10 +125,7 @@ $$(() => {
 `;
 
 exports[`let > should compile when accessing owned variables 1`] = `
-"import { $$update as _$$update } from \\"silmaril\\";
-import { $$sync as _$$sync } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
+"import { $$, $$context as _$$context, $$sync as _$$sync, $$update as _$$update } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let greeting = 'Hello';
@@ -167,8 +136,7 @@ $$(() => {
 `;
 
 exports[`let > should not compile when not accessing owned variables 1`] = `
-"import { $$context as _$$context } from \\"silmaril\\";
-import { $$ } from 'silmaril';
+"import { $$, $$context as _$$context } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   let message = Math.random();
@@ -176,9 +144,7 @@ $$(() => {
 `;
 
 exports[`onDestroy > should compile to $$destroy 1`] = `
-"import { $$destroy as _$$destroy } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, onDestroy } from 'silmaril';
+"import { $$, onDestroy, $$context as _$$context, $$destroy as _$$destroy } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   _$$destroy(_ctx, () => console.log('Example'));
@@ -186,9 +152,7 @@ $$(() => {
 `;
 
 exports[`onMount > should compile to $$mount 1`] = `
-"import { $$mount as _$$mount } from \\"silmaril\\";
-import { $$context as _$$context } from \\"silmaril\\";
-import { $$, onMount } from 'silmaril';
+"import { $$, onMount, $$context as _$$context, $$mount as _$$mount } from 'silmaril';
 $$(() => {
   let _ctx = _$$context();
   _$$mount(_ctx, () => sconsole.log('Example'));

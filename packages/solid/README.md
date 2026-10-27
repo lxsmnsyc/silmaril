@@ -2,75 +2,19 @@
 
 > SolidJS bindings for [`silmaril`](https://github.com/lxsmnsyc/silmaril)
 
-[![NPM](https://img.shields.io/npm/v/solid-silmaril.svg)](https://www.npmjs.com/package/solid-silmaril) [![JavaScript Style Guide](https://badgen.net/badge/code%20style/airbnb/ff5a5f?icon=airbnb)](https://github.com/airbnb/javascript)
+> [!WARNING]
+> This package is deprecated. Use `silmaril/solid` instead. This package now re-exports it and will not get new features.
 
-## Install
+[![NPM](https://img.shields.io/npm/v/solid-silmaril.svg)](https://www.npmjs.com/package/solid-silmaril)
 
-```bash
-npm install silmaril solid-silmaril
+## Migration
+
+```diff
+- import { fromSignal, fromStore } from 'solid-silmaril';
++ import { fromSignal, fromStore } from 'silmaril/solid';
 ```
 
-```bash
-yarn add silmaril solid-silmaril
-```
-
-```bash
-pnpm add silmaril solid-silmaril
-```
-
-## Usage
-
-### `fromSignal`
-
-```js
-import { createSignal, createEffect } from 'solid-js';
-import { fromSignal } from 'solid-silmaril';
-import { $$, $sync, $store } from 'silmaril';
-
-const [count, setCount] = createSignal(0);
-
-const countStore = fromSignal([count, setCount]);
-
-createEffect(() => {
-  console.log('SolidJS Count:', count());
-});
-
-$$(() => {
-  let counter = $store(countStore);
-
-  $sync(console.log('Silmaril Count:', counter));
-
-  setInterval(() => {
-    counter += 1;
-  }, 1000);
-});
-```
-
-### `fromStore`
-
-```js
-import { createEffect } from 'solid-js';
-import { fromStore } from 'solid-silmaril';
-import { $$, $sync, $store } from 'silmaril';
-
-const countStore = new Store(0);
-
-const [count, setCount] = fromStore(countStore);
-
-$$(() => {
-  let counter = $store(countStore);
-
-  $sync(console.log('Silmaril Count:', counter));
-});
-
-createEffect(() => {
-  console.log('SolidJS Count:', count());
-});
-
-setInterval(() => {
-  setCount((current) += 1);
-}, 1000);
-```
+The API is the same. See the [`silmaril` README](https://github.com/lxsmnsyc/silmaril#solidjs) for usage.
 
 ## Sponsors
 

@@ -1,14 +1,13 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import silmaril from 'vite-plugin-silmaril';
+import silmaril from 'silmaril/unplugin';
 
 export default defineConfig({
   plugins: [
     solidPlugin(),
-    silmaril({
+    silmaril.vite({
       filter: {
         include: 'src/**/*.{ts,tsx}',
-        exclude: 'node_modules/**/*.{ts,tsx}',
       },
     }),
   ],

@@ -1,21 +1,7 @@
 {
-  "exclude": ["node_modules"],
-  "include": ["babel", "src", "store", "test"],
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "ESNext",
-    "lib": ["ESNext"],
-    "importHelpers": true,
-    "declaration": true,
-    "sourceMap": true,
-    "rootDir": "./",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
-    "jsx": "react",
-    "esModuleInterop": true,
-    "target": "ES2017"
-  }
+    "lib": ["ESNext", "DOM"]
+  },
+  "include": ["src", "babel", "store", "solid", "unplugin", "test"]
 }

@@ -13,7 +13,7 @@ export default class Store<T> {
     return this.value;
   }
 
-  set(value: T) {
+  set(value: T): void {
     if (this.alive && !Object.is(this.value, value)) {
       this.value = value;
 
@@ -34,7 +34,7 @@ export default class Store<T> {
     };
   }
 
-  destroy() {
+  destroy(): void {
     if (this.alive) {
       this.alive = false;
       this.listeners.clear();

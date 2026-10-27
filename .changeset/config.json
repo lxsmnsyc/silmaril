@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "baseBranch": "main",
+  "access": "public",
+  "format": "oxfmt",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "lxsmnsyc/silmaril" }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "ignore": ["demo", "solid-demo"],
+  "updateInternalDependencies": "patch"
+}
