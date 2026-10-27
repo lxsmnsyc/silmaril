@@ -512,7 +512,7 @@ export default function silmarilPlugin(): PluginObject {
           const binding = path.scope.getBindingIdentifier(trueIdentifier.name);
           if (binding) {
             if (ctx.identifiers.$$.has(binding)) {
-              transformSetup(ctx, path, '$');
+              transformSetup(ctx, path, '$$');
             }
             if (ctx.identifiers.$composable.has(binding)) {
               transformSetup(ctx, path, '$composable');
