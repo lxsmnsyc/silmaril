@@ -1,6 +1,6 @@
 {
   "name": "solid-silmaril",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Deprecated: use silmaril/solid instead. SolidJS bindings for silmaril.",
   "homepage": "https://github.com/lxsmnsyc/silmaril/tree/main/packages/solid",
   "bugs": {
