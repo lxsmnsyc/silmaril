@@ -56,8 +56,30 @@ describe('unplugin', () => {
       '/src/example.ts',
     );
     expect(result).toMatchObject({
-      code: expect.stringContaining('$$update'),
+      code: expect.stringContaining('$$set($s, 0,'),
       map: expect.objectContaining({ mappings: expect.any(String) }),
     });
+  });
+
+  it('should ignore the query when picking the language', async () => {
+    const { handler } = getTransform();
+    const result = await handler.call(
+      {} as never,
+      `${SOURCE}\nconst y: number = 1;`,
+      '/src/example.ts?v=1',
+    );
+    expect(result).toMatchObject({
+      code: expect.stringContaining('const y: number = 1;'),
+    });
+  });
+
+  it('should leave modules with no compile-time import unchanged', async () => {
+    const { handler } = getTransform();
+    const result = await handler.call(
+      {} as never,
+      "import Store from 'silmaril/store';\nnew Store(0);",
+      '/src/example.ts',
+    );
+    expect(result).toBeUndefined();
   });
 });

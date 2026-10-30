@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import * as runtime from '../../src/v2';
+import * as runtime from '../../src';
 
 const ROOT = new URL('./fixtures/', import.meta.url).pathname;
 const AsyncFunction = (async () => {}).constructor as new (

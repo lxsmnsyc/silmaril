@@ -1,8 +1,7 @@
 import { behaviorCases } from '../harness';
 
 // Limits of the 0.4 runtime. The 0.5 compiler tracks reads inside local helpers,
-// so each case states the 0.5 behavior and is expected to fail on the babel pipeline.
-const XFAIL = { xfail: ['babel'] };
+// so each case states the 0.5 behavior.
 
 behaviorCases('limits', [
   {
@@ -29,7 +28,6 @@ behaviorCases('limits', [
       ['Count', 0],
       ['Total', 0],
     ],
-    options: XFAIL,
   },
   {
     name: 'sync effect tracks a variable read inside a local helper',
@@ -49,7 +47,6 @@ behaviorCases('limits', [
       ['Count', 0],
       ['Total', 0],
     ],
-    options: XFAIL,
   },
   {
     name: 'computed variable tracks a variable read inside a local helper',
@@ -67,7 +64,6 @@ behaviorCases('limits', [
       });
     `,
     logs: [[2], [11]],
-    options: XFAIL,
   },
   {
     name: 'computed variable stays current when its helper is declared after it',
@@ -84,6 +80,5 @@ behaviorCases('limits', [
       });
     `,
     logs: [[2], [10]],
-    options: XFAIL,
   },
 ]);

@@ -7,7 +7,7 @@ import type { Node } from 'oxc-parser';
 import type { Ref } from '../../../compiler/analysis/model';
 import { compile, type CompileResult } from '../../../compiler/index';
 import { parseModule } from '../../../compiler/source';
-import * as runtime from '../../../src/v2';
+import * as runtime from '../../../src';
 
 const dir = new URL('../../runtime/fixtures/', import.meta.url);
 const repo = fileURLToPath(new URL('../../../../../', import.meta.url));
