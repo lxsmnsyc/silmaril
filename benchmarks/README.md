@@ -47,6 +47,21 @@ In 0.4 the cost of one write grows faster than N. In 0.5 it grows about linearly
 
 An earlier 0.4 run under load (load average about 10) measured roughly twice these times; it is replaced by this run.
 
+## Check after the switch (0.5.0)
+
+`switch-to-v2` deleted the `babel` pipeline and moved the runtime from `src/v2` to `src`. The compiler code and its dependency versions did not change. `pnpm bench` was run again on `roadmap` at `25b4952` (2026-10-30, load average 2.8 to 5.0), and the commit above (`0f55110`) was run again in the same session for comparison:
+
+| run                    | 54.5 KB compile, median ms | one write N = 400, median us | batch N = 400, median ms |
+| ---------------------- | -------------------------- | ---------------------------- | ------------------------ |
+| `0f55110`, run 1       | 13.79                      | 131.6                        | 5.31                     |
+| `0f55110`, run 2       | 13.19                      | 122.0                        | 5.02                     |
+| `25b4952`, runs 1 to 4 | 42.78, 22.80, 20.45, 16.21 | 137.4, 406.7, 139.0          | 5.22, 5.76, 5.41         |
+| `25b4952`, larger heap | 14.58                      |                              |                          |
+
+- Update cost is the same before and after the switch, apart from one noisy run.
+- Compiling the small and medium sources is the same. Compiling the 54.5 KB source is slower and noisier after the switch, but the compiler is the same code. Before the switch, the `babel` pipeline ran first and grew the heap, so the `compiler` rows ran with a warm heap. Now `compiler` runs first, and the 30 MB that one compile allocates hits more young-generation collections. With `--max-semi-space-size=32`, the median drops back to 14.6 ms. It is a benchmark effect, not a compiler regression.
+- The table above (`0f55110`) stays the 0.4 against 0.5 comparison. Against 0.4, 0.5 compiles the 54.5 KB source about 13 times faster, and at N = 400 one write is about 60 times cheaper and a batch about 85 times cheaper.
+
 ## Notes
 
 - Memory is `heapUsed` before and after one compile, with a forced collection before it (`--expose-gc`). A collection during the compile can lower it, so read it as a lower bound.
