@@ -1,11 +1,11 @@
 import { $$root, $$composable, $$get, $$set, $$sync, $$store } from 'silmaril';
 
+// Composable scope. slot 0: input. entry 0: $sync
+const $g0 = [[0]];
+
 // Root scope. slots: 0 input (two way), 1 squared (one way)
 // entries: 0 write-back of input, 1 $sync
-const $g0 = [[0, 1], [1]];
-
-// Composable scope. slot 0: input. entry 0: $sync
-const $g1 = [[0]];
+const $g1 = [[0, 1], [1]];
 
 function createStore(value) {
   const listeners = new Set();
@@ -26,7 +26,7 @@ function createStore(value) {
   };
 }
 
-const useSquared = $$composable($g1, ($s, store) => {
+const useSquared = $$composable($g0, ($s, store) => {
   $$store($s, 0, store);
   const out = createStore(0);
   $$sync($s, 0, () => out.set($$get($s, 0) ** 2));
@@ -35,7 +35,7 @@ const useSquared = $$composable($g1, ($s, store) => {
 
 let setInput;
 
-$$root($g0, ($s) => {
+$$root($g1, ($s) => {
   const source = createStore(2);
   $$store($s, 0, source, 0);
   $$store($s, 1, useSquared(source));

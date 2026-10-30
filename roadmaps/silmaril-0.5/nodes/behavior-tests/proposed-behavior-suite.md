@@ -1,7 +1,7 @@
 ---
 name: behavior-suite
 version: 2
-status: frozen-proposal
+status: frozen
 defined_by: behavior-tests
 ---
 

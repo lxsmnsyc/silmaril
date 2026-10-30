@@ -1,7 +1,7 @@
 ---
 id: reactivity-adr
 title: Decide and freeze the static-graph runtime
-status: active
+status: done
 priority: must
 type: contract
 milestone: 0.5.0
@@ -43,3 +43,7 @@ Uncertainty high (new design); the code is small. Gate: the user reviews before 
 
 - Write the contract changes in your outcome and as a proposed replacement file; the orchestrator updates the contract and freezes it after the user approves.
 - Decide `$sync` explicitly: keep it as a synchronous effect, or fold it into memos.
+
+## Pull request
+
+- #8, merged into `roadmap`.

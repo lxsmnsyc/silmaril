@@ -1,7 +1,7 @@
 ---
 name: compiler-api
 version: 2
-status: proposed
+status: frozen
 defined_by: compiler-infra-spike
 ---
 
@@ -13,7 +13,7 @@ Replacement for `contracts/compiler-api.md` v1. The orchestrator copies it over 
 
 The public API of `silmaril/compiler`, and the internal API between the analysis (`compiler-core`) and the code generators (`codegen-core`, `codegen-extras`) inside `packages/silmaril/compiler/`. `switch-to-v2` wires `silmaril/unplugin` to it, and `runnable-samples` calls it in the browser.
 
-The output of the compiler is defined by the `reactivity-runtime` contract, version 4 (PR #8 at bc5407d, `nodes/reactivity-adr/proposed-reactivity-runtime.md` until it is frozen), and its fixtures in `packages/silmaril/test/runtime/fixtures/`. This contract does not repeat its rules. It says how the compiler computes them and how it edits the text. Where the two disagree, the runtime contract wins and this one gets a change request.
+The output of the compiler is defined by the `reactivity-runtime` contract, version 4 (`contracts/reactivity-runtime.md`), and its fixtures in `packages/silmaril/test/runtime/fixtures/`. This contract does not repeat its rules. It says how the compiler computes them and how it edits the text. Where the two disagree, the runtime contract wins and this one gets a change request.
 
 ## Public interface
 
@@ -559,7 +559,7 @@ None. `compiler-core` is the first implementation. `nodes/compiler-infra-spike/p
 ## Contract tests
 
 - `packages/silmaril/test/compiler/analysis/` (compiler-core): port `proto/test.ts` (Babel differential, recorded references, read and write flags, reference contexts, parameter scopes, namespaces, visit order, errors with locations, generated names, UTF-16 offsets, no `node:` imports), and the model half of `proto/fixtures.test.ts`: for every fixture with an `output.js`, the slots, entries (kind, id, output slot) and graphs of the model equal the ones `output.js` encodes, and every `compileError` fixture throws its message.
-- `packages/silmaril/test/compiler/codegen/` (codegen-core, codegen-extras): the rest of `proto/fixtures.test.ts`: compile each `input.js`, run it with the runtime contract's runner protocol and compare logs. Compare text with `output.js` too where the fixture's layout is the compiler's (see the outcome for the three that differ), and one source map test per construct.
+- `packages/silmaril/test/compiler/codegen/` (codegen-core, codegen-extras): the rest of `proto/fixtures.test.ts`: compile each `input.js`, run it with the runtime contract's runner protocol and compare logs. Compare text with `output.js` too, after the normalization the prototype applies, and add one source map test per construct.
 
 ## Dependencies
 

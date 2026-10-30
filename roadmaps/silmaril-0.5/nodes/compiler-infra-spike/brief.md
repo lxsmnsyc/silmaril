@@ -1,7 +1,7 @@
 ---
 id: compiler-infra-spike
 title: Spike oxc-parser, scope analysis and magic-string
-status: active
+status: done
 priority: must
 type: spike
 milestone: 0.5.0
@@ -38,3 +38,7 @@ Unknown libraries (high uncertainty), but throwaway code in the node folder.
 ## Notes for the worker
 
 - Do not add dependencies to `packages/silmaril`. Install what you try inside the node folder.
+
+## Pull request
+
+- #9, merged into `roadmap`.

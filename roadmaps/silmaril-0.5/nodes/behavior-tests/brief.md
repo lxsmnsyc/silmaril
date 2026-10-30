@@ -1,7 +1,7 @@
 ---
 id: behavior-tests
 title: Behavior test suite for any compiler and runtime
-status: active
+status: done
 priority: must
 type: chore
 milestone: 0.5.0
@@ -42,3 +42,7 @@ New pattern in this repo (medium uncertainty), about 6 to 10 files, no shared co
 
 - Evaluate compiled modules with `vm.SourceTextModule` or a data URL import with `silmaril` mapped to the runtime under test. Do not depend on the built `dist`.
 - Use fake timers or an explicit `flush()` for `$`, which is scheduled with `setTimeout` in 0.4.
+
+## Pull request
+
+- #6, merged into `roadmap`.

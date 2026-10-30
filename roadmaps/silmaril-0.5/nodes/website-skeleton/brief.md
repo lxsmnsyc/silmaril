@@ -1,7 +1,7 @@
 ---
 id: website-skeleton
 title: Documentation website built with brumate
-status: active
+status: done
 priority: should
 type: docs
 milestone: docs
@@ -43,3 +43,7 @@ Known pattern from brumate, new to this repo, adds dependencies.
 
 - Pin brumate and twinkleplop versions that pass the repo's pnpm release-age policy.
 - Hosting (Vercel, as brumate does) needs the user to connect the project; write the steps in the outcome.
+
+## Pull request
+
+- #7, merged into `roadmap`.

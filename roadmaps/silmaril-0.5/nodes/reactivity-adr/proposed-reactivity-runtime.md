@@ -1,7 +1,7 @@
 ---
 name: reactivity-runtime
 version: 4
-status: draft # the orchestrator sets frozen after the user approves
+status: frozen
 defined_by: reactivity-adr
 ---
 
@@ -126,6 +126,7 @@ export function onDestroy(callback: () => void): void;
 - A missing list, `undefined` and `[]` all mean that no entry reads the slot. The compiler writes `[]` for an empty list before the last non-empty one, and leaves out trailing empty lists, so a graph with no edges is `[]`. The runtime treats a missing list as empty.
 - The compiler writes each list in canonical order: numbers ascending, then paths in lexicographic order of their numbers. The runtime must not depend on that order (fixtures `sibling-order-a` and `sibling-order-b`).
 - Each graph is a module-level `const` declared after the last `import` declaration of the module, or at the start of the module when it has none. It is never placed before the statement that holds the setup: a function declaration that is called earlier in the module would read it in its temporal dead zone.
+- Graph constants are numbered in source order of their scope bodies, so a composable declared before the root that uses it has the lower number (fixtures `composable`, `composable-glitch`).
 
 ## Compiler rules
 
@@ -141,9 +142,11 @@ Rule 2 is applied to a fixed point, because a memo makes the names that read it 
 
 - A declarator whose initializer is a function or arrow expression is a memo when the function reads a slot, as in 0.4 (fixture `function-memo`). Its value is a new function each time a read slot changes.
 - A declarator whose initializer is a call to `$$` or `$composable` is never a memo. It gets a slot only by rule 1.
+- A declarator whose initializer is a class expression is never a memo, even when the class reads a slot. It gets a slot only by rule 1.
 - If one name of a destructuring declarator gets a slot, all its names do.
 - A `var` follows the same rules as `let`. A second `var` declaration of the same name with an initializer is a write. Without an initializer it compiles to nothing.
 - A declaration in a nested block, such as an `if`, `try`, `switch` or plain block, is a setup declaration, as in 0.4 (fixtures `block-slot`, `var-slot`). A memo or store in such a block registers only when the block runs.
+- A split declaration that is the bare body of a statement, such as `if (c) var a = 1, b = 2;`, is wrapped in `{ }` so every declarator stays inside that statement.
 - Declarations inside nested functions or loops stay plain JS locals, even if they are written. One slot cannot hold a binding per loop iteration.
 - Slots of a scope are numbered from 0 in source order of the declarators.
 
@@ -232,7 +235,7 @@ Notes on the table:
 - The outer parentheses of the logical form can be left out only where the form is a whole argument, a whole statement or a whole initializer.
 - `P'` is the pattern `P` as written, with each slot target replaced by its own temp `$t1`...`$tN`, numbered in source order. Shorthand properties become `key: $tI`. Defaults, computed keys, holes, nesting, rest elements and member targets stay as written. Reads inside defaults and computed keys compile as usual, except that a read of a slot that is a target earlier in the same pattern reads its temp. After the pattern, the slots are written in source order of the targets (fixture `destructure-assign`).
 - A function passed to `$` or `$sync` is the entry body, whatever its body kind: block, expression, `async` or `function`. Any other argument is an expression entry and is wrapped as `() => expr`. The body's return value, including a promise, is ignored.
-- `sc` for `onMount` and `onDestroy` is the scope of the nearest enclosing scope body. Inside a memo initializer or an expression entry, it is the run's child scope: the compute or wrapper takes `($cn)`.
+- `sc` for `onMount` and `onDestroy` is the scope of the nearest enclosing scope body. Inside a memo initializer or an expression entry, it is the run's child scope: the compute or wrapper takes `($cn)`. Inside the body of a function memo's function, it is the scope that holds the memo: the function runs when it is called, not as part of the memo's run.
 - A write inside `$skip(...)` is still a write.
 - Assignments and updates of plain locals, and member writes such as `obj.a = 1`, are not changed.
 
@@ -246,20 +249,20 @@ Notes on the table:
 
 The compiler throws an error whose message contains the text below. `<name>` is the imported name as written in the source, alias included.
 
-| Case                                                                                                                               | Message                                                            |
-| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `$` or `$sync` inside a loop of a scope body (`for`, `for-in`, `for-of`, `while`, `do`)                                            | `<name> cannot be called inside a loop.`                           |
-| `$` or `$sync` inside a nested function, a memo initializer or the argument of another `$` or `$sync`, or outside every setup tree | `<name> must be called directly in a setup body.`                  |
-| `$` or `$sync` called with other than one argument (the 0.4 text)                                                                  | `<name> can only accept a single argument`                         |
-| `$skip` or `$store` called with other than one argument                                                                            | `<name> takes exactly one argument.`                               |
-| `$$` or `$composable` whose argument is not a function or arrow expression                                                         | `<name> must be called with a function.`                           |
-| a compile-time name used other than as a call                                                                                      | `<name> can only be called.`                                       |
-| `$store` that initializes a declarator with a pattern binding (the 0.4 text)                                                       | `$store is only limited to identifiers.`                           |
-| `$store` that is not the whole initializer of a setup declaration                                                                  | `$store must initialize a variable of a setup body.`               |
-| `$skip`, `onMount` or `onDestroy` outside every setup tree                                                                         | `<name> must be used inside $$ or $composable.`                    |
-| a write to a `const` binding that has a slot                                                                                       | `Cannot assign to a constant.`                                     |
-| a reactive variable used as a JSX tag name, such as `<Tag />` or `<Tag.Item />`                                                    | `A reactive variable cannot be used as a JSX tag.`                 |
-| a comment whose text is `$skip` with only spaces around it, inside a setup tree                                                    | `The /* $skip */ comment is not supported. Use $skip(expression).` |
+| Case                                                                                                                                                                                | Message                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `$` or `$sync` inside a loop of a scope body (`for`, `for-in`, `for-of`, `while`, `do`)                                                                                             | `<name> cannot be called inside a loop.`                           |
+| `$` or `$sync` inside a nested function, a memo initializer, a class field initializer, a class static block or the argument of another `$` or `$sync`, or outside every setup tree | `<name> must be called directly in a setup body.`                  |
+| `$` or `$sync` called with other than one argument (the 0.4 text)                                                                                                                   | `<name> can only accept a single argument`                         |
+| `$skip` or `$store` called with other than one argument                                                                                                                             | `<name> takes exactly one argument.`                               |
+| `$$` or `$composable` whose argument is not a function or arrow expression                                                                                                          | `<name> must be called with a function.`                           |
+| a compile-time name used other than as a call                                                                                                                                       | `<name> can only be called.`                                       |
+| `$store` that initializes a declarator with a pattern binding (the 0.4 text)                                                                                                        | `$store is only limited to identifiers.`                           |
+| `$store` that is not the whole initializer of a setup declaration                                                                                                                   | `$store must initialize a variable of a setup body.`               |
+| `$skip`, `onMount` or `onDestroy` outside every setup tree                                                                                                                          | `<name> must be used inside $$ or $composable.`                    |
+| a write to a `const` binding that has a slot                                                                                                                                        | `Cannot assign to a constant.`                                     |
+| a reactive variable used as a JSX tag name, such as `<Tag />` or `<Tag.Item />`                                                                                                     | `A reactive variable cannot be used as a JSX tag.`                 |
+| a comment whose text is `$skip` with only spaces around it, inside a setup tree                                                                                                     | `The /* $skip */ comment is not supported. Use $skip(expression).` |
 
 Fixtures: `loop-entry`, `entry-in-function`, `entry-arguments`, `root-argument`, `store-pattern`, `jsx-tag`, `skip-comment`.
 
@@ -400,6 +403,7 @@ No fixture throws from a `$` body or from the `$` flush guard, because the error
 ## Changes
 
 - v1: draft.
+- v4, at the freeze: rules for the open cases of PR #9's second round. Graph constants are numbered in source order (fixtures `composable` and `composable-glitch` renumbered). A class expression is never a memo. A split declaration that is a bare statement body is wrapped in a block. `onMount` and `onDestroy` in a function memo's body bind to the scope that holds the memo. `$` and `$sync` in a class field or static block are a compile error.
 - v2: helpers, graph format, ordering, scheduling, lifecycles, stores, composables and errors decided by `reactivity-adr`. `$$scope` replaced by `$$root` and `$$composable`.
 - v4: loop guard (`Update loop`, 10000 entry runs per drain and per `$` flush). Changes from 0.4 reverted where a 0.4 rule works as well: a running entry can be queued, block declarations outside loops get slots, function initializers that read a slot are memos, entries can be called inside expressions, memo initializers can write slots, a class field destructuring write is wrapped, child scopes mount right after their run, dispose follows registration order, composables mount and dispose at the place of their call, store write-backs run at registration and on every change, `$$` and `$composable` run without the compiler, and 0.4 error messages. Compiler change requests from PR #9: slot rule 1 counts writes anywhere in the module, write-backs read their own slot, written bindings are not local functions, trailing empty graph lists are left out, `for (P of e)` keeps the pattern in place, merged imports, parentheses for object and sequence bodies, and compile errors for a non-function `$$` or `$composable` and for a reactive JSX tag.
 - v3: gate decisions and design reviews. `tick` added. Total order between sibling scopes. Children of a queued entry do not run. A running entry is never queued, at any depth. `$sync` registration runs as a running body. Store write-backs run in the memo phase. Errors dispose the scope of the failed run or setup. Memo writes are a compile error. Exact compiler rules: slots (including `var`), reads, names, temps, parenthesized compound forms, in-place destructuring, `for-of` and `for-in` targets, imports, graph placement and compile errors. The `/* $skip */` comment is a compile error.
