@@ -59,6 +59,7 @@ type ImportIdentifiers = {
 interface StateContext {
   hooks: Map<string, t.Identifier>;
   identifiers: ImportIdentifiers;
+  transformed: WeakSet<t.CallExpression>;
 }
 
 function getHookIdentifier(
@@ -442,6 +443,11 @@ function transformSetup(
   if (path.node.arguments.length !== 1) {
     throw new Error(`${type} can only accept a single argument`);
   }
+  // A nested setup is reached by the outer traversal and by the visitor
+  if (ctx.transformed.has(path.node)) {
+    return;
+  }
+  ctx.transformed.add(path.node);
   const isTopLevel = type === '$$' || type === '$composable';
   const arg = path.node.arguments[0];
   const trueArg =
@@ -509,6 +515,7 @@ export default function silmarilPlugin(): PluginObject {
     pre() {
       this.set(STATE_KEY, {
         hooks: new Map(),
+        transformed: new WeakSet(),
         identifiers: {
           $: new Set(),
           $$: new Set(),

@@ -364,3 +364,22 @@ describe('$$ argument', () => {
     );
   });
 });
+
+describe('nested $$', () => {
+  it('should emit one context per setup body', async () => {
+    const result = await compile(`
+    import { $$, $ } from 'silmaril';
+
+    $$(() => {
+      let a = 0;
+      $$(() => {
+        $(console.log(a));
+      });
+      a = 1;
+    });
+    `);
+
+    expect(result?.match(/_\$\$context\(\)/g)).toHaveLength(2);
+    expect(result?.match(/let _ctx\d* = /g)).toHaveLength(2);
+  });
+});
