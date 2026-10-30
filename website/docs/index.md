@@ -22,6 +22,7 @@ Compile-time reactivity for plain JS and TS.
 - [Bundler setup](./bundler-setup.md) adds the compiler to Vite, Rollup, webpack and others.
 - [Basic reactivity](./basic-reactivity.md) starts the guide. [Computed variables](./computed-variables.md), [synchronous tracking](./synchronous-tracking.md), [lifecycles](./lifecycles.md) and [composition](./composition.md) follow it.
 - [Stores](./stores.md) and [SolidJS](./solid.md) connect reactive code with the rest of an app.
+- [API reference](./api.md) lists every export. [Migrating from 0.4](./migration.md) lists what changed. [Internals](./internals.md) and [Limits](./limits.md) explain how the compiler and the runtime work and what they do not track.
 
 ## Inspirations and prior art
 

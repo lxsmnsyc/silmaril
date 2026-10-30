@@ -64,6 +64,8 @@ The compiler reads one module at a time. It cannot see inside a function it does
 - a method call, such as `store.read()`, and a call through a namespace import.
 - a function stored in a variable that is written. The call reads the variable, not what the function reads.
 
+[Limits](./limits.md#functions-the-compiler-cannot-follow) lists every case and how to work around it.
+
 ```js
 import { $$, $ } from 'silmaril';
 import { readPrefix } from './prefix.js';
@@ -106,7 +108,7 @@ A write inside `$skip` is still a write. The comment form `/* $skip */` is a com
 
 A `$` that writes a variable it reads runs again after the write, until the value settles.
 
-One write that runs more than 10,000 entries in one pass throws `Update loop`. A cycle that settles is not an error.
+One write that runs more than 10,000 entries in one pass throws `Update loop`. A cycle that settles is not an error. [Internals](./internals.md#the-loop-guard) explains how the guard counts.
 
 ## TypeScript
 
