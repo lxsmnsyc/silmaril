@@ -248,20 +248,4 @@ describe('codegen constructs', () => {
     expect(code).toContain("[$t0, $t1] = [1, 'x'];");
     expect(code).toContain('({ c: $t2 } = { c: 2 });');
   });
-
-  it('fails on the constructs that codegen-extras compiles', () => {
-    const cases = [
-      `$$(() => { const s = $store(x); });`,
-      `const C = $composable(() => {});`,
-      `$$(() => { onMount(() => {}); });`,
-      `$$(() => { onDestroy(() => {}); });`,
-      `$$(() => { let a = 0; a = 1; log($skip(a)); });`,
-    ];
-    for (const body of cases) {
-      const code = `import { $$, $store, $composable, onMount, onDestroy, $skip } from 'silmaril';\nconst x = null;\n${body}`;
-      expect(() => compileCode(code)).toThrow(
-        'is not supported by the compiler yet.',
-      );
-    }
-  });
 });

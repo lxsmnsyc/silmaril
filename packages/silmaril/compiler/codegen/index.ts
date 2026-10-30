@@ -12,7 +12,7 @@ import type { ModuleModel } from '../analysis/model';
 import { visit } from '../analysis/walk';
 import {
   createContext,
-  failUnsupported,
+  useHelper,
   printGet,
   type GenerateContext,
 } from './context';
@@ -24,7 +24,7 @@ import { rewriteWrite } from './writes';
 
 // Calls of compile-time names.
 function rewriteCall(context: GenerateContext, node: CallExpression): void {
-  const { model } = context;
+  const { s, model } = context;
   const setup = model.setupOf.get(node);
   if (setup) {
     rewriteSetup(context, node, setup);
@@ -36,10 +36,23 @@ function rewriteCall(context: GenerateContext, node: CallExpression): void {
     return;
   }
 
-  // $skip, onMount and onDestroy belong to codegen-extras.
   const name = model.trackedCalls.get(node);
-  if (name === '$skip' || name === 'onMount' || name === 'onDestroy') {
-    failUnsupported(context, name, node);
+  if (name === '$skip') {
+    // `$skip(e)` -> `(e)`
+    const arg = node.arguments[0]!;
+    s.update(node.start, arg.start, '(');
+    s.update(arg.end, node.end, ')');
+    return;
+  }
+  if (name === 'onMount' || name === 'onDestroy') {
+    // `onMount(f)` -> `$$mount(sc, f)`
+    const binding = model.bindingOf.get(node)!;
+    s.update(
+      node.callee.start,
+      node.callee.end,
+      useHelper(context, name === 'onMount' ? '$$mount' : '$$destroy'),
+    );
+    s.appendLeft(node.arguments[0]!.start, `${binding.scope.param}, `);
   }
 }
 

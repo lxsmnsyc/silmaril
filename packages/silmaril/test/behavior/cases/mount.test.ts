@@ -1,13 +1,8 @@
 import { behaviorCases } from '../harness';
 
-// $store, $composable, onMount, onDestroy and $skip compile in codegen-extras,
-// which removes the compiler pipeline from these cases.
-const WAITS_FOR_EXTRAS = { xfail: ['compiler'] };
-
 behaviorCases('onMount', [
   {
     name: 'runs after the setup finishes',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, onMount } from 'silmaril';
       $$(() => {
@@ -22,7 +17,6 @@ behaviorCases('onMount', [
   },
   {
     name: 'runs several callbacks in order',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, onMount } from 'silmaril';
       $$(() => {
@@ -35,7 +29,6 @@ behaviorCases('onMount', [
   },
   {
     name: 'runs once even when the boundary updates',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onMount } from 'silmaril';
       let set;
@@ -55,7 +48,6 @@ behaviorCases('onMount', [
   },
   {
     name: 'runs inside $ each time the effect starts',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onMount } from 'silmaril';
       let set;
@@ -79,7 +71,6 @@ behaviorCases('onMount', [
   },
   {
     name: 'runs inside $sync before the next statement after setup',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, onMount } from 'silmaril';
       $$(() => {
@@ -95,7 +86,6 @@ behaviorCases('onMount', [
   },
   {
     name: 'runs inside a composable',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $composable, onMount } from 'silmaril';
       const useThing = $composable(() => {

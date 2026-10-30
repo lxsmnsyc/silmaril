@@ -1,13 +1,8 @@
 import { behaviorCases } from '../harness';
 
-// $store, $composable, onMount, onDestroy and $skip compile in codegen-extras,
-// which removes the compiler pipeline from these cases.
-const WAITS_FOR_EXTRAS = { xfail: ['compiler'] };
-
 behaviorCases('nested', [
   {
     name: 'restarts a nested $ when the outer variable changes',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       $$(() => {
@@ -27,7 +22,6 @@ behaviorCases('nested', [
   },
   {
     name: 'cleans up a nested effect and starts a fresh one on outer change',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       let set;
@@ -81,7 +75,6 @@ behaviorCases('nested', [
   },
   {
     name: 'destroys nested effects together with the boundary',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       const stop = $$(() => {
@@ -99,7 +92,6 @@ behaviorCases('nested', [
   },
   {
     name: 'gives a nested $$ boundary its own stop callback',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, onDestroy } from 'silmaril';
       $$(() => {
