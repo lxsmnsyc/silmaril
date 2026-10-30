@@ -9,9 +9,11 @@
     "dev": "node scripts/dev.ts",
     "build": "vite build --outDir dist/client && vite build --ssr src/server.ts --outDir dist/server",
     "preview": "node scripts/preview.ts",
-    "type-check": "brumate-tsc --noEmit"
+    "type-check": "brumate-tsc --noEmit",
+    "check:samples": "node scripts/check-samples.ts"
   },
   "dependencies": {
+    "@oxc-parser/binding-wasm32-wasip1": "0.155.0",
     "brumate": "0.3.0",
     "silmaril": "workspace:*"
   },
