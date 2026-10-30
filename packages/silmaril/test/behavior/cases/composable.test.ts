@@ -1,8 +1,13 @@
 import { behaviorCases } from '../harness';
 
+// $store, $composable, onMount, onDestroy and $skip compile in codegen-extras,
+// which removes the compiler pipeline from these cases.
+const WAITS_FOR_EXTRAS = { xfail: ['compiler'] };
+
 behaviorCases('$composable', [
   {
     name: 'composes a derived store',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $composable, $store, onDestroy } from 'silmaril';
       import Store from 'silmaril/store';
@@ -34,6 +39,7 @@ behaviorCases('$composable', [
   },
   {
     name: 'returns a value to the caller',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $composable } from 'silmaril';
       const useAnswer = $composable((n) => n + 1);
@@ -45,6 +51,7 @@ behaviorCases('$composable', [
   },
   {
     name: 'tracks reactive variables with $sync inside the composable',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $composable } from 'silmaril';
       import Store from 'silmaril/store';
@@ -62,6 +69,7 @@ behaviorCases('$composable', [
   },
   {
     name: 'runs onDestroy inside the composable when the boundary is destroyed',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $composable, onDestroy } from 'silmaril';
       const useResource = $composable((name) => {
@@ -83,6 +91,7 @@ behaviorCases('$composable', [
   },
   {
     name: 'gives each call its own state',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $composable } from 'silmaril';
       const useCounter = $composable((label) => {
