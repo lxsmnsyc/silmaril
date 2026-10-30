@@ -23,7 +23,7 @@ $$(() => {
 });
 ```
 
-Computed variables run in declaration order. When every computed variable reads only variables declared before it, each runs at most once per write.
+Computed variables run in declaration order. When every computed variable reads only variables declared before it, and no computed variable writes a variable, each runs at most once per write.
 
 ## Writable computed variables
 

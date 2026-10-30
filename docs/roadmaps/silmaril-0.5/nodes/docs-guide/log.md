@@ -7,3 +7,6 @@
 - The Markdown plugin throws on a link to a page that is not on the site. I linked only to `getting-started.md` and `bundler-setup.md`.
 - Non-live blocks checked with a script (compile each fence with `silmaril/compiler`, wrapped in `$$` when it has no import). 8 blocks, 0 errors.
 - `check_prose.py` on the eight pages: ok.
+- Review fixes: `index-overview` and `basic-reactivity-count` write from a timer so `$` runs twice. Added imports to the `readPrefix` and TypeScript blocks, and the `typeof` example now writes `count`. Solid examples run inside `createRoot`. Nits from the review applied.
+- Recheck of the static blocks asserts the compiled output differs from the source. 8 blocks, one bare fragment (wrapped in `$$`), 0 errors.
+- `check-samples.ts` loads every `scripts/expected-*.ts` and throws on a duplicate sample name. Drop `expected-api.ts`'s own import line when catching up with `roadmap`.

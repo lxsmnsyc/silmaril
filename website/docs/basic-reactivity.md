@@ -8,17 +8,17 @@
 
 ```
 
-The sample logs `Count: 100` and nothing else. The write happens before `$` first runs, and `$` runs in a microtask after the code that wrote. See [synchronous tracking](./synchronous-tracking.md).
+The sample logs `Count: 1`, then `Count: 100`. The write waits for a timer, so it comes after the first run of `$`. A write made in the setup itself would come before that run, and `$` would log once. `$` runs in a microtask after the code that wrote. See [synchronous tracking](./synchronous-tracking.md).
 
 ## Which variables are reactive
 
 A variable declared with `let`, `const` or `var` directly in a setup is reactive when any of these holds.
 
-| Case                                       | Example                        |
-| ------------------------------------------ | ------------------------------ |
-| It is written after its declaration.       | `let count = 0; count += 1;`   |
-| Its initializer reads a reactive variable. | `const double = count * 2;`    |
-| It binds a store.                          | `const value = $store(store);` |
+| Case                                                          | Example                        |
+| ------------------------------------------------------------- | ------------------------------ |
+| It is a `let` or `var` that is written after its declaration. | `let count = 0; count += 1;`   |
+| Its initializer reads a reactive variable.                    | `const double = count * 2;`    |
+| It binds a store.                                             | `const value = $store(store);` |
 
 Other rules:
 
@@ -65,6 +65,7 @@ The compiler reads one module at a time. It cannot see inside a function it does
 - a function stored in a variable that is written. The call reads the variable, not what the function reads.
 
 ```js
+import { $$, $ } from 'silmaril';
 import { readPrefix } from './prefix.js';
 
 $$(() => {
@@ -109,12 +110,18 @@ One write that runs more than 10,000 entries in one pass throws `Update loop`. A
 
 ## TypeScript
 
-A reactive variable keeps its type. In a type position, `typeof count` still names the variable.
+A reactive variable keeps its type. In a type position, `typeof count` still names the variable, even though the compiler replaces reads of `count` in code.
 
 ```ts
+import { $$ } from 'silmaril';
+
 $$(() => {
   let count = 0;
+  count += 1;
+
+  // `Count` is `number`, and `count` is still the reactive variable
   type Count = typeof count;
+  const next: Count = count + 1;
 });
 ```
 

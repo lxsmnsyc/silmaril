@@ -1,7 +1,7 @@
 // The logs that `check-samples.ts` asserts for the samples of the guide pages.
 export default {
-  'samples/index-overview.js': ['21 doubled is 42'],
-  'samples/basic-reactivity-count.js': ['Count: 100'],
+  'samples/index-overview.js': ['1 doubled is 2', '21 doubled is 42'],
+  'samples/basic-reactivity-count.js': ['Count: 1', 'Count: 100'],
   'samples/basic-reactivity-tracking.js': ['Count: 0', 'Total: 0'],
   'samples/computed-variables-message.js': ['Count: 100'],
   'samples/computed-variables-writable.js': [

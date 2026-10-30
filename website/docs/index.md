@@ -2,7 +2,7 @@
 
 Compile-time reactivity for plain JS and TS.
 
-`$$` defines a reactive boundary. Variables declared inside it are reactive, and `$` reacts when they change. The compiler works out which code reads which variable, so a write runs only the code that reads the written variable.
+`$$` defines a reactive boundary. A variable declared inside it is reactive when it is written, reads another reactive variable or binds a store. `$` reacts when such a variable changes. The compiler works out which code reads which variable, so a write runs only the code that reads the written variable.
 
 ```js live index-overview.js
 

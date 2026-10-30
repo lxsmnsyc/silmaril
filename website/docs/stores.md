@@ -10,7 +10,7 @@ Reactivity is limited to `$$`. A store passes values across that boundary: to ev
 
 The variable `current` holds the value of the store.
 
-- A write to `current` calls `store.set`.
+- A write to `current` calls `store.set`. This applies to `let` only.
 - A change of the store writes `current`.
 - `$sync` and `$` track `current` like any reactive variable.
 

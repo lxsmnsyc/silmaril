@@ -27,6 +27,7 @@ Entries that wait for the same phase run in this order:
 
 1. An entry in a scope closer to its `$$` runs before an entry in a deeper scope.
 2. Entries in the same scope run in the order of their declaration. `$sync` bodies keep source order, and so do `$` bodies.
+3. Scopes of the same depth compare at their closest common ancestor. The branch with the lower entry id runs first, and a composable runs after the entry scopes of its parent, in call order.
 
 A write runs its phases in this order:
 

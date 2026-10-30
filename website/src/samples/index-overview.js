@@ -6,5 +6,8 @@ $$(() => {
 
   $(console.log(`${count} doubled is ${double}`));
 
-  count = 21;
+  // Writes after the first run, so the log shows the change
+  setTimeout(() => {
+    count = 21;
+  }, 10);
 });

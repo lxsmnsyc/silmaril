@@ -9,26 +9,28 @@ Both functions go through the store interface of `$store`: `get`, `set` and `sub
 Turns a Solid signal into a store that `$store` can bind.
 
 ```js
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, createRoot } from 'solid-js';
 import { fromSignal } from 'silmaril/solid';
 import { $$, $sync, $store } from 'silmaril';
 
-const [count, setCount] = createSignal(0);
+createRoot(() => {
+  const [count, setCount] = createSignal(0);
 
-const countStore = fromSignal([count, setCount]);
+  const countStore = fromSignal([count, setCount]);
 
-createEffect(() => {
-  console.log('SolidJS Count:', count());
-});
+  createEffect(() => {
+    console.log('SolidJS Count:', count());
+  });
 
-$$(() => {
-  let counter = $store(countStore);
+  $$(() => {
+    let counter = $store(countStore);
 
-  $sync(console.log('Silmaril Count:', counter));
+    $sync(console.log('Silmaril Count:', counter));
 
-  setInterval(() => {
-    counter += 1;
-  }, 1000);
+    setInterval(() => {
+      counter += 1;
+    }, 1000);
+  });
 });
 ```
 
@@ -39,28 +41,30 @@ The store reads the signal without tracking it. `set` writes the signal. `subscr
 Turns a store into a Solid signal.
 
 ```js
-import { createEffect } from 'solid-js';
+import { createEffect, createRoot } from 'solid-js';
 import { fromStore } from 'silmaril/solid';
 import { $$, $sync, $store } from 'silmaril';
 import Store from 'silmaril/store';
 
 const countStore = new Store(0);
 
-const [count, setCount] = fromStore(countStore);
+createRoot(() => {
+  const [count, setCount] = fromStore(countStore);
 
-$$(() => {
-  let counter = $store(countStore);
+  $$(() => {
+    let counter = $store(countStore);
 
-  $sync(console.log('Silmaril Count:', counter));
+    $sync(console.log('Silmaril Count:', counter));
+  });
+
+  createEffect(() => {
+    console.log('SolidJS Count:', count());
+  });
+
+  setInterval(() => {
+    setCount((current) => current + 1);
+  }, 1000);
 });
-
-createEffect(() => {
-  console.log('SolidJS Count:', count());
-});
-
-setInterval(() => {
-  setCount((current) => current + 1);
-}, 1000);
 ```
 
 `fromStore` registers an effect and a cleanup, so call it inside a Solid owner such as a component or `createRoot`. The effect writes the signal to the store when the store has `set`. The cleanup unsubscribes when the owner is disposed.
