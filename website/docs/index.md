@@ -1,21 +1,26 @@
 # silmaril
 
-Compile-time reactivity for JS.
+Compile-time reactivity for plain JS and TS.
 
-`$$` defines a reactive boundary. Variables declared inside it are reactive, and `$` reacts when they change.
+`$$` defines a reactive boundary. A variable declared inside it is reactive when it is written, reads another reactive variable or binds a store. `$` reacts when such a variable changes. The compiler works out which code reads which variable, so a write runs only the code that reads the written variable.
+
+```js live index-overview.js
+
+```
 
 ## Features
 
-- Compile-time reactivity
-- Minimal reactive runtime
-- Auto-memoization
-- Stores
+- Compile-time reactivity. `silmaril/compiler` finds the reactive variables and the code that reads them.
+- Static reactive graph. A write runs only the code that reads the written variable.
+- Minimal runtime. `silmaril` has no dependencies and ships less than 1.5 kB gzipped.
+- Auto-memoization. A computed variable runs again only when a variable it reads changes.
+- Stores. `$store` binds any store with `get` and `subscribe` to a variable.
 
 ## Where to go next
 
 - [Getting started](./getting-started.md) installs the package and lists the requirements.
 - [Bundler setup](./bundler-setup.md) adds the compiler to Vite, Rollup, webpack and others.
-- [Basic reactivity](./basic-reactivity.md) starts the guide.
+- [Basic reactivity](./basic-reactivity.md) starts the guide. [Computed variables](./computed-variables.md), [synchronous tracking](./synchronous-tracking.md), [lifecycles](./lifecycles.md) and [composition](./composition.md) follow it.
 - [Stores](./stores.md) and [SolidJS](./solid.md) connect reactive code with the rest of an app.
 
 ## Inspirations and prior art

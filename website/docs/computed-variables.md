@@ -1,25 +1,16 @@
 # Computed variables
 
-If a reactive variable references another, the variable becomes computed, which means that it will re-evaluate everytime the referenced variables changes.
+A variable whose initializer reads a reactive variable is computed. It evaluates again each time a variable it reads changes.
 
-```js
-import { $$, $ } from 'silmaril';
+```js live computed-variables-message.js
 
-$$(() => {
-  // Create a "reactive" variable
-  let count = 0;
-
-  // Create a "reactive" const variable.
-  const message = `Count: ${count}`;
-
-  // This only tracks `message`
-  $(console.log(message));
-
-  count = 100; // Logs 'Count: 100'
-});
 ```
 
-Updates on computed variables are synchronous.
+`message` is computed because it reads `count`. `$` tracks `message`, so the write to `count` runs it.
+
+## Updates are synchronous
+
+The compiler records which computed variables read each variable. A write updates them before it returns. Code after the write reads the new values.
 
 ```js
 import { $$ } from 'silmaril';
@@ -27,22 +18,31 @@ import { $$ } from 'silmaril';
 $$(() => {
   let count = 0;
   const message = `Count: ${count}`;
-  count = 100; // message = Count: 100
-  count = 200; // message = Count: 200
+  count = 100; // message is now 'Count: 100'
+  count = 200; // message is now 'Count: 200'
 });
 ```
 
-Computed variables are also writable if declared with `let`.
+Computed variables run in declaration order. When every computed variable reads only variables declared before it, and no computed variable writes a variable, each runs at most once per write.
 
-```js
-import { $$, $sync } from 'silmaril';
+## Writable computed variables
 
-$$(() => {
-  let count = 0;
-  let message = `Count: ${count}`;
-  $sync(console.log('Log', message)); // Log Count: 0
-  count = 100; // Log Count: 100
-  message = 'Hello World'; // Log Hello World
-  count = 200; // Log Count: 200
-});
+A computed variable declared with `let` can also be written. The next change to a variable it reads replaces the value.
+
+```js live computed-variables-writable.js
+
 ```
+
+## Declaration forms
+
+- Destructuring declarations compute all their names together: `const { width, height } = size;`.
+- A function or arrow initializer that reads a reactive variable is computed. Its value is a new function each time that variable changes.
+- A class expression is never computed, even if the class reads a reactive variable.
+- Only the initializer counts. A reactive variable read in a default value of a declaration pattern does not make the declaration computed.
+- A computed variable can write other reactive variables. The write runs in the same pass as the write that caused it.
+- If the initializer throws, the variable keeps its old value and the error reaches the caller of the write.
+
+## Limits
+
+- A computed variable reads reactive variables through the code it contains and through local functions it calls by name. A function imported from another module is opaque. See [basic reactivity](./basic-reactivity.md).
+- Mutating an object in place does not update the variables that read it.

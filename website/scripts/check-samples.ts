@@ -2,7 +2,6 @@
 // compiling or that throws fails the check. It runs the same code as the page.
 import { readFileSync, readdirSync } from 'node:fs';
 import MarkdownIt from 'markdown-it';
-import migrationLogs from './expected-docs-migration.ts'; // temporary, until docs-guide loads expected-*.ts
 import { importsSilmaril, runModule, runSample } from '../src/live/run.ts';
 
 interface Sample {
@@ -15,8 +14,6 @@ const EXPECTED: Record<string, string[]> = {
   'samples/counter.js': ['Count: 100'],
   'samples/computed.js': ['21 doubled is 42'],
 };
-
-Object.assign(EXPECTED, migrationLogs); // temporary
 
 const parser = new MarkdownIt();
 const samples: Sample[] = [];
@@ -75,6 +72,20 @@ async function checkDispose(): Promise<string | undefined> {
     return 'the interval of the sample kept running after a new run';
   }
   return undefined;
+}
+
+// Logs of the docs pages, kept in one `expected-*.ts` file per page group.
+for (const file of readdirSync(new URL('./', import.meta.url)).toSorted()) {
+  if (/^expected-.+\.ts$/.test(file)) {
+    const records: Record<string, string[]> = (await import(`./${file}`))
+      .default;
+    for (const [name, logs] of Object.entries(records)) {
+      if (name in EXPECTED) {
+        throw new Error(`${file}: duplicate expected logs for ${name}`);
+      }
+      EXPECTED[name] = logs;
+    }
+  }
 }
 
 // `--strict` also fails on samples that were compiled and not run. Turn it on in CI once

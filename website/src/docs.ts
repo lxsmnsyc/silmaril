@@ -21,6 +21,7 @@ for (const [file, page] of Object.entries(files)) {
 
 /** Shorter names for the sidebar, where the title of a page is long. */
 const labels: Record<string, string> = {
+  api: 'API reference',
   'bundler-setup': 'Bundler setup',
   'basic-reactivity': 'Basic reactivity',
   'computed-variables': 'Computed variables',
@@ -33,7 +34,7 @@ export const sections: {
   title: string;
   pages: { slug: string; title: string }[];
 }[] = [
-  { title: 'Start', pages: ['', 'getting-started', 'bundler-setup'] },
+  { title: 'Start', pages: ['', 'getting-started', 'bundler-setup', 'api'] },
   {
     title: 'Guide',
     pages: [
