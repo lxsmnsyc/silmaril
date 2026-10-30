@@ -2,7 +2,7 @@
 // text maps to itself. One test per construct.
 import { SourceMap, type SourceMapPayload } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { compile } from '../../../compiler/index';
+import { compileChecked } from './helpers';
 
 interface Position {
   line: number;
@@ -46,7 +46,7 @@ function mapTexts(
   source: string,
   mappings: Mapping[],
 ): { got: (Located | null)[]; want: Located[] } {
-  const result = compile(source, { filename: 'input.js' });
+  const result = compileChecked(source);
   const map = new SourceMap(result.map as unknown as SourceMapPayload);
   const generatedStart = Math.max(result.code.indexOf('$$root($'), 0);
   const originalStart = Math.max(source.indexOf('$$(('), 0);
@@ -181,7 +181,7 @@ describe('codegen source maps', () => {
 
   it('maps the rewritten import', () => {
     const source = `${IMPORT}$$(() => {});\n`;
-    const result = compile(source, { filename: 'input.js' });
+    const result = compileChecked(source);
     const map = new SourceMap(result.map as unknown as SourceMapPayload);
     expect(result.code.startsWith('import {')).toBe(true);
     expect(map.findEntry(0, 0)).toMatchObject({

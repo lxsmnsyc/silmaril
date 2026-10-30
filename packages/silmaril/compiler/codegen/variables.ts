@@ -92,7 +92,7 @@ function openDeclarator(
     const memo = `${useHelper(context, '$$memo')}(${record.scope.param}, ${entry.id}, ${entry.slot}, ${param} => `;
     if (declarator.id.type === 'Identifier') {
       // `const y = e` -> `$$memo(sc, n, k, () => e);`
-      const wrap = needsParens(init);
+      const wrap = needsParens(context.code, init);
       s.update(regionStart, init.start, `${lead}${memo}${wrap ? '(' : ''}`);
       return `${wrap ? ')' : ''});`;
     }
@@ -132,6 +132,12 @@ function openDeclarator(
   // `let [a, b] = e` -> `[$t0, $t1] = e; $$set(sc, k, $t0); $$set(sc, j, $t1);`
   const object = declarator.id.type === 'ObjectPattern';
   s.update(regionStart, declarator.id.start, `${lead}${object ? '(' : ''}`);
+
+  // An assignment pattern takes no type annotation: `let [a]: [number] = e`.
+  const annotation = declarator.id.typeAnnotation;
+  if (annotation) {
+    s.update(annotation.start, annotation.end, '');
+  }
   const list = renamePattern(
     context,
     createDeclaratorSite(context, declarator),

@@ -13,9 +13,9 @@
 - `compiler/index.ts` calls `generate(s, model)`. `silmaril/compiler` now emits code.
 - Tests in `packages/silmaril/test/compiler/codegen/`:
   - `fixtures.test.ts`: 36 fixtures compile to text equal to `output.js` (after the prototype's normalization: no comments, canonical graphs, oxfmt, blank lines dropped) and log `expected.json` on `src/v2`. 7 compile-error fixtures throw. 18 fixtures are in `WAITING_FOR_EXTRAS` and are checked to throw the "not supported" error.
-  - `constructs.test.ts`: 10 tests for what no fixture covers: loop and `for` init redeclares, `for (var x of e)` heads, `var` pattern redeclares, the bare-body block wrap, split declarators around slots with no initializer, expression-bodied entry temps, compound/logical/update, TypeScript wrappers and a `this` parameter, renamed helpers and temps, import merging, and the extras errors.
+  - `constructs.test.ts`: 13 tests for what no fixture covers: loop and `for` init redeclares, `for (var x of e)` heads, `var` pattern redeclares, the bare-body block wrap, split declarators around slots with no initializer, expression-bodied entry temps, compound/logical/update, TypeScript wrappers and a `this` parameter, arrow bodies that start with `{` (`{ n }.n`, `{ n } as const`, `{ n } satisfies T`), typed destructuring declarators, renamed helpers and temps, import merging, and the extras errors.
   - `sourcemap.test.ts`: 10 tests, one per construct (setup, state and reads, memo and function memo, destructuring memo, `$sync`/`$`, writes, destructuring, for-of, nested setup and redeclare, import).
-  - `helpers.ts`: fixture loading, text normalization, the runner protocol.
+  - `helpers.ts`: fixture loading, text normalization, the runner protocol, and `compileChecked`, which parses every compiled output again for its language. All codegen tests compile through it.
 - `packages/silmaril/test/behavior/pipelines/compiler.ts`: pipeline `compiler` (compiler and `src/v2`, from source, `.ts` imports). All 67 + 1 cases run on it: 41 pass, 27 are `xfail: ['compiler']` waiting for codegen-extras. The 4 `limits` cases (0.4 known limits) pass on it.
 
 ### For codegen-extras
@@ -52,6 +52,9 @@
 - Temps that the code declares itself (`const $t0` in a loop head, temps inside a `var` pattern) go in `context.declaredTemps` and get no `let`. Pass `declared = true` to `takeTemp`/`renamePattern` for those.
 - The behavior pipeline catches only the "not supported" CompileError and returns `log(<message>)`, so xfail sees a log mismatch, not an error. Other errors still throw.
 - The fixture text test spawns `node_modules/.bin/oxfmt` twice per fixture (about 3 s for the file).
+- A memo or expression entry whose source text starts with `{` gets `() => (...)`, not only a bare object literal. A sequence too.
+- A destructuring declarator that becomes an assignment loses its TS type annotation (`let [a]: [number] = e` gives `[$t0] = e;`).
+- For the docs: `type T = typeof n` naming a slot binding is left as written, because types are not walked. The output no longer declares `n`, so type-checking the compiled output would fail there. Types are erased before the code runs, so run time is not affected.
 - `insertParam` puts the scope parameter after a TypeScript `this` parameter.
 - Inside a `$sync` body, writes do not rerun other `$sync` bodies until the body returns. A test that writes from inside a body sees one run with both values.
 
@@ -62,7 +65,7 @@
 
 ## Verification
 
-- `pnpm --filter silmaril test` (the brief's `verify`): 24 files, 552 tests pass (118 in `test/compiler/codegen/`, 146 in `test/behavior/`).
+- `pnpm --filter silmaril test` (the brief's `verify`): 24 files, 555 tests pass (121 in `test/compiler/codegen/`, 146 in `test/behavior/`).
 - Fast check `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint`: passes.
 - `pnpm format:check`: passes.
 - No dependency added. Changeset `.changeset/silmaril-compiler-codegen-core.md` (patch: `silmaril/compiler` was added by an unreleased minor changeset, and this changes what it emits).

@@ -145,9 +145,12 @@ export function takeTemp(
   return name;
 }
 
-/** True when the expression must be parenthesized as an arrow body. */
-export function needsParens(node: Node): boolean {
-  return node.type === 'ObjectExpression' || node.type === 'SequenceExpression';
+/**
+ * True when the expression must be parenthesized as an arrow body: its text starts
+ * with `{` (an object literal, `{ n }.n`, `{ n } as const`), or it is a sequence.
+ */
+export function needsParens(code: string, node: Node): boolean {
+  return code[node.start] === '{' || node.type === 'SequenceExpression';
 }
 
 /**

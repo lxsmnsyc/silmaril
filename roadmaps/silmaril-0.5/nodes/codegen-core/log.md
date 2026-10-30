@@ -5,3 +5,4 @@
 - Fixed two proto gaps for the v3 write sites: `var` pattern redeclares lost their `var` (undeclared plain names), and `for (var [a] of e)` temps got both `var` and `let`.
 - Behavior pipeline `compiler`: 27 extras cases marked `xfail: ['compiler']` (the pipeline turns the "not supported" error into a log line so xfail sees a mismatch). Two cases stated 0.4 behavior that contract v4 changes (`$` queued then value restored, nested entry reads). They now state 0.5, and `xfail: ['babel']`, flagged in the outcome.
 - `.ts` imports in the pipeline need `allowImportingTsExtensions` in `packages/silmaril/tsconfig.json` (deviation). `compile.test.ts` asserted the stub and now asserts the output (deviation).
+- Review 5709256062: arrow bodies now get parentheses when their text starts with `{` (`{ n }.n`, `{ n } as const`), typed destructuring declarators lose the annotation, and every codegen test re-parses its output with oxc (`compileChecked`).

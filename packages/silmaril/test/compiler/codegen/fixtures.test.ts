@@ -3,7 +3,13 @@
 // its logs with expected.json. Every compile-error fixture throws its message.
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../../compiler/index';
-import { loadFixtures, normalize, runLogs, type Fixture } from './helpers';
+import {
+  compileChecked,
+  loadFixtures,
+  normalize,
+  runLogs,
+  type Fixture,
+} from './helpers';
 
 // Fixtures that need $store, $composable, onMount, onDestroy or $skip. Their code
 // generation belongs to codegen-extras, which empties this list.
@@ -61,11 +67,11 @@ describe('codegen fixtures', () => {
 
   for (const { name, input, output, expected } of compiledFixtures) {
     it(`fixture ${name} text matches output.js`, () => {
-      const { code } = compile(input, { filename: 'input.js' });
+      const { code } = compileChecked(input);
       expect(normalize(code)).toBe(normalize(output!));
     });
     it(`fixture ${name} logs match expected.json`, async () => {
-      const { code } = compile(input, { filename: 'input.js' });
+      const { code } = compileChecked(input);
       expect(await runLogs(code)).toStrictEqual(expected.logs);
     });
   }

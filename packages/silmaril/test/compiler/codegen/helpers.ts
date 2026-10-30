@@ -5,6 +5,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Node } from 'oxc-parser';
 import type { Ref } from '../../../compiler/analysis/model';
+import { compile, type CompileResult } from '../../../compiler/index';
 import { parseModule } from '../../../compiler/source';
 import * as runtime from '../../../src/v2';
 
@@ -16,6 +17,19 @@ export interface Fixture {
   input: string;
   output: string | null;
   expected: { description: string; logs?: unknown[][]; compileError?: string };
+}
+
+/**
+ * Compiles `code` and parses the output again for the same language. Throws when
+ * the output does not parse, so every codegen test also checks the syntax.
+ */
+export function compileChecked(
+  code: string,
+  filename = 'input.js',
+): CompileResult {
+  const result = compile(code, { filename });
+  parseModule(result.code, filename);
+  return result;
 }
 
 export function loadFixtures(): Fixture[] {

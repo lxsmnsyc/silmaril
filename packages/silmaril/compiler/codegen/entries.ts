@@ -108,7 +108,7 @@ export function rewriteEntry(
 
   // Any other argument is wrapped: `() => expr`, `() => ({ ... })`.
   const param = child.paramUsed ? `(${child.param})` : '()';
-  const wrap = needsParens(body) && arg.type !== 'ParenthesizedExpression';
+  const wrap = needsParens(context.code, arg);
   s.appendLeft(
     arg.start,
     `${owner.param}, ${entry.id}, ${param} => ${wrap ? '(' : ''}`,

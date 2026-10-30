@@ -1,11 +1,10 @@
 // Constructs that no runtime fixture covers: loop redeclares, `for` inits, `var`
 // patterns, split declarations, TypeScript, and generated names that a user name takes.
 import { describe, expect, it } from 'vitest';
-import { compile } from '../../../compiler/index';
-import { runLogs } from './helpers';
+import { compileChecked, runLogs } from './helpers';
 
 function compileCode(code: string, filename = 'input.js'): string {
-  return compile(code, { filename }).code;
+  return compileChecked(code, filename).code;
 }
 
 describe('codegen constructs', () => {
@@ -190,6 +189,64 @@ describe('codegen constructs', () => {
     );
     expect(code).not.toContain("import { $ } from 'silmaril';");
     expect(await runLogs(code)).toStrictEqual([['a', 1]]);
+  });
+
+  it('wraps every arrow body whose text starts with a brace', async () => {
+    const code = compileCode(`
+      import { $$, $sync } from 'silmaril';
+      $$(() => {
+        let n = 1;
+        const v = { n }.n;
+        $sync({ n }.n && log('v', v));
+        n = 2;
+      });
+    `);
+    expect(code).toContain('() => ({ n: $$get($s, 0) }.n)');
+    expect(code).toContain(
+      "() => ({ n: $$get($s, 0) }.n && log('v', $$get($s, 1)))",
+    );
+    expect(await runLogs(code)).toStrictEqual([
+      ['v', 1],
+      ['v', 2],
+    ]);
+  });
+
+  it('wraps object bodies behind TypeScript wrappers', () => {
+    const code = compileCode(
+      `
+      import { $$, $sync } from 'silmaril';
+      type T = { n: number };
+      $$(() => {
+        let n = 1;
+        const a = { n } as const;
+        const b = { n } satisfies T;
+        $sync({ n } as T);
+        n = 2;
+      });
+    `,
+      'input.ts',
+    );
+    expect(code).toContain('() => ({ n: $$get($s, 0) } as const)');
+    expect(code).toContain('() => ({ n: $$get($s, 0) } satisfies T)');
+    expect(code).toContain('() => ({ n: $$get($s, 0) } as T)');
+  });
+
+  it('drops the type annotation of a destructuring declarator', () => {
+    const code = compileCode(
+      `
+      import { $$ } from 'silmaril';
+      $$(() => {
+        let [a, b]: [number, string] = [1, 'x'];
+        let { c }: { c: number } = { c: 2 };
+        a = 3;
+        c = 4;
+        log(a, b, c);
+      });
+    `,
+      'input.ts',
+    );
+    expect(code).toContain("[$t0, $t1] = [1, 'x'];");
+    expect(code).toContain('({ c: $t2 } = { c: 2 });');
   });
 
   it('fails on the constructs that codegen-extras compiles', () => {
