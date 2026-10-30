@@ -4,7 +4,6 @@ import type { Node, VariableDeclaration, VariableDeclarator } from 'oxc-parser';
 import type { TempOwner, WriteSite } from '../analysis/model';
 import { visit } from '../analysis/walk';
 import {
-  failUnsupported,
   needsParens,
   printSet,
   printSetOpen,
@@ -82,7 +81,19 @@ function openDeclarator(
   const init = declarator.init;
 
   if (record?.kind === 'store') {
-    return failUnsupported(context, '$store', declarator);
+    // `const x = $store(e)` -> `$$store(sc, k, e);`, with the write-back entry
+    // id for a `let`: `$$store(sc, k, e, n);`
+    const arg = record.store!.arguments[0]!;
+    const id = record.entry ? `, ${record.entry.id}` : '';
+    s.update(
+      regionStart,
+      arg.start,
+      `${lead}${useHelper(context, '$$store')}(${record.scope.param}, ${record.slots[0]!.index}, `,
+    );
+    if (declarator.init && arg.end < declarator.init.end) {
+      s.update(arg.end, declarator.init.end, '');
+    }
+    return `${id});`;
   }
 
   if (record?.kind === 'memo' && init) {

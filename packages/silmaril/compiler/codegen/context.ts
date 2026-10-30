@@ -4,7 +4,6 @@ import type { MagicString } from 'magic-string';
 import type { Node } from 'oxc-parser';
 import type { ModuleModel, Slot, TempOwner } from '../analysis/model';
 import { visit } from '../analysis/walk';
-import { CompileError } from '../errors';
 
 /** The helpers of the runtime, in the order of the contract's export table. */
 export const HELPERS = [
@@ -151,20 +150,4 @@ export function takeTemp(
  */
 export function needsParens(code: string, node: Node): boolean {
   return code[node.start] === '{' || node.type === 'SequenceExpression';
-}
-
-/**
- * A construct whose code generation belongs to `codegen-extras` ($store,
- * $composable, onMount, onDestroy, $skip). It throws until that node lands.
- */
-export function failUnsupported(
-  context: GenerateContext,
-  name: string,
-  node: Node,
-): never {
-  throw new CompileError(
-    `${name} is not supported by the compiler yet.`,
-    context.code,
-    node.start,
-  );
 }

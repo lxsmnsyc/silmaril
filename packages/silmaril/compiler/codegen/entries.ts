@@ -9,12 +9,7 @@ import type {
 import type { Entry, ReactiveScope } from '../analysis/model';
 import { isFunctionNode } from '../analysis/scope';
 import { unwrap } from '../analysis/walk';
-import {
-  failUnsupported,
-  needsParens,
-  useHelper,
-  type GenerateContext,
-} from './context';
+import { needsParens, useHelper, type GenerateContext } from './context';
 
 /** Adds the scope parameter in front of the parameters of a scope body. */
 export function insertParam(
@@ -58,17 +53,18 @@ export function insertParam(
   s.appendLeft(code.indexOf('(', from) + 1, param);
 }
 
-/** `$$(fn)` -> `$$root($g0, ($s) => ...)`. */
+/** `$$(fn)` -> `$$root($g0, ($s) => ...)`, `$composable` -> `$$composable(...)`. */
 export function rewriteSetup(
   context: GenerateContext,
   call: CallExpression,
   scope: ReactiveScope,
 ): void {
-  if (scope.kind === 'composable') {
-    failUnsupported(context, '$composable', call);
-  }
   const { s } = context;
-  s.update(call.callee.start, call.callee.end, useHelper(context, '$$root'));
+  s.update(
+    call.callee.start,
+    call.callee.end,
+    useHelper(context, scope.kind === 'root' ? '$$root' : '$$composable'),
+  );
   s.appendLeft(call.arguments[0]!.start, `${scope.graphName}, `);
   insertParam(
     context,
