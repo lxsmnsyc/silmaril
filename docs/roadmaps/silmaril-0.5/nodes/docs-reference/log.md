@@ -6,3 +6,4 @@
 - New samples: `api-skip.js`, `api-store.js`, `api-tick.js`.
 - Signatures checked with a script that normalizes each statement in `packages/silmaril/dist/*.d.mts` and looks for it in `api.md`.
 - `Store` class listeners receive the new value at run time although the `.d.ts` types the callback as `() => void`. The page follows the `.d.ts` and says the value is passed.
+- Review fixes: `$` first run described as a microtask flush, `$composable` named as an exception, `api-skip.js` rewritten so `b` is written alone after `tick()`, logs of the three `api-*` samples asserted through `website/scripts/expected-api.ts`, Store interface documented as the custom-store contract, Rollup order advice relaxed, `vite` and `index.html` added to getting started, 0.4 and Babel mentions removed, `{ts,tsx}` include note, microtask rethrow of `$` errors.

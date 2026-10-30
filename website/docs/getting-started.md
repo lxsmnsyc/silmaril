@@ -23,7 +23,13 @@ yarn add silmaril
 pnpm add silmaril
 ```
 
-`silmaril` compiles your code at build time with `silmaril/compiler`, which uses [oxc-parser](https://oxc.rs/) and [magic-string](https://github.com/Rich-Harris/magic-string). Both install with `silmaril`. There is no Babel step. The runtime (`silmaril`, `silmaril/store` and `silmaril/solid`) has no dependencies.
+This page also uses Vite.
+
+```bash
+npm install --save-dev vite
+```
+
+`silmaril` compiles your code at build time with `silmaril/compiler`, which uses [oxc-parser](https://oxc.rs/) and [magic-string](https://github.com/Rich-Harris/magic-string). Both install with `silmaril`. The runtime (`silmaril`, `silmaril/store` and `silmaril/solid`) has no dependencies.
 
 ## Add the plugin
 
@@ -50,6 +56,12 @@ Put this in `src/main.js`.
 ```
 
 `$$` is the reactive boundary. `count` is reactive because the code writes it after its declaration. `$` runs again when a variable it reads changes. The edits to `count` are batched, so the log runs once, after the code that wrote it.
+
+Load it from `index.html` at the project root:
+
+```html
+<script type="module" src="/src/main.js"></script>
+```
 
 Start the dev server with `npx vite`. The console shows `Count: 100`.
 

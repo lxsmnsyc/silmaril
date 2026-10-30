@@ -20,6 +20,8 @@ export default defineConfig({
 });
 ```
 
+This `include` skips `.js` files. Leave `filter` out to compile every script file.
+
 ## Rollup
 
 ```js
@@ -33,7 +35,7 @@ export default {
 };
 ```
 
-Rollup does not read TypeScript or JSX. Compiled output keeps the syntax of the source. Add a plugin for that syntax (for example `@rollup/plugin-typescript`) after `silmaril.rollup()`. Add a resolver such as `@rollup/plugin-node-resolve` for `silmaril` itself.
+Rollup does not read TypeScript or JSX. Compiled output keeps the syntax of the source. Add a plugin for that syntax (for example `@rollup/plugin-typescript`). It works before or after `silmaril.rollup()`. Add a resolver such as `@rollup/plugin-node-resolve` for `silmaril` itself.
 
 ## Other bundlers
 
@@ -58,8 +60,6 @@ interface SilmarilPluginOptions {
 `FilterPattern` comes from `unplugin`: a string, a `RegExp`, or an array of them.
 
 The plugin also skips any module whose code does not contain the text `silmaril`. A module that imports no compile-time name comes back unchanged.
-
-The 0.4 `babel` option is gone, because 0.5 has no Babel step.
 
 ### Query strings and sub-modules
 

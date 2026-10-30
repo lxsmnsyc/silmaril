@@ -5,6 +5,7 @@
 - `website/docs/getting-started.md`: requirements, install, `silmaril.vite()` in `vite.config.js`, a first example (live `counter.js`), next steps. No Babel.
 - `website/docs/bundler-setup.md`: Vite, Rollup, the other unplugin members, the options (`filter.include`, `filter.exclude`), how ids with queries are named, the deprecated Rollup and Vite packages, and the browser compiler setup (wasm binding at the `oxc-parser` version, `@napi-rs/wasm-runtime` pinned to 1.2.5, Vite `optimizeDeps.exclude`, top-level await target, `ready()`).
 - `website/docs/api.md`: every export of `silmaril`, `silmaril/store`, `silmaril/solid`, `silmaril/compiler` and `silmaril/unplugin` with signature and short example. Runtime helper functions (`$$root`, `$$set` and the rest) are listed as compiler targets, not for direct use.
+- `website/scripts/expected-api.ts` and one `Object.assign` line in `website/scripts/check-samples.ts` (shared file) assert the sample logs.
 - `website/src/docs.ts`: `api` in the Start section, labeled `API reference`.
 - Samples: `website/src/samples/api-skip.js`, `api-store.js`, `api-tick.js` (live in `api.md`).
 
@@ -20,8 +21,7 @@
 ## Gotchas
 
 - `Store` from `silmaril/store` passes the new value to listeners, but its `.d.ts` types `subscribe(callback: () => void)`. The API page follows the `.d.ts`.
-- Samples have no asserted logs (`EXPECTED` in `check-samples.ts` covers only the first two); they are checked to run.
-- The Rollup section's advice about TypeScript plugins was not run against a Rollup project.
+- The logs of the `api-*` samples are asserted in `website/scripts/expected-api.ts`, merged into `EXPECTED` by one line in `check-samples.ts`.
 
 ## Proposed learnings
 

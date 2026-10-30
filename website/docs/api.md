@@ -12,7 +12,7 @@ Every export of `silmaril`, by subpath. Signatures are copied from the built `.d
 
 ## `silmaril`
 
-The compile-time names exist so that your code type-checks. The compiler removes them from the output, so calling one in a module that was not compiled throws. The one exception is `$$`, described below.
+The compile-time names exist so that your code type-checks. The compiler removes them from the output, so calling one in a module that was not compiled throws. The exceptions are `$$` and `$composable`, described below.
 
 ### `$$`
 
@@ -42,7 +42,7 @@ In a module that was not compiled, `$$` runs `setup` once with no reactivity.
 declare const $: <T>(value: T) => void;
 ```
 
-Runs its argument now and again after a write to a variable it reads. Reruns are batched and run in a microtask. The argument is an expression or a function expression. It tracks the variables read in the call, and in the local functions the call names. Throws `$ is meant to be compile-time only.` in a module that was not compiled.
+Runs its argument in a microtask flush after the code that queued it, and again after a write to a variable it reads. Runs are batched. The argument is an expression or a function expression. It tracks the variables read in the call, and in the local functions the call names. An error thrown in a `$` body is rethrown from a microtask, after the promises of `tick()` resolve. `$` throws `$ is meant to be compile-time only.` in a module that was not compiled.
 
 ### `$sync`
 
@@ -82,7 +82,7 @@ Binds a [store](#store) to a variable. Declare it with `let` for two-way binding
 declare function $composable<T extends (...args: any[]) => any>(setup: T): T;
 ```
 
-Wraps a function so that reactive code in it works when it is called from `$$`, `$`, `$sync`, another `$composable` or a computed variable. Outside a boundary, the compiled function throws `Unexpected missing reactive boundary.`
+Wraps a function so that reactive code in it works when it is called from `$$`, `$`, `$sync`, another `$composable` or a computed variable. Outside a boundary, the compiled function throws `Unexpected missing reactive boundary.` In a module that was not compiled, `$composable` returns `setup` unchanged.
 
 ### `onMount`
 
@@ -106,7 +106,7 @@ Runs `callback` when the enclosing boundary is disposed, or before the next run 
 declare function tick(): Promise<void>;
 ```
 
-Resolves at the end of the next `$` flush, after every queued `$` has run. It never rejects. `tick` is a real function and stays in the compiled output.
+Resolves at the end of the next `$` flush, after every queued `$` has run. It never rejects. An error thrown in a `$` body is rethrown from a microtask after `tick()` resolves, so the host reports it. `tick` is a real function and stays in the compiled output.
 
 ```js live api-tick.js
 
@@ -122,7 +122,7 @@ export interface Store<T> {
 }
 ```
 
-The interface that `$store` accepts. `get` returns the current value. `set` is optional: without it, the binding is one-way. `subscribe` takes a callback and returns a function that stops the subscription.
+The interface that `$store` accepts, and the contract for a custom store. `get` returns the current value. `set` is optional: without it, the binding is one-way. `subscribe` takes a callback and returns a function that stops the subscription. The runtime ignores any argument to the callback and calls `get()`.
 
 ### Runtime functions
 
