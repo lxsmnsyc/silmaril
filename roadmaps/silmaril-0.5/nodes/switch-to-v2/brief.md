@@ -23,6 +23,9 @@ owns:
   - .changeset/silmaril-0-5-compiler-and-runtime.md
 shared:
   - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - website/src/live/run.ts
+  - benchmarks/**
   - packages/silmaril/tsconfig.json
   - packages/silmaril/test/behavior/**
   - packages/silmaril/test/runtime/**
@@ -65,4 +68,6 @@ Mostly deletion and wiring, but it touches every entry point.
 
 - `rollup-plugin-silmaril` and `vite-plugin-silmaril` wrap `silmaril/unplugin` and need no change; check they still build.
 - `oxc-parser` and `magic-string` are regular dependencies of `silmaril` since `compiler-core`, so runtime-only users install the oxc native binding. Kept for now (maintainer, 2026-10-30); weigh optional peers or a separate package here.
-- `website/src/live/run.ts` (`MODULES`) gives live samples the 0.4 runtime. Point it at the v2 runtime, and turn on `check:samples --strict` in CI once samples run (from `runnable-samples`, PR #16).
+- `website/src/live/run.ts` (`MODULES`) imports the v2 runtime by a relative path to `packages/silmaril/src/v2/index.ts`. Point it back at `silmaril` once the package exports v2. `check:samples --strict` already runs in CI (`runnable-samples`' outcome has the details).
+- Deleting `test/behavior/pipelines/babel.ts` removes the 0.4 row from `pnpm bench`; the 0.4 and 0.5 numbers are recorded in `benchmarks/README.md` before this node starts. With only `pipelines/compiler.ts` left (explicit `.ts` imports), try running `benchmarks` with plain `node` and drop `tsx` and `allowBuilds: esbuild: false` from `pnpm-workspace.yaml` if it works (`benchmark-harness`' outcome explains why they were added).
+- The 0.5 changeset also lists the two behavior changes already in the decision record (a queued `$` runs when a later write restores the old value; reads in a nested entry no longer rerun the outer body) and the loop guard.
