@@ -12,7 +12,9 @@
 //   run. `ran` says which.
 
 import { compile, ready } from 'silmaril/compiler';
-import * as runtime from 'silmaril';
+// The source of the 0.5 runtime: the package does not export it yet. `switch-to-v2` makes
+// `silmaril` the same module, and this line can import `silmaril` again.
+import * as runtime from '../../../packages/silmaril/src/v2/index.ts';
 import * as store from 'silmaril/store';
 
 export interface RunOptions {
@@ -39,7 +41,7 @@ export interface RunResult {
   dispose: () => void;
 }
 
-// The page uses the 0.4 runtime. `switch-to-v2` points this at the 0.5 runtime.
+// The runtime of the compiled output (the v2 runtime), under the name samples import it by.
 const MODULES: Record<string, object> = {
   silmaril: runtime,
   'silmaril/store': store,

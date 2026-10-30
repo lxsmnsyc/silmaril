@@ -6,3 +6,4 @@
 - Checked the home page in Chrome against `preview`: the wasm compile loads and the sample shows "Compiled, not run".
 - Run path (shims, logs) tested in Node.js with a plain module using `$composable`; the v2 fixtures cannot load until `runtime-v2` merges.
 - Review fixes: samples must import `silmaril` (check fails otherwise); `--strict` flag; per-run context with timer bindings, `$$` disposer collection, blob revoke, owner-based replacement and unmount dispose; line-start import rewrite; `default` export fix in the shim; only `js` fences are live; dispose self-check in `check-samples.ts`.
+- After codegen-core and the merge: MODULES now uses the v2 runtime source (relative import); counter and computed run with asserted logs; CI uses --strict.

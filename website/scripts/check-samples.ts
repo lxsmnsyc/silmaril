@@ -9,6 +9,12 @@ interface Sample {
   source: string;
 }
 
+/** The logs of the samples of `src/samples`, by file. Other samples are only checked to run. */
+const EXPECTED: Record<string, string[]> = {
+  'samples/counter.js': ['Count: 100'],
+  'samples/computed.js': ['21 doubled is 42'],
+};
+
 const parser = new MarkdownIt();
 const samples: Sample[] = [];
 
@@ -89,6 +95,17 @@ for (const sample of samples) {
   try {
     const result = await runSample(sample.source);
     result.dispose();
+    const expected = EXPECTED[sample.where];
+    if (
+      result.ran &&
+      expected &&
+      JSON.stringify(result.logs) !== JSON.stringify(expected)
+    ) {
+      failures++;
+      console.error(
+        `${sample.where}: logged ${JSON.stringify(result.logs)}, expected ${JSON.stringify(expected)}`,
+      );
+    }
     if (!result.ran) {
       pending++;
       if (strict) {
@@ -105,6 +122,6 @@ for (const sample of samples) {
 }
 
 console.log(
-  `${samples.length} samples, ${failures} problems, ${pending} compiled only (the compiler emits no code yet)`,
+  `${samples.length} samples, ${failures} problems, ${pending} compiled and not run`,
 );
 process.exitCode = failures > 0 ? 1 : 0;

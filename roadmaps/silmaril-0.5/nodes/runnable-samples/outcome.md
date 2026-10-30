@@ -10,18 +10,19 @@
 - `website/vite.config.ts`: `optimizeDeps.exclude` for `oxc-parser` and the binding. `pnpm-workspace.yaml`: override `@napi-rs/wasm-runtime: 1.2.5`.
 - CI: a "Check website samples" step in `.github/workflows/ci.yml`. It runs in about a second, needs no browser, and runs after the build.
 
-## Run mode until codegen lands
+## Run mode
 
-Compile and load check only for samples that import `silmaril`. `silmaril/compiler` returns its input unchanged and `$` throws when it is not compiled, so a sample that imports `silmaril` and whose output equals its input is compiled (errors are reported) and not run. A sample with no silmaril import runs as plain JS in the page; `check:samples` fails on it. The page says "Compiled, not run"; `check:samples` counts these ("2 compiled only"). Once codegen emits code, the same path runs the module and shows logs, with no change here. The 0.4 Babel pipeline in the browser was not tried (heavy). Run, shim and log paths were tested in Node.js with a hand-written module against the 0.4 runtime.
+Samples run on the 0.5 pipeline. `silmaril/compiler` emits v2 code (`codegen-core`), and `MODULES` in `website/src/live/run.ts` points `silmaril` at the v2 runtime by a relative source import of `packages/silmaril/src/v2/index.ts` (the package does not export it). `silmaril/store` stays the real store entry; v2 takes store objects and does not import it. `check:samples` runs both demo samples and asserts their logs (`Count: 100`, `21 doubled is 42`, kept in `EXPECTED` in `check-samples.ts`); other samples are only checked to run. CI runs it with `--strict`, which fails on a sample compiled and not run.
+
+`switch-to-v2` still has to: change the import in `run.ts` to `silmaril` once the package exports the v2 runtime (and `silmaril/store` if its entry changes), and drop the `--strict`-guard text if codegen is complete. The Babel pipeline was not used in the browser. The sample code paths were checked in Node.js; the browser check was manual (see Stubs left).
 
 ## Deviations
 
-- Acceptance "after switch-to-v2, every sample runs on the 0.5 pipeline" is not met yet, as expected.
+- Samples already run on the 0.5 pipeline (compiler and v2 runtime); `switch-to-v2` only changes where the runtime is imported from.
 - No `features: 'all'` or COOP/COEP headers: the silmaril runner does not compile brumate components or use threads (the wasip1 binding is not threaded).
 - The editor is a plain textarea, with no highlighting while editing.
 - Edited `website/src/routes/index.brm` (outside the listed paths) to put the demo on the home page, so `docs-content` prose is untouched. Orchestrator: move it if the home page belongs to another node.
-- The page runs samples on the 0.4 runtime (`MODULES` in `website/src/live/run.ts` points at `silmaril` and `silmaril/store`). `switch-to-v2` must point `MODULES` at the v2 runtime (`packages/silmaril/src/v2/`).
-- `--strict` on `check:samples` fails on samples that were compiled and not run. It is off for now. Turn it on in the CI step (`pnpm --filter website check:samples -- --strict`) once `codegen-core` merges.
+- `--strict` on `check:samples` fails on samples that were compiled and not run. CI uses it now.
 - Runs are isolated: a new run of a sample, or the component going away, disposes the last one. It calls the disposers that `$$` and `$$root` return (the runner wraps them), stops the timers and intervals the sample started (`setTimeout`/`setInterval` are bindings of the run), frees the run table entry and revokes the blob URLs. `check:samples` runs a self-check of this with a `setInterval` sample.
 - Only `js` fences can be live; the Markdown plugin throws for other languages.
 - Import rewriting reads statements that start a line (`import`/`export ... from`, `import 'x'`), so strings are left alone. A dynamic `import()` in a sample is not rewritten.
@@ -29,7 +30,7 @@ Compile and load check only for samples that import `silmaril`. `silmaril/compil
 
 ## Stubs left
 
-- No expected-log assertions; `check:samples` only requires that a sample compiles and runs without throwing. Add them when codegen lands (a `// logs:` comment or a sidecar file).
+- Expected logs exist only for the two files of `src/samples`; docs fences are checked to run, not for their logs.
 - The check of the sample page in a browser was manual (Chrome against `preview`), not automated. After the review fixes the browser extension was not reachable, so the unmount and typing-timer changes in `LiveSample.brm` were built but not seen in a browser.
 
 ## Gotchas
@@ -47,8 +48,8 @@ Compile and load check only for samples that import `silmaril`. `silmaril/compil
 
 - `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint`: pass (358 tests; lint clean).
 - `pnpm format:check`: pass. `pnpm --filter website build`: 12 pages prerendered, wasm asset emitted.
-- `pnpm --filter website check:samples`: 2 samples, 0 problems, 2 compiled only.
-- Chrome on `website preview`: wasm compile loads, the home page sample shows "Compiled, not run".
+- `pnpm --filter website check:samples`: 2 samples, 0 problems, 0 compiled only, logs asserted (also with `--strict`).
+- Chrome on `website preview` (before the move to the v2 runtime): wasm compile loads. The run in the browser with the v2 runtime was not seen.
 
 ## Size
 
