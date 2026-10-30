@@ -1,7 +1,7 @@
 ---
 id: docs-reference
 title: API reference and setup pages for 0.5
-status: todo
+status: active
 priority: should
 type: docs
 milestone: docs

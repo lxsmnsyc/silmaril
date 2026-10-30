@@ -1,7 +1,7 @@
 ---
 id: docs-migration
 title: Migration, internals and limits pages for 0.5
-status: todo
+status: active
 priority: should
 type: docs
 milestone: docs

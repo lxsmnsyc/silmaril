@@ -1,7 +1,7 @@
 ---
 id: docs-guide
 title: Rewrite the guide pages for 0.5
-status: todo
+status: active
 priority: should
 type: docs
 milestone: docs
