@@ -2,7 +2,7 @@
 // compiling or that throws fails the check. It runs the same code as the page.
 import { readFileSync, readdirSync } from 'node:fs';
 import MarkdownIt from 'markdown-it';
-import { runSample } from '../src/live/run.ts';
+import { importsSilmaril, runModule, runSample } from '../src/live/run.ts';
 
 interface Sample {
   where: string;
@@ -19,7 +19,7 @@ function addFenced(folder: URL, file: string): void {
     if (
       token.type === 'fence' &&
       token.content.trim() &&
-      /^(?:js|jsx|ts|tsx)\s+live\b/.test(token.info.trim())
+      /^js\s+live\b/.test(token.info.trim())
     ) {
       samples.push({
         where: `${file}:${(token.map?.[0] ?? 0) + 1}`,
@@ -48,13 +48,53 @@ for (const file of readdirSync(folder).toSorted()) {
   }
 }
 
+// A run that is disposed stops its timers, and a new run of the same owner disposes the last.
+async function checkDispose(): Promise<string | undefined> {
+  const code = `setInterval(() => console.log('tick'), 5);`;
+  const first = await runModule(code, { settle: 30, owner: 'check' });
+  const before = first.logs.length;
+  const second = await runModule('console.log("second")', {
+    settle: 0,
+    owner: 'check',
+  });
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  second.dispose();
+  if (before === 0) {
+    return 'the interval of the sample did not run';
+  }
+  if (first.logs.length !== before) {
+    return 'the interval of the sample kept running after a new run';
+  }
+  return undefined;
+}
+
+// `--strict` also fails on samples that were compiled and not run. Turn it on in CI once
+// codegen-core has merged and the compiler emits code.
+const strict = process.argv.includes('--strict');
 let failures = 0;
 let pending = 0;
+const disposeProblem = await checkDispose();
+if (disposeProblem) {
+  failures++;
+  console.error(`dispose: ${disposeProblem}`);
+}
 for (const sample of samples) {
+  if (!importsSilmaril(sample.source)) {
+    failures++;
+    console.error(
+      `${sample.where}: the sample does not import from 'silmaril'`,
+    );
+    continue;
+  }
   try {
     const result = await runSample(sample.source);
+    result.dispose();
     if (!result.ran) {
       pending++;
+      if (strict) {
+        failures++;
+        console.error(`${sample.where}: compiled and not run`);
+      }
     }
   } catch (error) {
     failures++;

@@ -1,9 +1,11 @@
 <script>
-  import { $client, $props, $signal } from 'brumate/signals';
+  import { $client, $effect, $props, $signal } from 'brumate/signals';
 
   // A code sample of the docs that compiles and runs in the page. Editing it runs it again.
   const { name, source: initial } = $props<{ name: string; source: string }>();
 
+  // Names this sample for the runner, which stops the last run when a new one starts.
+  const owner = `${name}:${Math.random()}`;
   let source = $signal(initial);
   let logs = $signal<string[]>([]);
   let compiled = $signal('');
@@ -12,6 +14,7 @@
   let view = $signal<'logs' | 'compiled'>('logs');
   // Counts runs, so a run that finishes after a newer one started writes nothing.
   let runs = $signal(0);
+  let timer = $signal<number>();
 
   async function run() {
     runs++;
@@ -22,6 +25,7 @@
     try {
       const { runSample } = await import('../live/run.ts');
       const result = await runSample(source, {
+        owner,
         isLatest: () => id === runs,
         onLog: (line) => {
           logs = [...logs, line];
@@ -38,6 +42,12 @@
       }
     }
   }
+
+  // Going away stops the sample and a typing timer that has not fired.
+  $effect(() => () => {
+    void import('../live/run.ts').then(({ disposeOwner }) => disposeOwner(owner));
+    clearTimeout(timer);
+  });
 
   // The sample runs once the page has loaded.
   $client(() => {
@@ -69,7 +79,8 @@
       source = event.currentTarget.value;
       // Typing pauses before the sample compiles again.
       const typed = source;
-      setTimeout(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
         if (typed === source) {
           void run();
         }

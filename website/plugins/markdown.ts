@@ -33,7 +33,7 @@ export interface Heading {
 
 /**
  * A piece of a page: its HTML, or a sample that compiles and runs in the page. A sample is a
- * fenced block marked `live`, such as `js live`, or `js live counter.js` with an empty body,
+ * fenced block marked `live`, `js live`, or `js live counter.js` with an empty body,
  * which reads `src/samples/counter.js`.
  */
 export type PagePart =
@@ -236,20 +236,23 @@ function liveSample(
 ): { name: string; source: string } | undefined {
   const match =
     token.type === 'fence'
-      ? /^(?:js|jsx|ts|tsx)\s+live\b(?:\s+(\S+))?/.exec(token.info.trim())
+      ? /^(\w+)\s+live\b(?:\s+(\S+))?/.exec(token.info.trim())
       : null;
   if (!match) {
     return undefined;
   }
-  const lang = token.info.trim().split(/\s/)[0]!;
-  const file = match[1];
+  // The runner loads plain modules, so a block in another language cannot run.
+  if (match[1] !== 'js') {
+    throw new Error(`A live block must be js, not ${match[1]}, in ${page}`);
+  }
+  const file = match[2];
   if (file && !token.content.trim()) {
     return { name: file, source: readFileSync(new URL(file, SAMPLES), 'utf8') };
   }
   if (token.content.trim() === '') {
     throw new Error(`A live block with no code in ${page}`);
   }
-  return { name: file ?? `sample.${lang}`, source: token.content };
+  return { name: file ?? 'sample.js', source: token.content };
 }
 
 /** Compiles `.md` imports into pages. */
