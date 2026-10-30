@@ -208,9 +208,9 @@ function compiled(code: string, filename = 'a.js'): string {
   return compile(code, { filename }).code;
 }
 
-function throwsWith(code: string, message: string): void {
+function throwsWith(code: string, message: string, filename = 'a.js'): void {
   assert.throws(
-    () => compile(code, { filename: 'a.js' }),
+    () => compile(code, { filename }),
     (error: Error) => error.message.includes(message),
   );
 }
@@ -308,19 +308,28 @@ check('compile errors of the runtime contract', () => {
   );
   throwsWith(
     `${head}$$(() => { let x = 0; setTimeout(() => $(x)); x = 2; });`,
-    '$ must be called as a statement of a setup body.',
+    '$ must be called directly in a setup body.',
   );
   throwsWith(
-    `${head}$$(() => { let x = 0; x && $sync(x); x = 1; });`,
-    '$sync must be called as a statement of a setup body.',
+    `${head}$$(() => { let x = 0; $($sync(x)); x = 1; });`,
+    '$sync must be called directly in a setup body.',
   );
   throwsWith(
-    `${head}$(1);`,
-    '$ must be called as a statement of a setup body.',
+    `${head}$$(() => { let x = 0; const y = ($sync(x), x); x = 1; });`,
+    '$sync must be called directly in a setup body.',
   );
+  throwsWith(`${head}$(1);`, '$ must be called directly in a setup body.');
   throwsWith(
     `${head}$$(() => { $sync(1, 2); });`,
-    '$sync takes exactly one argument.',
+    '$sync can only accept a single argument',
+  );
+  throwsWith(
+    `${head}$$(() => { $skip(1, 2); });`,
+    '$skip takes exactly one argument.',
+  );
+  throwsWith(
+    `${head}$$(() => { const { a } = $store(t); });`,
+    '$store is only limited to identifiers.',
   );
   throwsWith(`${head}const f = $sync;`, '$sync can only be called.');
   throwsWith(
@@ -328,29 +337,38 @@ check('compile errors of the runtime contract', () => {
     '$skip must be used inside $$ or $composable.',
   );
   throwsWith(
-    `${head}$$(() => { if (a) { const s = $store(t); } });`,
-    '$store must initialize a top-level variable.',
+    `${head}$$(() => { for (;;) { const s = $store(t); } });`,
+    '$store must initialize a variable of a setup body.',
+  );
+  throwsWith(
+    `${head}$$(() => { f($store(t)); });`,
+    '$store must initialize a variable of a setup body.',
+  );
+  throwsWith(
+    `${head}$$(() => { let T = 'a'; log(<T />); T = 'b'; });`,
+    'A reactive variable cannot be used as a JSX tag.',
+    'input.jsx',
   );
   throwsWith(
     `${head}$$(() => { const s = $store(t); s = 1; });`,
     'Cannot assign to a constant.',
   );
   throwsWith(
-    `${head}$$(() => { let a = 0; let b = 0; function w() { a = 1; } const c = (w(), b); a = 2; b = 2; });`,
-    'Cannot write a reactive variable in the initializer of a derived value.',
-  );
-  throwsWith(
-    `${head}$$(() => { let a = 0; class K { f = ([a] = [1]); } });`,
-    'Cannot destructure into a reactive variable in a class field.',
-  );
-  throwsWith(
     `${head}$$(() => { let x = 0; $sync(log(/* $skip */ x)); x = 1; });`,
     'The /* $skip */ comment is not supported.',
   );
-  // `$` inside if, try, switch and labels is fine.
+  // `$` inside if, try, switch, labels and expressions is fine (v4, as in 0.4).
   compiled(
-    `${head}$$(() => { let x = 0; if (x) { $(x); } try { $(x); } catch { $(x); } switch (x) { case 1: $(x); } l: { $(x); } x = 1; });`,
+    `${head}$$(() => { let x = 0; if (x) { $(x); } try { $(x); } catch { $(x); } switch (x) { case 1: $(x); } l: { $(x); } x && $(x); x = 1; });`,
   );
+  // Writes in a memo initializer and destructuring in a class field are allowed (v4).
+  compiled(
+    `${head}$$(() => { let a = 0; let b = 0; function w() { a = 1; } const c = (w(), b); a = 2; b = 2; });`,
+  );
+  const field = compiled(
+    `${head}$$(() => { let a = 0; class K { f = ([a] = [1]); } a = 2; });`,
+  );
+  assert.match(field, /f = \(\(\) => \{ let \$t0, \$t1; return/);
 });
 
 check(
@@ -364,7 +382,7 @@ $$(() => {
   let d = 0;
   function one() { return a + two(); }
   function two() { return b + one(); }
-  const three = () => c;
+  function three() { return c; }
   let four = () => d;
   $sync(one());
   $sync(three?.());
@@ -382,9 +400,10 @@ $$(() => {
       }
       reads.push(names.toSorted());
     }
-    // `four` is a written top-level let: a slot, read as a value, not followed.
-    assert.deepEqual(reads, [['a', 'b'], ['c'], ['four'], ['a']]);
-    assert.deepEqual(root.graph, [[0, 3], [0], [1], [], [2]]);
+    // `four` is a written let: a slot, read as a value, not followed.
+    // It also has a memo (entry 0), because its initializer reads `d`.
+    assert.deepEqual(reads, [['d'], ['a', 'b'], ['c'], ['four'], ['a']]);
+    assert.deepEqual(root.graph, [[1, 4], [1], [2], [0], [3]]);
   },
 );
 
@@ -628,20 +647,52 @@ check(
   },
 );
 
-check('only top-level declarations get slots; functions are not memos', () => {
+check('setup declarations get slots; loops and nested functions do not', () => {
   const m = model(`import { $$ } from 'silmaril';
 $$(() => {
   let x = 0;
   { let inner = 0; inner = 1; }
+  for (const n of [1]) { let w = n; w += 1; }
   const handler = () => x;
+  const plain = () => 1;
   const double = x * 2;
+  const f = () => { let local = 0; local = 1; };
   x = 1;
 });`);
   const names: string[] = [];
   for (const slot of m.scopes[0]!.slots) {
     names.push(`${slot.binding.name}:${slot.declarator.kind}`);
   }
-  assert.deepEqual(names, ['x:state', 'double:memo']);
+  assert.deepEqual(names, [
+    'x:state',
+    'inner:state',
+    'handler:memo',
+    'double:memo',
+  ]);
+});
+
+check('a split declaration without a statement list gets a block', () => {
+  const out = compiled(
+    "import { $$ } from 'silmaril';\n$$(() => { let a = 0; if (a) var w = 1, z = 2; w = 3; });",
+  );
+  assert.match(out, /if \(a\) \{ \$\$set\(\$s, 0, 1\); var z = 2; \}/);
+});
+
+check('a written binding is not a local function', () => {
+  const m = model(`import { $$, $sync } from 'silmaril';
+$$(() => {
+  let a = 0;
+  let f = () => a;
+  $sync(f());
+  f = () => 0;
+  a = 1;
+});`);
+  const root = m.scopes[0]!;
+  const reads: string[] = [];
+  for (const binding of root.entries[1]!.reads) {
+    reads.push(binding.name);
+  }
+  assert.deepEqual(reads, ['f']);
 });
 
 check('the compiler files import no node: module', () => {

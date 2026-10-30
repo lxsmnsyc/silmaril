@@ -1,6 +1,6 @@
 // The reactive model of a module: scopes, slots, entries, reads, graphs, write sites
 // and compile errors, computed once on the original AST, as in the reactivity-runtime
-// contract (PR #8, version 3). In the package this is compiler/analysis/model.ts and its
+// contract (PR #8, version 4). In the package this is compiler/analysis/model.ts and its
 // neighbours. Codegen reads this model only.
 import type { Binding, Node, Reference, ScopeInfo } from './scope.ts';
 import {
@@ -117,7 +117,7 @@ export interface WriteSite {
   targets: WriteTarget[];
   /** A destructuring write that is a whole statement in a statement list. */
   statement: boolean;
-  /** The nearest function, which declares the temps of this site. */
+  /** The nearest function, or the class field whose initializer holds the site. */
   fn: Node;
 }
 
@@ -195,6 +195,61 @@ function compareRefs(a: Ref, b: Ref): number {
     }
   }
   return a.length - b.length;
+}
+
+// Setup declarations of a scope body: in its block or nested blocks, outside nested
+// functions and loops (contract "Setup declaration").
+function setupDeclarations(root: Node): Node[] {
+  const out: Node[] = [];
+  function walk(node: Node | null | undefined): void {
+    if (!node) {
+      return;
+    }
+    if (node.type === 'VariableDeclaration') {
+      if (node.kind === 'let' || node.kind === 'const' || node.kind === 'var') {
+        out.push(node);
+      }
+      return;
+    }
+    if (!STATEMENT_CONTAINERS.has(node.type)) {
+      return;
+    }
+    switch (node.type) {
+      case 'BlockStatement':
+        for (const statement of node.body) {
+          walk(statement);
+        }
+        return;
+      case 'IfStatement':
+        walk(node.consequent);
+        walk(node.alternate);
+        return;
+      case 'TryStatement':
+        walk(node.block);
+        walk(node.handler);
+        walk(node.finalizer);
+        return;
+      case 'CatchClause':
+        walk(node.body);
+        return;
+      case 'SwitchStatement':
+        for (const item of node.cases) {
+          walk(item);
+        }
+        return;
+      case 'SwitchCase':
+        for (const statement of node.consequent) {
+          walk(statement);
+        }
+        return;
+      case 'LabeledStatement':
+        walk(node.body);
+        return;
+      default:
+    }
+  }
+  walk(root);
+  return out;
 }
 
 export function analyzeModel(
@@ -342,43 +397,47 @@ export function analyzeModel(
     if (name !== '$' && name !== '$sync') {
       continue;
     }
-    const arg = oneArgument(call);
+    if (
+      call.arguments.length !== 1 ||
+      call.arguments[0].type === 'SpreadElement'
+    ) {
+      fail(`${nameOf(call)} can only accept a single argument`, call);
+    }
+    const arg = call.arguments[0];
+    // The call can be anywhere in a scope body outside loops, nested functions,
+    // memo initializers and the arguments of another `$` or `$sync`, as in 0.4.
+    const placeError = `${nameOf(call)} must be called directly in a setup body.`;
+    let inLoop = false;
+    let owner: ReactiveScope | null = null;
     let current = call;
     let parent = parentOf.get(current);
-    while (parent && parent.type === 'ParenthesizedExpression') {
+    while (parent) {
+      if (LOOPS.has(parent.type)) {
+        inLoop = true;
+      } else if (
+        parent.type === 'PropertyDefinition' ||
+        parent.type === 'AccessorProperty' ||
+        parent.type === 'StaticBlock'
+      ) {
+        fail(placeError, call);
+      } else if (parent.type === 'CallExpression') {
+        const outer = trackedCalls.get(parent);
+        if (outer === '$' || outer === '$sync') {
+          fail(placeError, call);
+        }
+      } else if (isFunctionNode(parent)) {
+        const scope = scopeOfNode.get(parent);
+        if (parent.body === current && scope && scope.isBody) {
+          owner = scope;
+          break;
+        }
+        fail(placeError, call);
+      }
       current = parent;
       parent = parentOf.get(current);
     }
-    const statementError = `${nameOf(call)} must be called as a statement of a setup body.`;
-    if (!parent || parent.type !== 'ExpressionStatement') {
-      fail(statementError, call);
-    }
-    let inLoop = false;
-    let owner: ReactiveScope | null = null;
-    current = parent;
-    parent = parentOf.get(current);
-    while (parent) {
-      if (STATEMENT_CONTAINERS.has(parent.type)) {
-        current = parent;
-        parent = parentOf.get(current);
-        continue;
-      }
-      if (LOOPS.has(parent.type) && parent.body === current) {
-        inLoop = true;
-        current = parent;
-        parent = parentOf.get(current);
-        continue;
-      }
-      if (isFunctionNode(parent) && parent.body === current) {
-        const scope = scopeOfNode.get(parent);
-        if (scope && scope.isBody) {
-          owner = scope;
-        }
-      }
-      break;
-    }
     if (!owner) {
-      fail(statementError, call);
+      fail(placeError, call);
     }
     if (inLoop) {
       fail(`${nameOf(call)} cannot be called inside a loop.`, call);
@@ -406,6 +465,7 @@ export function analyzeModel(
 
   // 4. Names that must be in a setup tree, and `$store` placement.
   const skips: Node[] = [];
+  const storeCalls: Node[] = [];
   for (const call of calls) {
     const name = trackedCalls.get(call)!;
     if (name === '$skip' || name === 'onMount' || name === 'onDestroy') {
@@ -425,19 +485,15 @@ export function analyzeModel(
         current = parent;
         parent = parentOf.get(current);
       }
-      const declaration = parent && parentOf.get(parent);
-      const block = declaration && parentOf.get(declaration);
-      const fn = block && parentOf.get(block);
       if (
-        !parent ||
-        parent.type !== 'VariableDeclarator' ||
-        parent.init !== current ||
-        parent.id.type !== 'Identifier' ||
-        block.type !== 'BlockStatement' ||
-        !scopeOfNode.get(fn)?.isBody
+        parent &&
+        parent.type === 'VariableDeclarator' &&
+        parent.init === current &&
+        parent.id.type !== 'Identifier'
       ) {
-        fail('$store must initialize a top-level variable.', call);
+        fail('$store is only limited to identifiers.', call);
       }
+      storeCalls.push(call);
     }
   }
 
@@ -529,10 +585,7 @@ export function analyzeModel(
     if (!scope.isBody || scope.node.body.type !== 'BlockStatement') {
       continue;
     }
-    for (const statement of scope.node.body.body) {
-      if (statement.type !== 'VariableDeclaration') {
-        continue;
-      }
+    for (const statement of setupDeclarations(scope.node.body)) {
       const kind = statement.kind;
       if (kind !== 'let' && kind !== 'const' && kind !== 'var') {
         continue;
@@ -559,8 +612,7 @@ export function analyzeModel(
           bindings,
           neverMemo:
             init !== null &&
-            (isFunctionNode(init) ||
-              init.type === 'ClassExpression' ||
+            (init.type === 'ClassExpression' ||
               initName === '$$' ||
               initName === '$composable'),
           store: initName === '$store' ? init : null,
@@ -611,8 +663,14 @@ export function analyzeModel(
   // Local functions: function declarations, and declarators with a function initializer
   // and no slot, inside a setup tree. Keyed by binding, with the function node.
   function localFunction(binding: Binding): Node | null {
+    // A binding that is written anywhere, or that has a slot, is never a local function.
     if (slotted.has(binding)) {
       return null;
+    }
+    for (const ref of binding.references) {
+      if (ref.write) {
+        return null;
+      }
     }
     const declaration = binding.declaration;
     if (
@@ -742,6 +800,28 @@ export function analyzeModel(
     }
   }
 
+  // `$store` must be the whole initializer of a setup declarator.
+  for (const call of storeCalls) {
+    let found = false;
+    for (const candidate of candidates) {
+      if (candidate.store === call) {
+        found = true;
+      }
+    }
+    if (!found) {
+      fail('$store must initialize a variable of a setup body.', call);
+    }
+  }
+
+  // A memo initializer holds no `$` or `$sync` call.
+  for (const candidate of memoCandidates) {
+    visit(candidate.declarator.init, (node) => {
+      if (entryCalls.has(node)) {
+        fail(`${nameOf(node)} must be called directly in a setup body.`, node);
+      }
+    });
+  }
+
   // 7. Slots, numbered in source order of the declarators.
   const slotOf = new Map<Binding, Slot>();
   const declarators = new Map<Node, SlotDeclarator>();
@@ -818,6 +898,10 @@ export function analyzeModel(
           scope.tree,
           scope.setupDepth,
         );
+        // A function initializer is the memo's value, not a scope body.
+        if (isFunctionNode(record.declarator.init)) {
+          scopeOfNode.delete(record.declarator.init);
+        }
         scope.entries.push(entry);
         record.entry = entry;
         inits.add(record.declarator.init);
@@ -972,38 +1056,29 @@ export function analyzeModel(
   const writes: WriteSite[] = [];
   const writeOf = new Map<Node, WriteSite>();
 
+  // The node that declares the temps of a write: the nearest function, or a class field
+  // whose initializer holds the write (codegen then wraps it in a called arrow).
   function nearestFunction(node: Node): Node {
+    let child = node;
     let current = parentOf.get(node);
     while (current) {
       if (isFunctionNode(current)) {
         return current;
       }
+      if (
+        (current.type === 'PropertyDefinition' ||
+          current.type === 'AccessorProperty') &&
+        current.value === child
+      ) {
+        return current;
+      }
+      child = current;
       current = parentOf.get(current);
     }
     return fail(
       'A write to a reactive variable must be inside a function.',
       node,
     );
-  }
-
-  function inClassField(node: Node): boolean {
-    let current = node;
-    let parent = parentOf.get(current);
-    while (parent) {
-      if (isFunctionNode(parent)) {
-        return false;
-      }
-      if (
-        (parent.type === 'PropertyDefinition' ||
-          parent.type === 'AccessorProperty') &&
-        parent.value === current
-      ) {
-        return true;
-      }
-      current = parent;
-      parent = parentOf.get(current);
-    }
-    return false;
   }
 
   function isStatement(node: Node): boolean {
@@ -1100,15 +1175,6 @@ export function analyzeModel(
         fail('Cannot assign to a constant.', target.identifier);
       }
     }
-    const destructures =
-      kind === 'destructure' ||
-      (kind === 'for' && unwrap(pattern).type !== 'Identifier');
-    if (destructures && inClassField(node)) {
-      fail(
-        'Cannot destructure into a reactive variable in a class field.',
-        node,
-      );
-    }
     const site: WriteSite = {
       kind,
       node,
@@ -1145,45 +1211,15 @@ export function analyzeModel(
   }
   writes.sort((a, b) => a.node.start - b.node.start);
 
-  // 12. Writes in memo initializers, outside nested functions and through local calls.
-  function checkMemoWrites(
-    root: Node,
-    tree: ReactiveScope,
-    seen: Set<Binding>,
-  ): void {
-    visit(root, (node) => {
-      if (node !== root && isFunctionNode(node)) {
-        return false;
-      }
-      if (node.type !== 'Identifier') {
-        return;
-      }
-      const ref = info.referenceOf.get(node);
-      if (!ref || !ref.binding) {
-        return;
-      }
-      if (ref.write && slotted.has(ref.binding)) {
+  // A reactive variable cannot be a JSX tag: a tag cannot be a call.
+  for (const [binding] of slotOf) {
+    for (const ref of binding.references) {
+      if (!ref.write && ref.context === 'jsx') {
         fail(
-          'Cannot write a reactive variable in the initializer of a derived value.',
-          node,
+          'A reactive variable cannot be used as a JSX tag.',
+          ref.identifier,
         );
       }
-      if (!ref.write && isCallee(node)) {
-        const fn = localFunction(ref.binding);
-        if (fn && treeOf(fn) === tree && !seen.has(ref.binding)) {
-          seen.add(ref.binding);
-          const body = fn.body;
-          checkMemoWrites(body, tree, seen);
-          for (const param of fn.params) {
-            checkMemoWrites(param, tree, seen);
-          }
-        }
-      }
-    });
-  }
-  for (const record of declarators.values()) {
-    if (record.kind === 'memo') {
-      checkMemoWrites(record.declarator.init, record.scope.tree, new Set());
     }
   }
 

@@ -1,4 +1,4 @@
-// Code generation against the reactivity-runtime contract (PR #8, version 3), from the
+// Code generation against the reactivity-runtime contract (PR #8, version 4), from the
 // model only. It follows the edit rules of proposed-compiler-api.md:
 // - One pre-order walk. An outer node's edits are made before an inner node's.
 // - Text is replaced with `update` (keeps inserts at the range's ends), never `overwrite`.
@@ -196,6 +196,19 @@ export function generate(s: MagicString, model: ModuleModel): void {
 
   // A declaration with slot declarators: one statement per declarator.
   function rewriteDeclaration(declaration: Node, list: Node[]): void {
+    // `if (c) var a = 1, b = 2;` has no statement list: the split needs a block.
+    const container = parents.get(declaration);
+    const wrapped =
+      container !== null &&
+      container !== undefined &&
+      container.type !== 'BlockStatement' &&
+      container.type !== 'Program' &&
+      container.type !== 'SwitchCase' &&
+      container.type !== 'StaticBlock';
+    if (wrapped) {
+      s.prependLeft(declaration.start, '{ ');
+      s.appendRight(declaration.end, ' }');
+    }
     const special = new Set(list);
     const items = declaration.declarations;
     const keyword = declaration.kind;
@@ -510,6 +523,13 @@ export function generate(s: MagicString, model: ModuleModel): void {
       continue;
     }
     const declaration = `let ${names.join(', ')};`;
+    if (fn.type === 'PropertyDefinition' || fn.type === 'AccessorProperty') {
+      // A class field initializer: an arrow called at once keeps `this` and declares
+      // the temps. It wraps the edits made inside the value.
+      s.prependLeft(fn.value.start, `(() => { ${declaration} return `);
+      s.appendRight(fn.value.end, '; })()');
+      continue;
+    }
     const body = fn.body;
     if (body.type === 'BlockStatement') {
       let at = body.start + 1;

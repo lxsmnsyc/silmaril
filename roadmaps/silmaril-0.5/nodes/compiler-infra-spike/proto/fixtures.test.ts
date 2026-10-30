@@ -237,6 +237,7 @@ function canonicalGraphs(code: string): string {
   return out + code.slice(last);
 }
 
+// Blank lines are layout: the fixtures group the graph constants differently.
 function format(code: string): string {
   return execFileSync(
     `${repo}node_modules/.bin/oxfmt`,
@@ -245,7 +246,9 @@ function format(code: string): string {
       input: code,
       cwd: repo,
     },
-  ).toString();
+  )
+    .toString()
+    .replaceAll(/\n\s*\n/g, '\n');
 }
 
 const AsyncFunction = (async () => {}).constructor as new (
@@ -253,11 +256,16 @@ const AsyncFunction = (async () => {}).constructor as new (
 ) => (...args: unknown[]) => Promise<void>;
 
 async function runLogs(code: string): Promise<unknown[][]> {
-  const body = code.replace(
-    /import\s*\{([^}]*)\}\s*from\s*'silmaril';?/g,
-    (_, names: string) =>
-      `const {${names.replaceAll(' as ', ': ')}} = runtime;`,
-  );
+  const body = code
+    .replace(
+      /import\s*\*\s*as\s+(\w+)\s+from\s*'silmaril';?/g,
+      (_, name: string) => `const ${name} = runtime;`,
+    )
+    .replace(
+      /import\s*\{([^}]*)\}\s*from\s*'silmaril';?/g,
+      (_, names: string) =>
+        `const {${names.replaceAll(' as ', ': ')}} = runtime;`,
+    );
   const logs: unknown[][] = [];
   const log = (...args: unknown[]): void => {
     logs.push(args);

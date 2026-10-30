@@ -64,11 +64,9 @@ const TRACKED = new Set<string>([
 
 function getLang(filename: string): 'js' | 'jsx' | 'ts' | 'tsx' {
   const match = /\.[cm]?([jt]sx?)$/i.exec(filename);
-  return (match ? match[1]!.toLowerCase() : 'js') as
-    | 'js'
-    | 'jsx'
-    | 'ts'
-    | 'tsx';
+  const lang = match ? match[1]!.toLowerCase() : 'js';
+  // `.js` files parse as JSX, as the 0.4 Babel plugin did.
+  return (lang === 'js' ? 'jsx' : lang) as 'js' | 'jsx' | 'ts' | 'tsx';
 }
 
 export interface ParsedModule {

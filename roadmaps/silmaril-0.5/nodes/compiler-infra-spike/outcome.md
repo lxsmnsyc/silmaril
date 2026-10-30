@@ -5,12 +5,12 @@
 - `proto/` holds a throwaway prototype of `silmaril/compiler` for the 0.5 runtime. It is outside the pnpm workspace and has its own `package.json`. To run it, inside `proto/`: `npm install --no-package-lock`, then `node fetch-pr8.ts` (copies the PR #8 fixtures and sketch runtime into the ignored `.pr8/`; not needed once PR #8 has merged), then `node test.ts`, `node fixtures.test.ts`, `node bench.ts` and `node browser/run.ts`. The Babel baseline and oxfmt are loaded from the repository root, so `pnpm install` must have run there.
   - `proto/source.ts`: `CompileError`, `parseModule`, `unwrap`, `visit`, `findSilmarilImports`.
   - `proto/scope.ts`: the scope builder over oxc's ESTree AST, with `Reference.context` and the fixes of the design review (below).
-  - `proto/model.ts`: the reactive model of `reactivity-runtime` v3: `ReactiveScope` tree, slots, entries, reads, graphs, write sites, `$skip` calls, scope bindings, names and compile errors.
+  - `proto/model.ts`: the reactive model of `reactivity-runtime` v4: `ReactiveScope` tree, slots, entries, reads, graphs, write sites, `$skip` calls, scope bindings, names and compile errors.
   - `proto/codegen.ts`: the code generator, from the model only, with the edit rules of the contract.
   - `proto/compile.ts`: `compile` and `ready`.
-  - `proto/test.ts`: 30 checks. `proto/fixtures.test.ts`: the PR #8 fixtures.
+  - `proto/test.ts`: 32 checks. `proto/fixtures.test.ts`: the PR #8 fixtures.
   - `proto/bench.ts`, `proto/gen.ts`, `proto/browser/`: benchmark and browser run, now on the new compiler.
-- `proposed-compiler-api.md`: the proposed v2 of `contracts/compiler-api.md`, rewritten against `reactivity-runtime` v3 (PR #8, 937424c).
+- `proposed-compiler-api.md`: the proposed v2 of `contracts/compiler-api.md`, rewritten against `reactivity-runtime` v4 (PR #8, bc5407d). The first draft was written against v3 (937424c).
 
 ## What changed after the design review
 
@@ -25,18 +25,28 @@ The design review of PR #9, and where each item went:
 7. Scope builder (should-fix). A `params` scope when parameters have expressions (`function f(a = x) { let x }` now reads the outer `x`; Babel gets it wrong). Qualified namespaces (`namespace A.B`) declare `A` and walk the body. Expression-bodied setups compile (`$$(() => expr)` to `$$root($g0, ($s) => expr)`, as the runtime contract allows). `childNodes` and `visit` skip type keys, visit a shorthand property once and follow source order. `<this.Foo />` records no reference. `test.ts` now checks `read`, `write`, `writeExpression` and `context`, not only resolution.
 8. Nit. `x = y = 1` gives two disjoint edits, `$$set($s, 0, $$set($s, 1, 1))` (fixture `chained-write` matches). The import rewrite follows the runtime contract. Graph constants go after the last import. File names match the owned paths of compiler-core and the codegen nodes.
 
+## Revision for runtime contract v4 (bc5407d)
+
+PR #8 moved from v3 to v4: 11 fixtures changed and 16 were added (61 in all). The prototype changed as follows:
+
+- Setup declarations: a `let`/`const`/`var` in a nested block (`if`, `try`, `switch`, label, plain block) is a candidate, a loop or a nested function is not. A declaration that is the bare body of an `if` gets `{ }` around the split.
+- A function or arrow initializer that reads a slot is a memo. A binding that is written, or has a slot, is never a local function.
+- `$` and `$sync` can be called in an expression. The error `must be called directly in a setup body.` replaces the statement rule and also covers memo initializers and the argument of another entry. New texts: `can only accept a single argument`, `$store is only limited to identifiers.`, `$store must initialize a variable of a setup body.`
+- A write in a memo initializer and a destructuring write in a class field are no longer errors. The field value is wrapped in an arrow called at once, which declares the temps.
+- A reactive variable as a JSX tag is raised in analysis. `.js` files parse as JSX (fixture `jsx-tag` is a `.js` file with JSX).
+- Harness: `import * as name from 'silmaril'` becomes `const name = runtime` (the v4 runner protocol), and blank lines are ignored in the text comparison.
+- Bench and browser: numbers did not move (the model changed little). Chromium and WebKit still pass; Firefox still does not launch.
+
 ## What the prototype now proves
 
-Against the 45 fixtures of PR #8 (`node fixtures.test.ts`):
+Against the 61 fixtures of PR #8 at bc5407d (`node fixtures.test.ts`):
 
-- **Model: 41 of 41** fixtures with an `output.js`. For each, the slots, the entries (kind, id, output slot, in source order) and every graph of the model equal the ones `output.js` encodes. Graphs are compared as sets, without trailing empty lists. The comment numbering of each `input.js` is the same numbering.
-- **Compile errors: 4 of 4** (`entry-in-function`, `loop-entry`, `memo-writes-slot`, `skip-comment`) throw the expected message.
-- **Logs: 41 of 41.** The compiled `input.js`, run on the sketch runtime with the contract's runner protocol, logs `expected.json`.
-- **Text: 38 of 41.** The compiled `input.js` equals `output.js` after removing comments, writing graph lists in canonical order without trailing empty lists, and formatting both with oxfmt. This includes the three with the most overwrites: `nested-scope`, `update-expression` and `destructure-assign` (in-place destructuring with defaults that read an earlier target, rest elements, a member target, both the expression and the statement form, and a destructuring declarator), plus `compound-assignment`, `chained-write`, `memo-destructure`, `order`, `var-slot`, `store-let` and the rest. The three that differ:
-  - `composable`, `composable-glitch`: the fixture numbers the composable's graph `$g1` and the root's `$g0`, against source order. Only the names differ.
-  - `for-of-slot`: the pattern loop uses the in-place form (change request below).
+- **Model: 54 of 54** fixtures with an `output.js`. For each, the slots, the entries (kind, id, output slot, in source order) and every graph of the model equal the ones `output.js` encodes. Graphs are compared as sets, without trailing empty lists. The comment numbering of each `input.js` is the same numbering.
+- **Compile errors: 7 of 7** (`entry-arguments`, `entry-in-function`, `jsx-tag`, `loop-entry`, `root-argument`, `skip-comment`, `store-pattern`) throw the expected message.
+- **Logs: 54 of 54.** The compiled `input.js`, run on the sketch runtime with the contract's runner protocol, logs `expected.json`.
+- **Text: 52 of 54.** The compiled `input.js` equals `output.js` after removing comments, writing graph lists in canonical order, ignoring blank lines, and formatting both with oxfmt. This includes the in-place destructuring, the class field wrap, `object-memo`, `block-slot`, `function-memo`, `entry-in-expression` and the rest. The two that differ, `composable` and `composable-glitch`, number the composable's graph `$g1` and the root's `$g0`, against source order (the composable comes first in the source). Only the names differ. `composable-lifecycle` numbers in source order, so the fixtures disagree with each other (change request 1).
 
-Other checks in `node test.ts` (30, all pass): the Babel differential and recorded references on `tricky.tsx` and the 2,028-line file, the scope fixes of finding 7, read and write flags, every compile error of the table, reads through helpers and child memos, scope bindings, the overwrite cases (`x *= a + b`, logical, chained, destructuring with a default), the magic-string traps, the import rewrite (alias, kept `tick` and `type Store`, namespace import left as is), generated names next to user names `$s`, `$$get` and `$t0`, UTF-16 offsets, the source map of every kept identifier, and no `node:` import in the compiler files.
+Other checks in `node test.ts` (32, all pass): the Babel differential and recorded references on `tricky.tsx` and the 2,028-line file, the scope fixes of finding 7, read and write flags, every compile error of the table, reads through helpers and child memos, scope bindings, the overwrite cases (`x *= a + b`, logical, chained, destructuring with a default), the magic-string traps, the import rewrite (alias, kept `tick` and `type Store`, namespace import left as is), generated names next to user names `$s`, `$$get` and `$t0`, UTF-16 offsets, the source map of every kept identifier, and no `node:` import in the compiler files.
 
 ### Measured numbers
 
@@ -67,19 +77,18 @@ Generated TSX file of 2,028 lines (43 KB) with 45 `$composable` setups. Apple M2
 - magic-string makes `sources` relative to `file`. Pass the module path as both.
 - Compare fixture text after normalizing graph list order and trailing empty lists, or compare logs. The fixtures are not consistent on either (below).
 
-## Change requests for the runtime contract (PR #8)
+## Change requests for the runtime contract (PR #8, v4)
 
-None of the contract is impossible to compile. These are gaps and small inconsistencies found while making all 41 fixtures pass:
+Of the 9 change requests of the first round, v4 took 8: slot rule 1 module-wide (1), write-back reads its own slot (2), trailing empty lists (4), `for (P of e)` in place (5), the missing errors (6), written bindings are not local functions (7), merged import (8) and parenthesized object or sequence bodies (9). Request 3 (graph list order in `nested-scope`) is fixed in the fixture. What is left, and what is new:
 
-1. **Rule 1 of "Slots" says "written anywhere in the setup tree".** The setup tree excludes nested `$$`, but `nested-root-write` needs `outer` to get a slot from a write inside a nested `$$`. Say "anywhere in the module" (any write reference of the binding). The prototype does that.
-2. **A write-back reads its own slot.** The graphs list it (`store-let`: `[[0, 1, 2]]`, `composable`: `[[0, 1], [2]]`), but "Reads" does not say so.
-3. **Graph list order in `nested-scope`.** `$g0 = [[[0, 0], 1]]` puts a path before a number, against "numbers ascending, then paths". Write `[[1, [0, 0]]]`.
-4. **Trailing empty lists.** `nested-root` writes `$g0 = [[]]`, while `child-memo-wasted` and `compound-assignment` leave them out. Pick one for the fixtures. The prototype leaves them out.
-5. **`for (P of e)` with a pattern.** The contract's form `for (const $t0 of e) { P' = $t0; ... }` moves the pattern into the body, which needs `MagicString.move`. Allow the in-place form `for (P' of e) { $$set(...); ...; body }` with the targets' temps in the function's `let`. It is equivalent and needs no move.
-6. **Errors missing from the table**: `$$` or `$composable` with an argument that is not one function, and a slot used as a JSX tag (`<Comp />` where `Comp` has a slot). A JSX tag cannot be a call, so the second has no compiled form. The prototype throws `<name> must be called with a function.` and `A reactive variable cannot be used as a JSX tag.`
-7. **Local functions and writes.** "A declarator ... that has no slot" lets a written `let f = () => ...` inside a nested block count as a local function, so the reads of its first value are added. Consider treating any written binding as opaque. The prototype follows the contract as written.
-8. **Merged import.** "Imports" says the compiler adds one new declaration before the first statement, but the fixtures (`order`, `store-let`) merge the helpers into the user's import: `import { $$root, ..., tick } from 'silmaril'`. Allow both. The prototype merges.
-9. **Object literal or sequence initializers.** The table shows `$$memo($s, n, k, () => e)`. Add that `e` is parenthesized when it is an object literal or a sequence.
+1. **Graph numbering in `composable` and `composable-glitch`** (kept, narrowed). The contract places graphs "after the last import" but does not say how they are numbered. `composable-lifecycle` and `nested-composable` number in source order of the scope bodies; `composable` and `composable-glitch` give the root `$g0` and the composable `$g1`, though the composable is first in the source. Say "numbered in source order of the scope bodies" and renumber the two fixtures, or compare logs and models only.
+2. **Parsing `.js` as JSX** (new, open). Fixture `jsx-tag` is a `.js` file with `<Tag />`. The contract does not name a language rule. The prototype parses `.js` as JSX, as the 0.4 Babel plugin did. State it in `compiler-api`, or rename the fixture `input.jsx`.
+3. **A declaration that is a bare statement body** (new, open). `if (c) var a = 1, b = 2;` is a setup declaration with no statement list. The prototype wraps the split in `{ }`. The contract says nothing; 0.4 behavior is not known. Allow the block, or reject it.
+4. **Function memos and the scope parameter** (new, open). A function memo `const f = () => { onMount(g); }` has a memo child scope whose node is the function itself. The prototype binds `onMount` to the nearest enclosing scope, not the memo's, so the callback belongs to the scope that holds `f`. The contract says a memo runs with a child scope but not what a lifecycle call in a function value means. State which scope.
+5. **Class expressions** (new, open). The contract says a function or arrow initializer that reads a slot is a memo and a `$$`/`$composable` call is never one. A class expression that reads a slot is not mentioned. The prototype never makes it a memo (as in v3).
+6. **`$` or `$sync` in a class field initializer or a static block** (new, open). The contract lists nested functions, memo initializers and entry arguments. The prototype also rejects a class field value and a static block with `must be called directly in a setup body.`; 0.4 behavior is not known.
+
+No fixture contradicts the v4 contract text. The v4 "Compile errors" table and its fixtures agree.
 
 ## Deviations
 
@@ -90,7 +99,6 @@ None of the contract is impossible to compile. These are gaps and small inconsis
 ## Stubs left
 
 - None in the package. `proto/` is throwaway. The prototype types nodes as `any`.
-- The JSX-tag case throws in codegen. compiler-core should raise it in analysis.
 
 ## Gotchas
 
@@ -117,13 +125,13 @@ None of the contract is impossible to compile. These are gaps and small inconsis
 
 ## Verification
 
-- `node test.ts` in `proto/`: 30 checks pass.
-- `node fixtures.test.ts` in `proto/`: 45 fixtures, 0 failures (model 41, logs 41, text 38, compile errors 4).
-- `node bench.ts` in `proto/`: the numbers above.
-- `node browser/run.ts` in `proto/`: Chromium and WebKit pass with both bindings, with and without COOP/COEP.
-- At the repository root: `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check` passes.
+- `node test.ts` in `proto/`: 32 checks pass.
+- `node fixtures.test.ts` in `proto/`: 61 fixtures, 0 failures (model 54, logs 54, text 52, compile errors 7).
+- `node bench.ts` in `proto/`: rerun after the v4 changes, within noise of the numbers above (compile 13.1 ms, Babel plugin 178 ms).
+- `node browser/run.ts` in `proto/`: rerun, Chromium and WebKit pass with both bindings, with and without COOP/COEP (compile 11 to 13 ms). Firefox does not launch.
+- At the repository root after the v4 revision: `pnpm lint && pnpm format:check` pass. The earlier full check (`pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check`) was run on the first round; `packages/` did not change since.
 - No change to `packages/`, the root `package.json` or `pnpm-lock.yaml`.
 
 ## Size
 
-- Estimated M, actual M for the first round. The revision was another M: the model and the code generator.
+- Estimated M, actual M for the first round. The first revision was another M. The v4 revision was S.
