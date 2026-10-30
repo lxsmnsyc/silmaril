@@ -1,7 +1,7 @@
 # Change request: compiler-api v2 to v3
 
 - From node: compiler-core
-- Status: open
+- Status: accepted
 
 ## Problem
 
@@ -50,4 +50,4 @@
 
 ## Decision
 
-<Filled in by the orchestrator.>
+Accepted as compiler-api v3 on 2026-10-30, after the fresh review of PR #15 checked each item. `codegen-core` builds against v3.

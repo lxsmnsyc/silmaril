@@ -1,11 +1,11 @@
 ---
 name: compiler-api
-version: 2
+version: 3
 status: frozen
 defined_by: compiler-infra-spike
 ---
 
-# Contract: compiler-api (proposed v2)
+# Contract: compiler-api
 
 Replacement for `contracts/compiler-api.md` v1. The orchestrator copies it over the contract if accepted. Evidence is in `nodes/compiler-infra-spike/outcome.md` and the prototype in `nodes/compiler-infra-spike/proto/`.
 
@@ -375,8 +375,15 @@ export interface WriteSite {
   /** A destructuring write that is a whole expression statement in a statement list. */
   statement: boolean;
   /** The nearest function, or the class field whose initializer holds the site: it declares the temps. */
-  fn: oxc.Function | oxc.ArrowFunctionExpression;
+  fn: TempOwner;
 }
+
+// PropertyDefinition covers TSAbstractPropertyDefinition, AccessorProperty covers TSAbstractAccessorProperty.
+export type TempOwner =
+  | oxc.Function
+  | oxc.ArrowFunctionExpression
+  | oxc.PropertyDefinition
+  | oxc.AccessorProperty;
 
 /** A call that binds to a scope at run time. */
 export interface ScopeBinding {
@@ -429,7 +436,7 @@ The order matters, because later steps use earlier results. `proto/model.ts` fol
 2. **Setup trees.** Each `$$` and `$composable` call, outer ones first, makes a setup scope (`root` or `composable`) with `parent: null`. The argument must be one function or arrow, block or expression body. The setup tree of a node is its nearest enclosing setup function.
 3. **Entries.** Each `$`/`$sync` call, in source order (outer before inner), takes exactly one argument, no spread (`<name> can only accept a single argument`, the 0.4 text). Walk up from the call until a function. The call may sit in any expression, as in 0.4 (`on && $sync(...)`). The walk fails with `<name> must be called directly in a setup body.` at a function that is not a setup or an entry body (a nested function, or a parameter default), at the program, at a class field or static block, and at the argument of another `$`/`$sync` call (step 6 adds the memo initializers). It fails with `<name> cannot be called inside a loop.` when it passes a loop node on the way to an owner. A function argument makes a `sync`/`effect` scope with `isBody: true`, so calls inside it can be checked next.
 4. **Other names.** `$skip`, `onMount` and `onDestroy` outside every setup tree fail. `$skip` and `$store` take exactly one argument (no spread). A `$store` call that is the whole initializer of a declarator with a pattern fails with `$store is only limited to identifiers.`; each other `$store` call must be the whole initializer (through wrappers) of a slot candidate (step 5), else `$store must initialize a variable of a setup body.` A comment whose trimmed text is `$skip`, inside a setup function, fails.
-5. **Slot candidates.** The declarators of every setup declaration of each scope body with a block body, one per declarator: a `let`, `const` or `var` reached through blocks, `if`, `try`/`catch`/`finally`, `switch` cases and labels, but not through a loop or a nested function. A later `var` of a name that already has a candidate is not a candidate: it becomes a `redeclare` write if it has an initializer, and prints nothing otherwise. Initializers that are a class expression, `$$` or `$composable` call are never memos. A function or arrow initializer is a memo when it reads a slot (v4, fixture `function-memo`).
+5. **Slot candidates.** The declarators of every setup declaration of each scope body with a block body, one per declarator: a `let`, `const` or `var` reached through blocks, `if`, `try`/`catch`/`finally`, `switch` cases and labels, but not through a loop or a nested function. A later `var` of a name that already has a candidate is not a candidate: it becomes a `redeclare` write if it has an initializer, and prints nothing otherwise. Initializers that are a class expression, `$$` or `$composable` call are never memos. A function or arrow initializer is a memo when it reads a slot (v4, fixture `function-memo`). The redeclare check is per bound name. A declarator that names a binding with a candidate is a redeclare of it. Its other names form a candidate of their own, which is never a memo. A `var` in a loop or a loop head is never a candidate, but one that names a candidate is a redeclare too. A redeclare counts for rule 1 when it has an initializer or heads a `for-in` or `for-of` loop. A `for (var x of e)` head gives a `for` write site whose node is the loop and whose `pattern` is the `VariableDeclaration`. A redeclare in the init of a `for` statement has `statement: false`.
 6. **Slots, to a fixed point.** Rule 1 (a `let`/`var` with any write reference, or a redeclare with an initializer) and rule 3 (`$store`) give slots first. Then rule 2 repeats until nothing changes: a candidate whose initializer reads a slot becomes a memo and gets slots. All names of a declarator get slots together. Slots are numbered per scope in source order of the declarators.
 7. **Entries.** Per scope body: memos and `let`/`var` write-backs in source order, then `$sync` calls, then `$` calls. A memo gets a `memo` child scope over its initializer. An expression entry gets a `sync`/`effect` child scope over its argument, with `isBody: false`.
 8. **Reads.** See below.
@@ -478,6 +485,7 @@ All of the runtime contract's table, raised during analysis:
 | `$` or `$sync` in a nested function, a memo initializer, another entry's argument, or outside every setup | `<name> must be called directly in a setup body.`                  | 3, 6 |
 | `$` or `$sync` with other than one argument                                                               | `<name> can only accept a single argument`                         | 3    |
 | `$skip` or `$store` with other than one argument                                                          | `<name> takes exactly one argument.`                               | 4    |
+| `onMount` or `onDestroy` with other than one argument                                                     | `<name> takes exactly one argument.`                               | 12   |
 | `$skip`, `onMount` or `onDestroy` outside every setup tree                                                | `<name> must be used inside $$ or $composable.`                    | 4    |
 | `$store` with a pattern binding                                                                           | `$store is only limited to identifiers.`                           | 4    |
 | `$store` not the whole initializer of a setup declaration                                                 | `$store must initialize a variable of a setup body.`               | 4, 6 |
@@ -570,5 +578,6 @@ None. `compiler-core` is the first implementation. `nodes/compiler-infra-spike/p
 ## Changes
 
 - v1: draft.
+- v3 (change request from compiler-core, accepted 2026-10-30): `WriteSite.fn` is a `TempOwner`, which includes class fields. Row for `onMount` and `onDestroy` with other than one argument. Step 5: the redeclare check is per bound name, and a loop `var` that names a setup `var` is a redeclare write.
 - v2, revised for `reactivity-runtime` v4 (bc5407d): setup declarations in nested blocks, function memos, written bindings are not local functions, `$`/`$sync` in expressions, the v4 error table and messages (the memo write and class field errors are gone), the class field arrow wrap, `.js` parsed as JSX. The earlier text was written against v3.
 - v2 (proposed by compiler-infra-spike): sync `compile` plus a no-op `ready()`, own `SourceMap` with `file` naming the generated file, exact pinning with the wasm binding as an optional peer, one tsdown config with a `node:` import test. Internal API rewritten against `reactivity-runtime` v3: the `ReactiveScope` tree, slots, entries, reads (local functions, child memos), graphs, scope bindings, write sites, `$skip` calls, the compile errors and the import rewrite. Edit rules for magic-string and `Reference.context`. File layout matching the owned paths of compiler-core and the codegen nodes.
