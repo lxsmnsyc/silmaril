@@ -12,7 +12,7 @@
 
 - Edited `website/scripts/check-samples.ts` (outside the brief's paths) to assert sample logs. It is the only way to have `--strict` assert logs.
 - The sidebar section is called "More" and comes after "Integrations". The brief says "after the guide pages".
-- Compile errors, the plain-values change and the nested `$$` change have no live sample, because a compile error cannot run and a plain value shows no difference in logs. They are in the text.
+- Three changes have no live sample: compile errors (they cannot run), plain values (the logs do not differ) and the nested `$$`. They are in the text.
 - No link to `./api.md`.
 
 ## Stubs left
