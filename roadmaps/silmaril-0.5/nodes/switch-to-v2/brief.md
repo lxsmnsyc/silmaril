@@ -1,7 +1,7 @@
 ---
 id: switch-to-v2
 title: Switch silmaril to the new compiler and runtime
-status: todo
+status: active
 priority: must
 type: feature
 milestone: 0.5.0
