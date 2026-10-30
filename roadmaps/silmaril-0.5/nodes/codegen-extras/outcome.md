@@ -14,6 +14,7 @@
 ## Deviations
 
 - Edits to shared paths only, plus the removal of `failUnsupported` from `compiler/codegen/context.ts`, which is a codegen-core file the brief does not list.
+- The extras live in the shared `codegen/variables.ts`, `entries.ts` and `index.ts` (about 30 lines) instead of `compiler/codegen/extras/*.ts` as the compiler-api layout table says. It is simpler, and those files are listed as shared.
 - No change request.
 
 ## Stubs left
