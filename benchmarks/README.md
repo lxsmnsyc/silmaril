@@ -49,7 +49,7 @@ An earlier 0.4 run under load (load average about 10) measured roughly twice the
 
 ## Check after the switch (0.5.0)
 
-`switch-to-v2` deleted the `babel` pipeline and moved the runtime from `src/v2` to `src`. The compiler code and its dependency versions did not change. `pnpm bench` was run again on `roadmap` at `25b4952` (2026-10-30, load average 2.8 to 5.0), and the commit above (`0f55110`) was run again in the same session for comparison:
+`switch-to-v2` deleted the `babel` pipeline and moved the runtime from `src/v2` to `src`. The compiler code and its dependency versions did not change. `pnpm bench` was run again on `roadmap` at `25b4952` (2026-10-30, load average 2.8 to 5.0). The commit above (`0f55110`) was run again in the same session for comparison:
 
 | run                    | 54.5 KB compile, median ms | one write N = 400, median us | batch N = 400, median ms |
 | ---------------------- | -------------------------- | ---------------------------- | ------------------------ |
