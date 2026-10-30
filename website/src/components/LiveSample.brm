@@ -1,0 +1,304 @@
+<script>
+  import { $client, $effect, $memo, $props, $signal } from 'brumate/signals';
+  import { prevent } from 'brumate/events';
+  import { highlight } from '../live/highlight.ts';
+
+  // A code sample of the docs that compiles and runs in the page. Editing it runs it again.
+  const { name, source: initial } = $props<{ name: string; source: string }>();
+
+  // Names this sample for the runner, which stops the last run when a new one starts.
+  const owner = `${name}:${Math.random()}`;
+  let source = $signal(initial);
+  let logs = $signal<string[]>([]);
+  let compiled = $signal('');
+  let error = $signal('');
+  let status = $signal<'idle' | 'running' | 'done' | 'compiled'>('idle');
+  let view = $signal<'logs' | 'compiled'>('logs');
+  // Counts runs, so a run that finishes after a newer one started writes nothing.
+  let runs = $signal(0);
+  let timer = $signal<number>();
+  let backdrop = $signal<HTMLElement>();
+
+  // A line break at the end keeps the last line of the editor and the highlight the same height.
+  const code = $memo(highlight(`${source}\n`));
+  // The line numbers of the gutter, one for each line of the source.
+  const lines = $memo(Array.from({ length: source.split('\n').length }, (_, index) => index + 1).join('\n'));
+  const compiledCode = $memo(highlight(compiled));
+
+  // Typing pauses before the sample compiles again.
+  function edit(next: string) {
+    source = next;
+    const typed = next;
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      if (typed === source) {
+        void run();
+      }
+    }, 400);
+  }
+
+  async function run() {
+    runs++;
+    const id = runs;
+    status = 'running';
+    error = '';
+    logs = [];
+    try {
+      const { runSample } = await import('../live/run.ts');
+      const result = await runSample(source, {
+        owner,
+        isLatest: () => id === runs,
+        onLog: (line) => {
+          logs = [...logs, line];
+        },
+      }, name);
+      if (id === runs) {
+        compiled = result.code;
+        status = result.ran ? 'done' : 'compiled';
+      }
+    } catch (caught) {
+      if (id === runs) {
+        error = caught instanceof Error ? caught.message : String(caught);
+        status = 'idle';
+      }
+    }
+  }
+
+  // Going away stops the sample and a typing timer that has not fired.
+  $effect(() => () => {
+    void import('../live/run.ts').then(({ disposeOwner }) => disposeOwner(owner));
+    clearTimeout(timer);
+  });
+
+  // The sample runs once the page has loaded.
+  $client(() => {
+    void run();
+  });
+</script>
+
+<figure class="live">
+  <div class="live-bar">
+    <span class="live-file">{name}</span>
+    <span class="live-status">
+      #if (status === 'running') {
+        Running
+      } #else if (status === 'compiled') {
+        Compiled, not run
+      } #else if (status === 'done') {
+        Done
+      }
+    </span>
+    <button type="button" class="live-run" onClick=(() => void run())>Run</button>
+  </div>
+  <div class="live-editor">
+    <pre class="live-gutter" aria-hidden="true">{lines}</pre>
+    <div class="live-body">
+      <div class="live-backdrop code" ref=backdrop aria-hidden="true">{code}</div>
+      <textarea
+        aria-label=(`Source of ${name}`)
+        spellcheck="false"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        value=source
+        onInput=((event) => edit(event.currentTarget.value))
+        onKeyDown=(prevent((event) => {
+          const area = event.currentTarget;
+          // The wrapper keeps the browser from moving focus on Tab, with or without Shift, so
+          // the editor lets go of focus itself: Escape leaves the editor, and Shift+Tab goes
+          // back to the Run button.
+          if (event.key === 'Escape') {
+            area.blur();
+          } else if (event.key === 'Tab' && event.shiftKey) {
+            area.closest('.live')?.querySelector<HTMLElement>('.live-run')?.focus();
+          } else if (event.key === 'Tab') {
+            // Tab writes two spaces.
+            area.setRangeText('  ', area.selectionStart, area.selectionEnd, 'end');
+            edit(area.value);
+          }
+        }, 'Tab'))
+        onScroll=((event) => {
+          backdrop!.scrollTop = event.currentTarget.scrollTop;
+          backdrop!.scrollLeft = event.currentTarget.scrollLeft;
+        })
+      >{initial}</textarea>
+    </div>
+  </div>
+  <div class="live-tabs" role="tablist">
+    <button type="button" role="tab" aria-selected=(view === 'logs') class={ active: view === 'logs' } onClick=(() => (view = 'logs'))>Logs</button>
+    <button type="button" role="tab" aria-selected=(view === 'compiled') class={ active: view === 'compiled' } onClick=(() => (view = 'compiled'))>Compiled</button>
+  </div>
+  #if (error) {
+    <pre class="live-error">{error}</pre>
+  }
+  #if (view === 'logs') {
+    <div class="live-logs">
+      #for (line, index of logs by index) {
+        <p>{line}</p>
+      } #else {
+        <p class="live-empty">{status === 'compiled' ? 'The compiler does not generate code yet, so this sample is not run.' : 'No logs.'}</p>
+      }
+    </div>
+  } #else {
+    <div class="live-compiled code">{compiledCode}</div>
+  }
+</figure>
+
+<style>
+  /* Live samples of the docs */
+
+  .live {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+
+  .live-bar,
+  .live-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--surface);
+    font: 0.8rem var(--mono);
+  }
+
+  .live-bar {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .live-tabs {
+    border-top: 1px solid var(--border);
+  }
+
+  .live-bar button,
+  .live-tabs button {
+    padding: 0.15rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .live-bar .live-run {
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .live-tabs button.active {
+    border-color: var(--border);
+    background: var(--code-bg);
+    color: var(--text);
+  }
+
+  .live-file {
+    color: var(--muted);
+  }
+
+  .live-status {
+    margin-left: auto;
+    color: var(--muted);
+  }
+
+  .live-editor {
+    display: flex;
+  }
+
+  .live-gutter {
+    flex: none;
+    min-width: 3rem;
+    margin: 0;
+    padding: 0.9rem 0.75rem 0.9rem 0.5rem;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font: 0.85rem/1.6 var(--mono);
+    text-align: right;
+    opacity: 0.6;
+    user-select: none;
+  }
+
+  .live-body {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .live-backdrop,
+  .live-editor textarea {
+    margin: 0;
+    padding: 0.9rem 1.1rem;
+    font: 0.85rem/1.6 var(--mono);
+    white-space: pre;
+    overflow-x: auto;
+    overflow-y: hidden;
+    tab-size: 2;
+  }
+
+  .live-backdrop.code {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .live-editor textarea {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--text);
+    resize: none;
+  }
+
+  .live-editor textarea:focus {
+    outline: none;
+  }
+
+  /* The textarea has no outline, so the editor shows the focus instead. */
+  .live-editor:has(textarea:focus-visible) {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: -2px;
+  }
+
+  .live-editor textarea::selection {
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    color: transparent;
+  }
+
+  .live-logs,
+  .live-compiled.code {
+    margin: 0;
+    padding: 0.75rem 1.1rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 0.85rem/1.6 var(--mono);
+    overflow-x: auto;
+  }
+
+  .live-logs p {
+    margin: 0;
+  }
+
+  .live-empty {
+    color: var(--muted);
+  }
+
+  .live-error {
+    margin: 0;
+    padding: 0.75rem 1.1rem;
+    border: 0;
+    border-radius: 0;
+    background: color-mix(in srgb, #e5484d 12%, var(--bg));
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+</style>

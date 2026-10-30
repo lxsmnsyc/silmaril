@@ -1,0 +1,14 @@
+{
+  "description": "A declaration whose initializer reads a slot is a memo. Memos run in topological order, each once per write, so the diamond d computes once. A read right after a write sees the new memo value. A memo that computes the same value (parity) stops there.",
+  "logs": [
+    ["compute d"],
+    ["d", 4],
+    ["parity", 1],
+    ["compute d"],
+    ["d", 7],
+    ["parity", 0],
+    ["read after write", 7],
+    ["compute d"],
+    ["d", 13]
+  ]
+}

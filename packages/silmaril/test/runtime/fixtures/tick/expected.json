@@ -1,0 +1,13 @@
+{
+  "description": "tick() returns a promise that resolves after the $ flush, including $ bodies queued during the flush. It resolves after $ bodies queued after the call and before the flush. With nothing queued it still resolves.",
+  "logs": [
+    ["setup"],
+    ["double", 0],
+    ["first tick"],
+    ["double", 2],
+    ["second tick"],
+    ["double", 4],
+    ["third tick"],
+    ["empty tick"]
+  ]
+}

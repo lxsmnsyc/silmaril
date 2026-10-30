@@ -1,0 +1,9 @@
+{
+  "description": "Entries at the same depth in sibling scopes run in the order of their branches under the common ancestor: the child of entry 0 before the child of entry 1. This graph lists the refs in the order the compiler emits.",
+  "logs": [
+    ["A", 0],
+    ["B", 0],
+    ["A", 1],
+    ["B", 1]
+  ]
+}

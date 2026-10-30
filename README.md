@@ -2,6 +2,8 @@
 
 > Compile-time reactivity for JS
 
+Documentation: the website lives in [`website`](https://github.com/lxsmnsyc/silmaril/tree/main/website). Its address goes here once the site is deployed.
+
 [![NPM](https://img.shields.io/npm/v/silmaril.svg)](https://www.npmjs.com/package/silmaril) [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/github/LXSMNSYC/silmaril/tree/main/examples/demo)
 
 ## Install
@@ -27,7 +29,7 @@ pnpm add silmaril
 
 ## Requirement
 
-Due to the compile-time nature of this library, it requires the use of [Babel](https://babeljs.io/). `silmaril` provides a Babel plugin under `silmaril/babel`.
+`silmaril` works at compile time, so your code must go through its compiler. `silmaril/compiler` is the compiler, built on [oxc-parser](https://oxc.rs/) and [magic-string](https://github.com/Rich-Harris/magic-string). `silmaril/unplugin` runs it in your bundler. The runtime (`silmaril`, `silmaril/store` and `silmaril/solid`) has no dependencies.
 
 `silmaril` requires Node.js `^22.18.0 || >=24.11.0` and is published as ESM only.
 
@@ -56,15 +58,37 @@ Use `silmaril.rollup`, `silmaril.rolldown`, `silmaril.esbuild`, `silmaril.webpac
 Options:
 
 - `filter.include` and `filter.exclude`: glob patterns or regular expressions for the modules to compile. By default, every `.js`, `.jsx`, `.ts` and `.tsx` file (including `.mjs`, `.cjs`, `.mts` and `.cts`) that contains `silmaril` is compiled.
-- `babel`: extra [Babel options](https://babeljs.io/docs/options) passed to the transform.
 
 `rollup-plugin-silmaril` and `vite-plugin-silmaril` are deprecated in favor of `silmaril/unplugin`.
+
+### Compiler
+
+`silmaril/compiler` compiles one module. Use it to write a plugin for a tool that unplugin does not cover.
+
+```js
+import { compile, ready, CompileError } from 'silmaril/compiler';
+
+await ready();
+
+try {
+  const { code, map } = compile(source, { filename: 'counter.ts' });
+} catch (error) {
+  if (error instanceof CompileError) {
+    // error.loc has the location, error.frame a code frame
+  }
+}
+```
+
+- `filename` picks the language: `.js` and `.jsx` parse as JSX, `.ts` and `.tsx` as TypeScript (`.mjs`, `.cjs`, `.mts` and `.cts` too). It also names the source in the map.
+- `sourcemap`: `false` skips the source map. Default `true`.
+- A module that imports no compile-time name from `silmaril` comes back unchanged, with `map` set to `null`.
+- `ready()` resolves when `compile` can run. Await it before the first `compile` in a browser. There the parser needs `@oxc-parser/binding-wasm32-wasip1`, an optional peer dependency.
 
 ## Usage
 
 ### Basic reactivity
 
-`$$` defines the reactive boundary in your JS code. Any top-level variables (function-scoped) declared in `$$` will be treated as "reactive" as possible. `$` can be used to asynchronously react to variable changes.
+`$$` defines the reactive boundary in your JS code. A variable declared in `$$` is reactive when it is written after its declaration, reads a reactive variable or binds a store. Variables declared inside loops stay plain. `$` can be used to asynchronously react to variable changes.
 
 Variable changes and reactions are only limited in `$$` (even for nested `$$` calls).
 
@@ -73,7 +97,7 @@ import { $$, $ } from 'silmaril';
 
 $$(() => {
   // Create a "reactive" variable
-  let count = 0;
+  let count = 1;
 
   // Log count for changes
   $(console.log('Count: ', count));
@@ -88,7 +112,7 @@ $$(() => {
 });
 ```
 
-`$` will know which variables to track with, but it can only know if the variable is accessed in that same call.
+`$` tracks the variables read in its call. It also tracks the variables read by a local function that it calls by name.
 
 ```js
 import { $$, $ } from 'silmaril';
@@ -99,11 +123,10 @@ $$(() => {
   let prefix = 'Count';
 
   function log(current) {
-    // `prefix` is not tracked
     console.log(`${prefix}: `, current);
   }
 
-  // This only tracks `count`
+  // This tracks `count`, and `prefix` through `log`
   $(log(count));
 });
 ```
@@ -117,7 +140,9 @@ $(() => {
 });
 ```
 
-`$` will only run if the tracked variables have actually changed (except for the first run), which means that it has some "auto-memoization".
+After its first run, `$` runs again only after a write that changes a tracked variable (compared with `Object.is`). A write of the same value does nothing. Once queued, `$` runs even if a later write puts the old value back.
+
+Reads inside a function imported from another module are not tracked: the compiler sees one module at a time.
 
 ### Computed variables
 
@@ -208,7 +233,7 @@ stop();
 
 ### Synchronous tracking
 
-`$` is deferred by a timeout schedule which means that `$` asynchronously reacts on variable updates, this is so that updates on variables are batched by default (writing multiple times synchronously will only cause a single asynchronous update).
+`$` runs in a microtask after the code that wrote the variables, so updates are batched. Writing multiple times synchronously causes a single asynchronous update. `await tick()` waits until the queued `$` calls have run.
 
 `$sync` provides synchronous tracking.
 
@@ -247,8 +272,6 @@ $$(() => {
   $(console.log(a, $skip(b)));
 });
 ```
-
-The `/*$skip*/` comment before an identifier does the same for that identifier.
 
 ### Stores
 
@@ -344,15 +367,18 @@ $$(() => {
   input = 100;
 
   // Logs
-  // Count: 0
-  // Count: 100
-  // Count: 200
+  // Value 0
+  // Squared 0
+  // Value 100
+  // Squared 10000
 });
 ```
 
 #### `$` and `$sync`
 
-Both `$` and `$sync` behave much like `$$`: variables become reactive, `onMount` and `onDestroy` can be used, same goes to other APIs.
+Both `$` and `$sync` behave much like `$$`: variables become reactive, `onMount` and `onDestroy` can be used, same goes to other APIs. Each run of the body is disposed before the next run.
+
+A nested `$` or `$sync` tracks its own reads. A read inside it does not make the outer body run again.
 
 ```js
 import { $$, $, onDestroy } from 'silmaril';
@@ -362,6 +388,9 @@ $$(() => {
   $(() => {
     let x = 0;
 
+    // This read makes the outer body run again when `y` changes
+    console.log('y is', y);
+
     $(console.log(x + y));
 
     onDestroy(() => {
@@ -370,7 +399,10 @@ $$(() => {
 
     x += 100;
   });
-  y += 100;
+
+  setTimeout(() => {
+    y += 100;
+  });
 });
 ```
 

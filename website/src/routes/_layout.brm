@@ -1,0 +1,37 @@
+<script>
+  import { $props } from 'brumate/signals';
+  import { raw } from 'brumate/html';
+  import Header from '../components/Header.brm';
+  import { THEME_SCRIPT } from '../scripts.ts';
+  import { STYLES } from '../theme.ts';
+
+  const { children } = $props();
+  const base = import.meta.env.BASE_URL;
+</script>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href=(`${base}logo.svg`)>
+    {raw(THEME_SCRIPT)}
+    {raw(STYLES)}
+  </head>
+  <body>
+    <Header />
+    {children}
+    <footer class="footer">
+      <p>MIT licensed. Built with <a href="https://github.com/lxsmnsyc/brumate" target="_blank" rel="noreferrer">brumate</a>.</p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .footer {
+    padding: 2rem 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+</style>

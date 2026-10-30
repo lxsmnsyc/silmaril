@@ -1,0 +1,11 @@
+{
+  "description": "A composable scope mounts and is disposed at the place of its call among the caller's own onMount and onDestroy callbacks. So the callbacks run in call order, as in 0.4, where the composable shared the caller's instance.",
+  "logs": [
+    ["mount A"],
+    ["mount thing"],
+    ["mount C"],
+    ["destroy A"],
+    ["destroy thing"],
+    ["destroy C"]
+  ]
+}

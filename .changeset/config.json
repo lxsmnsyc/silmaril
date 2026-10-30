@@ -5,11 +5,20 @@
   "format": "oxfmt",
   "changelog": [
     "@changesets/changelog-github",
-    { "repo": "lxsmnsyc/silmaril" }
+    {
+      "repo": "lxsmnsyc/silmaril"
+    }
   ],
   "commit": false,
   "fixed": [],
-  "linked": [],
+  "linked": [
+    [
+      "silmaril",
+      "rollup-plugin-silmaril",
+      "vite-plugin-silmaril",
+      "solid-silmaril"
+    ]
+  ],
   "ignore": ["demo", "solid-demo"],
   "updateInternalDependencies": "patch"
 }

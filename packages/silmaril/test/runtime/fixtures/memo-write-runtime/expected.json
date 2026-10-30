@@ -1,0 +1,10 @@
+{
+  "description": "The compiler cannot see a write that a memo makes through a function passed as a value. At run time the write stores the value and queues its entries. They run after the memo returns, in the same drain, so the memo can compute again in the same write.",
+  "logs": [
+    ["c computes with b", 0],
+    ["sync c", 0],
+    ["c computes with b", 0],
+    ["c computes with b", 10],
+    ["sync c", 10]
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "As in 0.4, an entry that writes a slot it reads runs again after it returns, until the value stops changing. A $sync that clamps the slot it reads moves it to the limit. A write that never settles hits the loop guard (fixture update-loop).",
+  "logs": [["x", 3]]
+}

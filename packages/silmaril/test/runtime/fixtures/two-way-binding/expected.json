@@ -1,0 +1,9 @@
+{
+  "description": "Two $sync bodies that write what the other reads form a cycle that settles: the second write stores the value the slot already holds, so it queues nothing. The loop guard does not stop a cycle that settles.",
+  "logs": [
+    ["C", 100, "F", 212],
+    ["C", 0, "F", 32],
+    ["C", 100, "F", 212],
+    ["C", -40, "F", -40]
+  ]
+}

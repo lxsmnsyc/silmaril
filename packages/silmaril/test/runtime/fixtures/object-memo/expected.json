@@ -1,0 +1,7 @@
+{
+  "description": "A memo initializer or an expression entry that is an object literal or a sequence is wrapped in parentheses after () =>, so it stays an expression. The $sync runs once per write, after both of its slots changed.",
+  "logs": [
+    ["point", 1, 2],
+    ["point", 2, 4]
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "$store must initialize a variable with an identifier binding. The message is the one 0.4 throws.",
+  "compileError": "$store is only limited to identifiers."
+}

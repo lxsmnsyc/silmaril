@@ -1,0 +1,164 @@
+<script>
+  import { $signal } from 'brumate/signals';
+
+  interface Result {
+    href: string;
+    title: string;
+    page: string;
+    text: string;
+  }
+
+  const base = import.meta.env.BASE_URL;
+  let query = $signal('');
+  let results = $signal<Result[]>([]);
+  let open = $signal(false);
+
+  // The index loads the first time someone types, so pages do not load it before.
+  async function find(value: string) {
+    query = value;
+    open = true;
+    const terms = value.toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0) {
+      results = [];
+      return;
+    }
+    const { index } = await import('virtual:search-index');
+    const scored = index.flatMap((entry) => {
+      const heading = entry.heading.toLowerCase();
+      const text = entry.text.toLowerCase();
+      if (!terms.every((term) => heading.includes(term) || text.includes(term))) {
+        return [];
+      }
+      const score = terms.reduce((sum, term) => sum + (heading.includes(term) ? 3 : 1), 0);
+      const at = Math.max(0, text.indexOf(terms[0]!) - 40);
+      return [
+        {
+          score,
+          href: `${base}docs${entry.page ? `/${entry.page}` : ''}${entry.id ? `#${entry.id}` : ''}`,
+          title: entry.heading,
+          page: entry.pageTitle,
+          text: `${at > 0 ? '…' : ''}${entry.text.slice(at, at + 120)}…`,
+        },
+      ];
+    });
+    // Only the answer to the latest query is shown.
+    if (query === value) {
+      results = scored.toSorted((a, b) => b.score - a.score).slice(0, 8);
+    }
+  }
+</script>
+
+<div class="search" onFocusout=((event) => {
+  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+    open = false;
+  }
+})>
+  <input
+    type="search"
+    placeholder="Search the docs"
+    aria-label="Search the docs"
+    value=query
+    onInput=((event) => find(event.currentTarget.value))
+    onFocus=(() => (open = true))
+  >
+  #if (open && query) {
+    <div class="search-results" role="listbox">
+      #for (result of results by result.href) {
+        <a href=(result.href) onClick=(() => (open = false))>
+          <strong>{result.title}</strong>
+          <small>{result.page}</small>
+          <span>{result.text}</span>
+        </a>
+      } #else {
+        <p class="search-empty">No results</p>
+      }
+    </div>
+  }
+</div>
+
+<style>
+  /* Search */
+
+  .search {
+    position: relative;
+    flex: 0 1 18rem;
+    margin: 0 1rem;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9rem;
+  }
+
+  .search input:focus {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: 1px;
+  }
+
+  .search-results {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    left: 0;
+    min-width: 20rem;
+    max-height: 70vh;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    box-shadow: var(--shadow);
+    overflow-y: auto;
+  }
+
+  .search-results a {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .search-results a:hover,
+  .search-results a:focus {
+    background: var(--surface);
+  }
+
+  .search-results small {
+    color: var(--accent-strong);
+    font-size: 0.75rem;
+  }
+
+  .search-results span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .search-empty {
+    margin: 0;
+    padding: 0.6rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 800px) {
+    .search {
+        flex-basis: 9rem;
+        margin: 0 0.5rem;
+      }
+  }
+
+  @media (max-width: 640px) {
+    .search {
+        order: 1;
+        flex: 1 1 100%;
+        margin: 0;
+      }
+  }
+</style>

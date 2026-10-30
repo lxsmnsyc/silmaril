@@ -1,0 +1,8 @@
+{
+  "description": "A $composable declared inside a $$ body is its own setup tree, like a nested $$. Its entries read the outer slots without edges, so they do not run again when the outer slots change.",
+  "logs": [
+    ["inner reads outer", 0],
+    ["outer", 0],
+    ["outer", 1]
+  ]
+}

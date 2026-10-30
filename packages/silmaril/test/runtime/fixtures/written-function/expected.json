@@ -1,0 +1,4 @@
+{
+  "description": "A binding that is written, or that has a slot, is not followed as a local function: a call to it adds only the read of its slot. So the $sync runs again when format is written, but not when prefix changes, as in 0.4.",
+  "logs": [["1"], ["b:1!"]]
+}

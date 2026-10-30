@@ -1,0 +1,9 @@
+{
+  "description": "$skip(expression) reads the current values without adding edges. A write to b runs nothing. A write to a runs the memo first, then both $sync bodies in id order, and they see the new b.",
+  "logs": [
+    ["a", 0, "b", 0],
+    ["sum", 0],
+    ["a", 1, "b", 5],
+    ["sum", 6]
+  ]
+}

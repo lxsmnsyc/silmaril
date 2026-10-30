@@ -1,0 +1,4 @@
+{
+  "description": "A $ that is queued when its scope is disposed does not run. Disposing runs the onDestroy callbacks of its last run.",
+  "logs": [["effect", 0], ["mounted"], ["cleanup"]]
+}

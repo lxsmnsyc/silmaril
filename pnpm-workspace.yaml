@@ -1,3 +1,12 @@
 packages:
   - 'packages/*'
   - 'examples/*'
+  - 'website'
+  - 'benchmarks'
+allowBuilds:
+  esbuild: false
+
+overrides:
+  # 1.2.6 does not accept the emnapi alpha that the oxc 0.155 bindings pin, and the browser load fails.
+  # Remove it once they agree.
+  '@napi-rs/wasm-runtime': 1.2.5

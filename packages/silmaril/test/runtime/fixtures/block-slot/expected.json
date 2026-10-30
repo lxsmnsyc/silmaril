@@ -1,0 +1,10 @@
+{
+  "description": "As in 0.4, declarations in blocks of a setup body are reactive, as long as the block is not inside a loop. A declaration inside a loop stays a plain local, because one slot cannot hold a binding per iteration.",
+  "logs": [
+    ["z", 10],
+    ["z", 11],
+    ["z", 21],
+    ["loop", 2],
+    ["loop", 3]
+  ]
+}

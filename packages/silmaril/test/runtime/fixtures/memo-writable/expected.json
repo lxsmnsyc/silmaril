@@ -1,0 +1,9 @@
+{
+  "description": "A memo declared with let can be written. The written value stays until a slot the memo reads changes, then the memo computes again.",
+  "logs": [
+    ["Log", "Count: 0"],
+    ["Log", "Count: 100"],
+    ["Log", "Hello World"],
+    ["Log", "Count: 200"]
+  ]
+}

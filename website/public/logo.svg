@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .line { stroke: #24211e; }
+    @media (prefers-color-scheme: dark) { .line { stroke: #ece8e4; } }
+  </style>
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset=".5" stop-color="#8fd3ff"/>
+      <stop offset="1" stop-color="#6b7cff"/>
+    </linearGradient>
+  </defs>
+  <path d="M16 2.5 28 12 16 29.5 4 12Z" fill="url(#fill)"/>
+  <path class="line" d="M16 2.5 28 12 16 29.5 4 12Z M4 12h24M11 12l5-9.5 5 9.5-5 17.5Z" fill="none" stroke-width="1.8" stroke-linejoin="round"/>
+</svg>

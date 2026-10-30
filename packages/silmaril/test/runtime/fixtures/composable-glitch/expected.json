@@ -1,0 +1,8 @@
+{
+  "description": "A value that crosses scopes through a store is a new write. The root $sync runs first, because it is at a lower depth, and sees the new input with the old squared value. It runs again when the composable writes squared. This torn read is part of the contract.",
+  "logs": [
+    ["input", 2, "squared", 4],
+    ["input", 3, "squared", 4],
+    ["input", 3, "squared", 9]
+  ]
+}

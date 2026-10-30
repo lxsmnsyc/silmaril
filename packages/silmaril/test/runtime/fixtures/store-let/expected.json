@@ -1,0 +1,12 @@
+{
+  "description": "let x = $store(store) also writes back. The write-back is an entry numbered and run with the memos, with no first run, so the store holds the new value when the write returns. It calls store.set only when the store holds another value, so a change that came from the store is not written back.",
+  "logs": [
+    ["Sync Count:", 100],
+    ["Raw Count:", 200],
+    ["Sync Count:", 200],
+    ["Async Count:", 200],
+    ["Raw Count:", 300],
+    ["Sync Count:", 300],
+    ["Async Count:", 300]
+  ]
+}

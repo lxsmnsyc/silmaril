@@ -1,0 +1,10 @@
+{
+  "description": "When a run throws, its new child scope is disposed before the error leaves the write: its onDestroy callbacks run, its queued $ does not run, and its onMount callbacks never run. The entry stays registered.",
+  "logs": [
+    ["mount", 0],
+    ["child effect", 0],
+    ["destroy", 0],
+    ["destroy", 1],
+    ["caught", "boom"]
+  ]
+}

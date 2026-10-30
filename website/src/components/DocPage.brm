@@ -1,0 +1,146 @@
+<script>
+  import { $props } from 'brumate/signals';
+  import { pages, sections } from '../docs.ts';
+  import LiveSample from './LiveSample.brm';
+  import Meta from './Meta.brm';
+
+  const { slug } = $props<{ slug: string }>();
+  const base = import.meta.env.BASE_URL;
+  const brand = 'silmaril';
+  const page = pages[slug];
+  const order = sections.flatMap((group) => group.pages);
+  const index = order.findIndex((item) => item.slug === slug);
+  const previous = index > 0 ? order[index - 1] : undefined;
+  const next = index !== -1 ? order[index + 1] : undefined;
+  const link = (target: string): string => `${base}docs${target ? `/${target}` : ''}`;
+  const contents = (page?.headings ?? []).filter(
+    (heading) => heading.level === 2 || heading.level === 3,
+  );
+</script>
+
+#head {
+  <title>{page ? (page.title === brand ? brand : `${page.title} | ${brand}`) : `Not found | ${brand}`}</title>
+}
+
+#if (page) {
+  <Meta
+    title=(page.title === brand ? brand : `${page.title} | ${brand}`)
+    description=page.description
+    path=(slug ? `docs/${slug}` : 'docs')
+    type="article"
+  />
+}
+<article class="prose">
+  #if (page) {
+    #for (part, index of page.parts by index) {
+      #if ('sample' in part) {
+        <LiveSample name=(part.sample.name) source=(part.sample.source) />
+      } #else {
+        {part.html}
+      }
+    }
+    <nav class="pager" aria-label="Pages">
+      #if (previous) {
+        <a class="previous" href=(link(previous.slug))><small>Previous</small>{previous.title}</a>
+      }
+      #if (next) {
+        <a class="next" href=(link(next.slug))><small>Next</small>{next.title}</a>
+      }
+    </nav>
+  } #else {
+    <h1>Not found</h1>
+    <p>No page at this address. <a href=(link(''))>Back to the documentation</a>.</p>
+  }
+</article>
+<nav class="toc" aria-label="On this page">
+  #if (contents.length > 0) {
+    <p>On this page</p>
+    #for (heading of contents by heading.id) {
+      <a href=(`#${heading.id}`) class=(`level-${heading.level}`)>{heading.text}</a>
+    }
+  }
+</nav>
+
+<style>
+  .toc {
+    position: sticky;
+    top: var(--header-height);
+    align-self: start;
+    max-height: calc(100vh - var(--header-height));
+    padding: 1.5rem 0;
+    overflow-y: auto;
+  }
+
+  .toc p {
+    margin: 1rem 0 0.3rem;
+    padding: 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .toc p {
+    margin-top: 0;
+  }
+
+  .toc a {
+    display: block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.925rem;
+    text-decoration: none;
+  }
+
+  .toc a:hover {
+    color: var(--text);
+  }
+
+  .toc a {
+    font-size: 0.85rem;
+  }
+
+  .toc a.level-3 {
+    padding-left: 1.5rem;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 3.5rem;
+  }
+
+  .pager a {
+    display: flex;
+    flex-direction: column;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .pager a:hover {
+    border-color: var(--accent);
+  }
+
+  .pager small {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .pager .next {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  @media (max-width: 1100px) {
+    .toc {
+        display: none;
+      }
+  }
+</style>

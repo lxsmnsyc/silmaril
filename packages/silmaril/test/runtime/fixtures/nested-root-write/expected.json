@@ -1,0 +1,11 @@
+{
+  "description": "A nested $$ does not track outer slots, but it reads their current value when it runs, and its writes to outer slots run the outer entries.",
+  "logs": [
+    ["outer", 0],
+    ["inner", 0, 0],
+    ["inner", 1, 0],
+    ["outer", 1],
+    ["inner", 2, 1],
+    ["outer", 2]
+  ]
+}

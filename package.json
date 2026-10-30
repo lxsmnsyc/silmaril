@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r --filter=./packages/* build",
+    "bench": "pnpm --filter benchmarks bench",
     "build:examples": "pnpm -r --filter=./examples/* build",
     "test": "pnpm -r --filter=./packages/* test",
     "type-check": "pnpm -r type-check",

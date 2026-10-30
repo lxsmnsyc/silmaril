@@ -1,0 +1,12 @@
+{
+  "description": "As in 0.4, the write-back of let x = $store(store) calls store.set once at registration, and again each time the slot changes, also when the change came from the store. A store that does not compare values sees that second call.",
+  "logs": [
+    ["set", 1],
+    ["v", 1],
+    ["set", 2],
+    ["v", 2],
+    ["set", 3],
+    ["set", 3],
+    ["v", 3]
+  ]
+}

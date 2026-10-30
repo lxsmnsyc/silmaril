@@ -1,0 +1,4 @@
+{
+  "description": "const x = $store(store) reads the store into a slot and subscribes once. A store change is a write to the slot. Disposing the scope unsubscribes.",
+  "logs": [["subscribed"], ["value", 1], ["value", 2], ["unsubscribed"]]
+}

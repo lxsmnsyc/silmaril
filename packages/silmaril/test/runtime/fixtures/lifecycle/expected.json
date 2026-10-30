@@ -1,0 +1,13 @@
+{
+  "description": "As in 0.4, the child scope of an entry mounts right after its run, also during the parent's setup. The root mounts after its setup returns and runs its onMount callbacks in order. Dispose runs child scopes first, then onDestroy callbacks in order. A second dispose does nothing, and a write after dispose stores the value and runs nothing.",
+  "logs": [
+    ["count", 0],
+    ["mount child"],
+    ["setup"],
+    ["mount root"],
+    ["before stop"],
+    ["destroy child"],
+    ["destroy root"],
+    ["done"]
+  ]
+}

@@ -1,0 +1,12 @@
+<!-- The mark of silmaril, in front of its name in the header. -->
+<svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+  <defs>
+    <linearGradient id="brand-fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3c4" />
+      <stop offset=".5" stop-color="#8fd3ff" />
+      <stop offset="1" stop-color="#6b7cff" />
+    </linearGradient>
+  </defs>
+  <path d="M16 2.5 28 12 16 29.5 4 12Z" fill="url(#brand-fill)" />
+  <path d="M16 2.5 28 12 16 29.5 4 12Z M4 12h24M11 12l5-9.5 5 9.5-5 17.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+</svg>
