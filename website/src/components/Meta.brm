@@ -1,0 +1,28 @@
+<script>
+  import { $props } from 'brumate/signals';
+
+  // The description and link preview of a page: Open Graph for most sites and chat apps,
+  // and the card for X. Previews need absolute URLs, so they start with the site address.
+  const { title, description, path, type = 'website' } = $props<{
+    title: string;
+    description: string;
+    path: string;
+    type?: 'website' | 'article';
+  }>();
+  const site = import.meta.env.SITE_URL;
+  const base = import.meta.env.BASE_URL;
+  const url = `${site}${base}${path.replace(/^\//, '')}`;
+</script>
+
+#head {
+  <meta name="description" content=description>
+  <link rel="canonical" href=url>
+  <meta property="og:type" content=type>
+  <meta property="og:site_name" content="silmaril">
+  <meta property="og:title" content=title>
+  <meta property="og:description" content=description>
+  <meta property="og:url" content=url>
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content=title>
+  <meta name="twitter:description" content=description>
+}

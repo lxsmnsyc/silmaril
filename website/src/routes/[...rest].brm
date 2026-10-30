@@ -1,0 +1,24 @@
+<script>
+  import { getEvent } from 'brumate/server';
+
+  const base = import.meta.env.BASE_URL;
+  getEvent().setStatus(404);
+</script>
+
+#head {
+  <title>Not found | silmaril</title>
+}
+
+<main class="not-found">
+  <h1>Not found</h1>
+  <p>Nothing lives here. <a href=base>Go home</a>.</p>
+</main>
+
+<style>
+  .not-found {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 6rem 1rem;
+    text-align: center;
+  }
+</style>

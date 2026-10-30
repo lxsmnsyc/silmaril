@@ -57,3 +57,6 @@ jobs:
 
       - name: Build examples
         run: pnpm build:examples
+
+      - name: Build website
+        run: pnpm --filter website build

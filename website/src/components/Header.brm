@@ -1,0 +1,172 @@
+<script>
+  import BrandMark from './BrandMark.brm';
+  import Icon from './Icon.brm';
+  import Search from './Search.brm';
+
+  const base = import.meta.env.BASE_URL;
+
+  // The theme is on the root element, where the inline script put the saved one.
+  function toggleTheme() {
+    const root = document.documentElement;
+    const dark =
+      root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try {
+      localStorage.setItem('theme', root.dataset.theme);
+    } catch {
+      // Storage can be blocked. The theme still changes for this page.
+    }
+  }
+</script>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href=base>
+      <BrandMark />
+      silmaril
+    </a>
+    <Search />
+    <nav class="header-nav" aria-label="Main">
+      <a href=(`${base}docs`)>Docs</a>
+      <a href="https://github.com/lxsmnsyc/silmaril" target="_blank" rel="noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Switch theme" onClick=toggleTheme>
+        <span class="sun"><Icon name="sun" size=(17) /></span>
+        <span class="moon"><Icon name="moon" size=(17) /></span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<style>
+  /* Header */
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* The header stays in place while the page fades between pages. */
+    view-transition-name: header;
+    height: var(--header-height);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 82rem;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .brand-mark {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .header-nav a {
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.925rem;
+    text-decoration: none;
+  }
+
+  .header-nav a:hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    margin-left: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .theme-toggle .moon,
+  :global(:root[data-theme='dark']) .theme-toggle .sun {
+    display: none;
+  }
+
+  :global(:root[data-theme='dark']) .theme-toggle .moon {
+    display: inline;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .theme-toggle .sun {
+        display: none;
+      }
+
+    :global(:root:not([data-theme='light'])) .theme-toggle .moon {
+        display: inline;
+      }
+  }
+
+  @media (max-width: 640px) {
+    .header-inner {
+        flex-wrap: wrap;
+        align-content: center;
+        row-gap: 0.4rem;
+      }
+
+    .header-nav a {
+        padding: 0.35rem 0.45rem;
+      }
+  }
+
+  /* A narrow phone keeps the brand and the links on one row. */
+
+  @media (max-width: 420px) {
+    .header-inner {
+        padding: 0 0.75rem;
+      }
+
+    .brand {
+        gap: 0.4rem;
+        font-size: 1rem;
+      }
+
+    .header-nav {
+        gap: 0;
+      }
+
+    .header-nav a {
+        padding: 0.35rem 0.25rem;
+        font-size: 0.85rem;
+      }
+
+    .theme-toggle {
+        width: 1.9rem;
+        height: 1.9rem;
+        margin-left: 0.15rem;
+      }
+  }
+</style>

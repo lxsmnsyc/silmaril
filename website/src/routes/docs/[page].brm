@@ -1,0 +1,13 @@
+<script>
+  import { $props } from 'brumate/signals';
+  import { getEvent } from 'brumate/server';
+  import DocPage from '../../components/DocPage.brm';
+  import { pages } from '../../docs.ts';
+
+  const { params } = $props<{ params: { page: string } }>();
+  if (!(params.page in pages)) {
+    getEvent().setStatus(404);
+  }
+</script>
+
+<DocPage slug=(params.page) />

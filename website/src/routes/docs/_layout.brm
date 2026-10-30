@@ -1,0 +1,9 @@
+<script>
+  import { $props } from 'brumate/signals';
+  import DocsShell from '../../components/DocsShell.brm';
+  import { sections } from '../../docs.ts';
+
+  const { children } = $props();
+</script>
+
+<DocsShell sections=sections label="Documentation">{children}</DocsShell>
