@@ -74,6 +74,9 @@ async function checkDispose(): Promise<string | undefined> {
   return undefined;
 }
 
+// Logs of the guide pages, kept in their own file.
+Object.assign(EXPECTED, (await import('./expected-docs-guide.ts')).default);
+
 // `--strict` also fails on samples that were compiled and not run. Turn it on in CI once
 // codegen-core has merged and the compiler emits code.
 const strict = process.argv.includes('--strict');

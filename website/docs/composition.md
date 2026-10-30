@@ -2,77 +2,40 @@
 
 ## `$composable`
 
-`$composable` allows composing functions that can be used in `$$`, `$sync`, `$`, another `$composable` or computed variables.
+`$composable(setup)` wraps a function so that it can use reactive variables, `$`, `$sync`, `$store`, `onMount` and `onDestroy`. Call it from a `$$`, another `$composable`, or the body of a `$` or `$sync`.
 
-```js
-import { $$, $sync, $composable, $store, onDestroy } from 'silmaril';
-import Store from 'silmaril/store';
+```js live composition-squared.js
 
-// Create a composable
-const useSquared = $composable((store) => {
-  // Bind the input store to a variable
-  const input = $store(store);
-
-  // Create a store
-  const squaredStore = new Store(0);
-
-  // Make sure to cleanup the store
-  onDestroy(() => squaredStore.destroy());
-
-  // Update the store based on the bound input store
-  $sync(squaredStore.set(input ** 2));
-
-  // Return the store
-  return squaredStore;
-});
-
-$$(() => {
-  // Create a store
-  const store = new Store(0);
-
-  // Bind it
-  let input = $store(store);
-
-  // Track the value of the store
-  $sync(console.log('Value', input));
-
-  // Create a "squared" store based on the input store
-  // then bind it
-  const squared = $store(useSquared(store));
-
-  // Track the squared store
-  $sync(console.log('Squared', squared));
-
-  // Update the input store
-  input = 100;
-
-  // Logs
-  // Count: 0
-  // Count: 100
-  // Count: 200
-});
 ```
 
-## `$` and `$sync`
+The composable runs in its own scope under the scope of its caller.
 
-Both `$` and `$sync` behave much like `$$`: variables become reactive, `onMount` and `onDestroy` can be used, same goes to other APIs.
+- It mounts at the place of its call and is disposed with its caller. Its `onDestroy` callbacks run at the place of the call among those of the caller.
+- It returns whatever the setup returns.
+- Arguments are passed as values. A composable cannot track a variable of its caller, so pass a store as the sample does.
+- Called while no scope is running, it throws `Unexpected missing reactive boundary.` This includes a call after an `await` in an async body.
+- If the setup throws, the scope is disposed and the error is thrown again from the call.
 
-```js
-import { $$, $, onDestroy } from 'silmaril';
+Called through a namespace import (`import * as s from 'silmaril'`), `$$` and `$composable` still run, but without reactivity.
 
-$$(() => {
-  let y = 0;
-  $(() => {
-    let x = 0;
+### Order across scopes
 
-    $(console.log(x + y));
+A value that moves from one scope to another through a store is a new write in the second scope. The scopes run in a fixed order. A body that reads values from both sides can see a new value next to an old one, then run again.
 
-    onDestroy(() => {
-      console.log('This will be cleaned up when `y` changes');
-    });
+## `$` and `$sync` as scopes
 
-    x += 100;
-  });
-  y += 100;
-});
+The body of `$` and `$sync` is a scope. Variables declared in it are reactive, and `onMount`, `onDestroy` and `$store` work there.
+
+Each run disposes the scope of the last run and makes a new one. Variables declared in the body start again, and `onDestroy` callbacks of the last run fire first.
+
+```js live composition-nested.js
+
 ```
+
+The outer `$` reads `y`, so a change to `y` runs it again, and it destroys the inner scope first. The inner `$` tracks its own reads. A read inside it does not make the outer body run again.
+
+Rules for nested entries:
+
+- A parent runs before its children.
+- When a parent and its child are both queued, only the parent runs. Its run disposes the child scope.
+- A `$` or `$sync` must be called directly in a setup body. It cannot be in a loop, a nested function or a computed variable. See [basic reactivity](./basic-reactivity.md).
