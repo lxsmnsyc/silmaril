@@ -1,7 +1,7 @@
 ---
 id: codegen-core
 title: Codegen for variables, computeds, $ and $sync
-status: active
+status: done
 priority: must
 type: feature
 milestone: 0.5.0
@@ -56,3 +56,7 @@ New code generation on a new runtime: uncertainty medium, size high.
 
 - `compiler/index.ts` belongs to `compiler-core`. Calling `generate(s, model)` there is the one edit you make to it (the spot is in `compiler-core`'s outcome); record it under Deviations.
 - In the new pipeline file, import with explicit `.ts` paths (no directory or extensionless imports), so the pipeline loads under plain Node. `benchmarks/` discovers pipelines from that folder.
+
+## Pull request
+
+- #17, merged into `roadmap`.

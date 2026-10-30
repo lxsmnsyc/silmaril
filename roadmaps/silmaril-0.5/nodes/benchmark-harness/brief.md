@@ -1,7 +1,7 @@
 ---
 id: benchmark-harness
 title: Compile and update benchmarks with a 0.4 baseline
-status: active
+status: done
 priority: should
 type: chore
 milestone: 0.5.0
@@ -38,3 +38,7 @@ Known pattern (brumate has a `benchmarks` folder); new to this repo.
 ## Notes for the worker
 
 - Keep benchmark dependencies out of `packages/silmaril`.
+
+## Pull request
+
+- #14, merged into `roadmap`. The 0.4 baseline was taken under load (load average about 10); re-run `pnpm bench` on a quiet machine before `benchmark-report`. `tsx` and `allowBuilds: esbuild: false` can go once every behavior-suite pipeline imports with explicit `.ts` paths.
