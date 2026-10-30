@@ -15,9 +15,6 @@ const EXPECTED: Record<string, string[]> = {
   'samples/computed.js': ['21 doubled is 42'],
 };
 
-// Logs of the API page, kept in their own file.
-Object.assign(EXPECTED, (await import('./expected-api.ts')).default);
-
 const parser = new MarkdownIt();
 const samples: Sample[] = [];
 

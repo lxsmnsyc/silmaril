@@ -26,6 +26,7 @@ const labels: Record<string, string> = {
   'basic-reactivity': 'Basic reactivity',
   'computed-variables': 'Computed variables',
   'synchronous-tracking': 'Synchronous tracking',
+  migration: 'Migrating from 0.4',
 };
 
 /** The sections of the sidebar, in reading order. */
@@ -45,6 +46,7 @@ export const sections: {
     ],
   },
   { title: 'Integrations', pages: ['stores', 'solid'] },
+  { title: 'More', pages: ['migration', 'internals', 'limits'] },
 ].map((section) => ({
   title: section.title,
   pages: section.pages
