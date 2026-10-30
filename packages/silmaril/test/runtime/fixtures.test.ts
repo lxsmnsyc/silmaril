@@ -33,6 +33,7 @@ function macrotask(): Promise<void> {
 }
 
 describe('fixtures', () => {
+  let ran = 0;
   for (const name of readdirSync(ROOT).toSorted()) {
     const dir = join(ROOT, name);
     const expected = JSON.parse(
@@ -55,6 +56,18 @@ describe('fixtures', () => {
       );
       await macrotask();
       expect(logs).toStrictEqual(expected.logs);
+      ran++;
     });
   }
+
+  it('ran every fixture that has an output', () => {
+    let count = 0;
+    for (const name of readdirSync(ROOT)) {
+      if (existsSync(join(ROOT, name, 'output.js'))) {
+        count++;
+      }
+    }
+    expect(count).toBeGreaterThan(0);
+    expect(ran).toBe(count);
+  });
 });

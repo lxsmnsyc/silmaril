@@ -73,8 +73,10 @@ const WAITERS: (() => void)[] = [];
 // Per kind, MEMO and SYNC: entries of that kind are running.
 // MEMO busy: a write only queues. SYNC busy: a write runs memos, then returns.
 const BUSY = [false, false];
+// Per kind: the queue has entries added since it was last sorted.
+const UNSORTED = [false, false, false];
 let scheduled = false;
-let unsorted = false;
+
 let roots = 0;
 // Entry runs of the current synchronous drain, for the loop guard.
 let runs = 0;
@@ -123,14 +125,13 @@ function before(a: Entry, b: Entry): boolean {
   return i < j;
 }
 
-// Takes the first entry of a queue. The queues are sorted when something
-// was queued since the last take, so n queued entries cost O(n log n).
-function take(queue: Entry[]): Entry {
-  if (unsorted) {
-    unsorted = false;
-    for (const q of QUEUES) {
-      q.sort((a, b) => (before(a, b) ? -1 : 1));
-    }
+// Takes the first entry of a queue. A queue is sorted when something was
+// queued in it since its last take, so n queued entries cost O(n log n).
+function take(kind: number): Entry {
+  const queue = QUEUES[kind]!;
+  if (UNSORTED[kind]) {
+    UNSORTED[kind] = false;
+    queue.sort((a, b) => (before(a, b) ? -1 : 1));
   }
   const entry = queue.shift()!;
   entry.q = false;
@@ -140,7 +141,7 @@ function take(queue: Entry[]): Entry {
 function enqueue(entry: Entry): void {
   const queue = QUEUES[entry.k]!;
   queue.push(entry);
-  unsorted = true;
+  UNSORTED[entry.k] = true;
   entry.q = true;
   if (entry.k === EFFECT) {
     schedule();
@@ -220,7 +221,7 @@ function drain(kind: number): void {
   const queue = QUEUES[kind]!;
   BUSY[kind] = true;
   while (queue.length) {
-    const entry = take(queue);
+    const entry = take(kind);
     try {
       if (++runs > LIMIT) {
         throw new Error('Update loop');
@@ -254,7 +255,7 @@ function flushEffects(): void {
   let held: [unknown] | undefined;
   let count = 0;
   while (queue.length) {
-    const entry = take(queue);
+    const entry = take(EFFECT);
     try {
       // First runs do not count: only a run again can be part of a loop.
       if (entry.c && ++count > LIMIT) {

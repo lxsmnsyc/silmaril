@@ -17,11 +17,18 @@
 
 ## Gotchas
 
-- Queue order: the queues hold entries and are sorted by the contract's total order when something was queued since the last take (`Array.prototype.sort`, then `shift`). Order never changes for a live entry, so this is safe. A fan-out of n entries costs O(n log n) comparisons. A test runs 3000 entries from one write.
+- Queue order: the queues hold entries and are sorted by the contract's total order when something was queued in that queue since its last take (`Array.prototype.sort`, then `shift`). Order never changes for a live entry, so this is safe. A fan-out of n entries costs O(n log n) comparisons. A test runs 3000 entries from one write.
 - A composable scope has rank `2 ** 30 + n`, so `scope.e` has no entry at that index. The "queued ancestor" check uses `e[x]?.q` for this reason.
 - `mark` builds a small array per graph reference (`[ref].flat()`), which costs one allocation per reader per write. It saved 24 B gzip. Revert it if the benchmarks show it.
 - The tests import `'../../src/v2'` directly. The fixtures `import ... from 'silmaril'` are rewritten by the runner to the namespace of that module.
 - The `$` flush error and loop guard throw from a microtask, so the tests catch them with a `process.on('uncaughtException')` handler.
+
+## Follow-ups for the perf pass
+
+- `[ref].flat()` in `mark` allocates an array per reader per write.
+- `scope()` allocates five arrays (`v`, `e`, `l`, `o`, `u`) for every scope, including scopes that use none.
+- The store write-back runs as a memo, so each run creates a child scope that nothing uses. Dropping it costs size, so it was left.
+- The unit test `does not sort the $ queue again for each memo write` takes about 150 ms for 30000 effects. The version with one global dirty flag took 14 s.
 
 ## Proposed learnings
 
@@ -38,7 +45,7 @@
 
 Method: build `src/v2/index.ts` with tsdown (rolldown) with `minify: true`, neutral platform, target es2022, all exports kept, then gzip level 9 of the output. The script was a scratch file, not committed. The sketch measures 1481 B with it, as in the ADR outcome.
 
-Result: 2971 B minified, 1413 B gzip. Under the 1.5 kB cap by 87 B. The 1.2 kB aim is not reached (213 B over).
+Result: 2985 B minified, 1417 B gzip. Under the 1.5 kB cap by 83 B. The 1.2 kB aim is not reached (217 B over).
 
 Gzip size after each change (cumulative unless marked dropped):
 
@@ -54,7 +61,7 @@ Gzip size after each change (cumulative unless marked dropped):
 | Dropped: lazy `o` and `u` arrays                                                                                                       | 1434   |
 | Dropped: shared `call` helper for the three try/finally blocks                                                                         | 1419   |
 
-Cost of the remaining parts (gzip with the part removed, base 1413):
+Cost of the remaining parts (gzip with the part removed, measured at 1413 B, before the review fix):
 
 | Part                                         | Cost B |
 | -------------------------------------------- | ------ |

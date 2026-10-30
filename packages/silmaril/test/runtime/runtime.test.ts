@@ -163,6 +163,23 @@ describe('write ordering', () => {
     expect(log).toEqual(['outer', 'inner 1']);
   });
 
+  it('does not sort the $ queue again for each memo write', () => {
+    // One $ registration per round, with a write that queues a memo in
+    // between. A sort of the pending $ queue on each take is quadratic.
+    const count = 30_000;
+    const start = performance.now();
+    const s = root([[0]], (t) => {
+      $$set(t, 0, 0);
+      $$memo(t, 0, 1, () => $$get(t, 0) + 1);
+      for (let i = 1; i <= count; i++) {
+        $$effect(t, i, () => {});
+        $$set(t, 0, i);
+      }
+    });
+    expect($$get(s, 1)).toBe(count + 1);
+    expect(performance.now() - start).toBeLessThan(2000);
+  });
+
   it('treats a missing graph list as no readers', () => {
     const log: string[] = [];
     const s = root([undefined, [0]], (t) => {
