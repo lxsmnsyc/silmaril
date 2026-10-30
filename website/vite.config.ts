@@ -33,7 +33,12 @@ export default defineConfig({
       prerender: { paths: ['/'] },
     }),
   ],
+  // The compiler parses with oxc on WebAssembly, which loads its files itself.
+  optimizeDeps: {
+    exclude: ['oxc-parser', '@oxc-parser/binding-wasm32-wasip1'],
+  },
   build: {
+    // Top-level await, which the WebAssembly binding of oxc-parser uses.
     target: 'es2023',
     // The prerender script reads the manifest to find the built client entry.
     manifest: true,

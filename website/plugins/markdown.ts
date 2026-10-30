@@ -9,7 +9,7 @@ import { language as json } from '@twinkleplop/json';
 import twinkleplop from '@twinkleplop/markdown-it';
 import { language as tsx } from '@twinkleplop/tsx';
 import { language as typescript } from '@twinkleplop/typescript';
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import MarkdownIt from 'markdown-it';
 import type { Plugin } from 'vite';
@@ -31,8 +31,14 @@ export interface Heading {
   id: string;
 }
 
-/** A piece of a page: its HTML. Later pages add parts, such as samples that run in the page. */
-export type PagePart = { html: unknown };
+/**
+ * A piece of a page: its HTML, or a sample that compiles and runs in the page. A sample is a
+ * fenced block marked `live`, such as `js live`, or `js live counter.js` with an empty body,
+ * which reads `src/samples/counter.js`.
+ */
+export type PagePart =
+  | { html: unknown }
+  | { sample: { name: string; source: string } };
 
 export interface Page {
   title: string;
@@ -221,6 +227,31 @@ function summary(
   return `${cut.slice(0, cut.lastIndexOf(' '))}…`;
 }
 
+const SAMPLES = new URL('../src/samples/', import.meta.url);
+
+/** The sample of a fenced block marked `live`, or undefined for other blocks. */
+function liveSample(
+  token: { type: string; info: string; content: string },
+  page: string,
+): { name: string; source: string } | undefined {
+  const match =
+    token.type === 'fence'
+      ? /^(?:js|jsx|ts|tsx)\s+live\b(?:\s+(\S+))?/.exec(token.info.trim())
+      : null;
+  if (!match) {
+    return undefined;
+  }
+  const lang = token.info.trim().split(/\s/)[0]!;
+  const file = match[1];
+  if (file && !token.content.trim()) {
+    return { name: file, source: readFileSync(new URL(file, SAMPLES), 'utf8') };
+  }
+  if (token.content.trim() === '') {
+    throw new Error(`A live block with no code in ${page}`);
+  }
+  return { name: file ?? `sample.${lang}`, source: token.content };
+}
+
 /** Compiles `.md` imports into pages. */
 export default function markdown(): Plugin {
   let base = '/';
@@ -236,10 +267,26 @@ export default function markdown(): Plugin {
       const env = { headings: [] as Heading[] };
       const parser = createRenderer(base);
       const tokens = parser.parse(code, env);
-      const html = focusableCode(
-        parser.renderer.render(tokens, parser.options, env),
-      );
-      const parts = [`{ html: raw(${JSON.stringify(html)}) }`];
+      // A page is a run of HTML, with a sample part in place of each live block.
+      const parts: string[] = [];
+      let start = 0;
+      const flush = (end: number): void => {
+        const html = focusableCode(
+          parser.renderer.render(tokens.slice(start, end), parser.options, env),
+        );
+        if (html.trim()) {
+          parts.push(`{ html: raw(${JSON.stringify(html)}) }`);
+        }
+      };
+      for (let index = 0; index < tokens.length; index++) {
+        const sample = liveSample(tokens[index]!, id);
+        if (sample) {
+          flush(index);
+          parts.push(`{ sample: ${JSON.stringify(sample)} }`);
+          start = index + 1;
+        }
+      }
+      flush(tokens.length);
       const title =
         env.headings.find((heading) => heading.level === 1)?.text ?? '';
       const description = summary(tokens);

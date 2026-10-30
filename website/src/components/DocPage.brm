@@ -1,6 +1,7 @@
 <script>
   import { $props } from 'brumate/signals';
   import { pages, sections } from '../docs.ts';
+  import LiveSample from './LiveSample.brm';
   import Meta from './Meta.brm';
 
   const { slug } = $props<{ slug: string }>();
@@ -32,7 +33,11 @@
 <article class="prose">
   #if (page) {
     #for (part, index of page.parts by index) {
-      {part.html}
+      #if ('sample' in part) {
+        <LiveSample name=(part.sample.name) source=(part.sample.source) />
+      } #else {
+        {part.html}
+      }
     }
     <nav class="pager" aria-label="Pages">
       #if (previous) {
