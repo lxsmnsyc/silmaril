@@ -15,11 +15,11 @@
 
 ## Gotchas
 
-- The compile benchmark is sensitive to the heap state: it does 7 timed runs per size, and the 54.5 KB compile allocates about 30 MB. With `compiler` as the only pipeline, its large-file median ranged from 16 to 43 ms across four runs. The same code measured 13 to 14 ms when the `babel` pipeline ran first. `--max-semi-space-size=32` brings it back to 14.6 ms. No regression: the compiler code and its dependencies are unchanged since `0f55110`.
+- The compile benchmark is sensitive to the heap state. It does 7 timed runs per size, and the 54.5 KB compile allocates about 30 MB. With `compiler` as the only pipeline, its large-file median ranged from 16 to 43 ms across four runs. The same code measured 13 to 14 ms when the `babel` pipeline ran first. `--max-semi-space-size=32` brings it back to 14.6 ms. No regression: the compiler code and its dependencies are unchanged since `0f55110`.
 
 ## Proposed learnings
 
-- Stabilize the compile benchmark before using it to find regressions (more runs, or a fixed `--max-semi-space-size`) | the median moved by 2.6x between runs of the same code | `benchmarks/` | no
+- Stabilize the compile benchmark with more runs or a fixed `--max-semi-space-size` | its median moved 2.6x for the same code | `benchmarks/` | no
 
 ## Follow-ups
 
