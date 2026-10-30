@@ -93,6 +93,12 @@ pre {
   font-family: var(--mono);
 }
 
+/* Images fit the column, such as the sponsors image at its 800px natural width. */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Buttons */
 
 .button {
