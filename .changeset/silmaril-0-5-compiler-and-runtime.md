@@ -9,7 +9,8 @@ Removed and added:
 - Remove `silmaril/babel`. Use `silmaril/unplugin` in a bundler, or `compile` from `silmaril/compiler`.
 - Remove the `babel` option of `silmaril/unplugin`. The plugin now calls `silmaril/compiler`.
 - Remove the `@babel/core`, `@babel/helper-module-imports` and `@babel/types` dependencies.
-- Add `silmaril/compiler`: `compile`, `ready`, `CompileError` and the `CompileOptions`, `CompileResult` and `SourceMap` types.
+- Add the `silmaril/compiler` entry: `compile`, `ready`, `CompileError` and the `CompileOptions`, `CompileResult` and `SourceMap` types. `compile` runs every compile-time check and throws `CompileError` with a location and a code frame. It returns the code with a source map that points back to the original positions.
+- `silmaril` depends on `oxc-parser` (exact version) and `magic-string`. Only `silmaril/compiler` and `silmaril/unplugin` use them. `@oxc-parser/binding-wasm32-wasip1` is an optional peer dependency at the same version as `oxc-parser`, for running the compiler in a browser.
 - `silmaril` exports the new runtime. Add `tick()`, which resolves after the queued `$` bodies have run. The helpers that compiled code calls changed. `$$context` and `$$subscribe` are gone, and `$$update`, `$$sync`, `$$effect`, `$$mount` and `$$destroy` take new arguments. `$$root`, `$$composable`, `$$get`, `$$set`, `$$memo` and `$$store` are new. The public names (`$$`, `$`, `$sync`, `$skip`, `$store`, `$composable`, `onMount`, `onDestroy`, `Store`), `silmaril/store` and `silmaril/solid` keep their API.
 
 Scheduling:

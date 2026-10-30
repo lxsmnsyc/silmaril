@@ -3,13 +3,14 @@
 ## Built
 
 - `packages/silmaril/src/index.ts` is the runtime of contract `reactivity-runtime` v4 (moved from `src/v2/index.ts`). The 0.4 runtime and `src/v2/` are gone. `silmaril/solid` imports `Store` from it; the interface is unchanged.
-- `packages/silmaril/unplugin/index.ts` calls `compile` from `silmaril/compiler`. The `babel` option is gone. It strips a `?query` from the id before the compiler picks the language, and returns `undefined` when the module imports no compile-time name.
+- `packages/silmaril/unplugin/index.ts` calls `compile` from `silmaril/compiler`. The `babel` option is gone. It returns `undefined` when the module imports no compile-time name. The compiler gets the id without its query when the path ends in a JS or TS extension. Otherwise the extension that ends the full id is appended (`/a.vue?vue&lang.ts` compiles as `/a.vue.ts`), as 0.4 read `lang.ts` from the full id. The source map then names `a.vue.ts`.
 - Removed: `packages/silmaril/babel/`, `test/compiler.test.ts`, `test/__snapshots__/compiler.test.ts.snap`, `test/behavior/pipelines/babel.ts`, the `xfail: ['babel']` markers (`let`, `nested`, `limits`), the `@babel/*` dependencies, the `./babel` export, the `babel` tsdown entry, `babel` in tsconfig `include` and in `keywords`. `pnpm-lock.yaml` regenerated (185 lines removed).
 - `test/behavior/harness.ts` links imports with `oxc-parser` in place of `@babel/core`.
 - Test imports of `src/v2` point at `src` (`test/runtime/*`, `test/compiler/codegen/helpers.ts`, `pipelines/compiler.ts`).
-- `test/unplugin.test.ts`: expects `$$set` output, plus tests for the query and for an unchanged module.
+- `test/unplugin.test.ts`: expects `$$set` output, plus tests for `.ts?v=123`, `?lang.ts`, `?lang.tsx`, `.js` (JSX parses, TS throws) and an unchanged module.
 - `website/src/live/run.ts` imports the runtime from `silmaril`.
 - `README.md` and `packages/silmaril/README.md` (identical): compiler section, no Babel, scheduling and tracking text for 0.5, `tick()`. Every sample was compiled and run on 0.5; the wrong ones were fixed (see log).
+- Review fixes: the Babel differential in `test/compiler/analysis/scope.test.ts` deleted (it could not run). `silmaril-compiler-entry.md`, `silmaril-compiler-codegen-core.md` and `silmaril-compiler-codegen-extras.md` deleted; their facts (the `./compiler` entry, `oxc-parser` pinned, `magic-string`, the optional wasm peer) moved into the 0.5 changeset. `benchmarks/README.md` says its pipeline paths are as of `0f55110`.
 - `.changeset/silmaril-0-5-compiler-and-runtime.md` (minor): removals and additions, scheduling, tracking and compile-error changes from the decision record's "Changes from 0.4" ((a) 1-8, (b) 1-10, (c) 13-16), the loop guard, and the behavior cases that differed between the pipelines (`let` queued effect, `nested` inner variable, the 4 `limits` cases).
 - Examples needed no change.
 
@@ -26,6 +27,7 @@ Kept as regular dependencies, as the maintainer decided on 2026-10-30. Weighed:
 ## Deviations
 
 - `test/behavior/harness.ts` (shared) changed parser, because it imported `@babel/core`.
+- Review fixes outside owned paths: deleted `.changeset/silmaril-compiler-entry.md`, `silmaril-compiler-codegen-core.md` and `silmaril-compiler-codegen-extras.md`, as the review asked.
 - `website/src/live/run.ts` keeps the `ran` guard for a module that imports `silmaril` and comes back unchanged. Only its comment changed. `check:samples --strict` stays as is.
 - `tsx` and `allowBuilds: esbuild: false` stay. Plain Node cannot load `compiler/index.ts`: the compiler's own imports have no extensions (`./analysis/index`), so Node throws ERR_MODULE_NOT_FOUND. Dropping `tsx` needs `.ts` extensions throughout `packages/silmaril/compiler/` (not owned here).
 - No change request.
@@ -36,9 +38,8 @@ Kept as regular dependencies, as the maintainer decided on 2026-10-30. Weighed:
 
 ## Gotchas
 
-- `test/compiler/analysis/scope.test.ts` has a Babel differential guarded by `describe.skipIf(!babel)`. With `@babel/core` gone it is skipped (the 3 skipped tests). Delete it or keep it as a manual check. The owner of `test/compiler/` decides.
 - `website/docs/getting-started.md` and `website/docs/bundler-setup.md` still describe `silmaril/babel` and the `babel` unplugin option. They belong to `docs-content`.
-- Some unreleased changesets describe superseded states. `fix-setup-argument-and-skip.md` and `nested-setup-single-context.md` describe the removed Babel plugin (unless 0.4.1 is released first), and `silmaril-compiler-entry.md` says the compiler does not rewrite code yet.
+- The unreleased 0.4.1 changesets `fix-setup-argument-and-skip.md` and `nested-setup-single-context.md` describe the removed Babel plugin. They are left for the maintainer (release 0.4.1 first, or drop them).
 - `benchmarks/README.md` now matches what `pnpm bench` prints only for the `compiler` rows. The `babel` rows are the recorded baseline.
 
 ## Proposed learnings
@@ -47,7 +48,7 @@ Kept as regular dependencies, as the maintainer decided on 2026-10-30. Weighed:
 
 ## Verification
 
-- `pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check && pnpm build:examples` (the brief's verify, after `pnpm install --frozen-lockfile`): passes. `pnpm test`: 24 files, 484 passed, 3 skipped (the Babel differential).
+- `pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check && pnpm build:examples` (the brief's verify, after `pnpm install --frozen-lockfile`): passes. `pnpm test`: 24 files, 488 passed.
 - `pnpm --filter website build`: passes. `pnpm --filter website check:samples --strict`: 2 samples, 0 problems, 0 compiled and not run.
 - `pnpm bench`: runs, one `compiler` row per size (numbers not recorded, the report node re-runs it).
 - Examples in Chrome, built with `vite preview` and in `vite` dev:

@@ -58,7 +58,8 @@ Use `silmaril.rollup`, `silmaril.rolldown`, `silmaril.esbuild`, `silmaril.webpac
 Options:
 
 - `filter.include` and `filter.exclude`: glob patterns or regular expressions for the modules to compile. By default, every `.js`, `.jsx`, `.ts` and `.tsx` file (including `.mjs`, `.cjs`, `.mts` and `.cts`) that contains `silmaril` is compiled.
-  `rollup-plugin-silmaril` and `vite-plugin-silmaril` are deprecated in favor of `silmaril/unplugin`.
+
+`rollup-plugin-silmaril` and `vite-plugin-silmaril` are deprecated in favor of `silmaril/unplugin`.
 
 ### Compiler
 
