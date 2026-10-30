@@ -1,7 +1,7 @@
 ---
 id: runtime-v2
 title: Static-graph runtime
-status: todo
+status: active
 priority: must
 type: feature
 milestone: 0.5.0
@@ -33,7 +33,7 @@ Implement the `reactivity-runtime` contract in `packages/silmaril/src/v2/`, next
 
 - [ ] Every fixture under `test/runtime/fixtures/` passes.
 - [ ] Unit tests for: write ordering, batching, `Object.is` skip, disposal of child scopes, `onMount`, `onDestroy`, store subscription cleanup.
-- [ ] Size pass (maintainer decision, 2026-10-27): the reference sketch measures 1434 B gzip against the 1.5 kB cap. Work toward the 1.2 kB aim without changing behavior: lazy allocation of scope arrays, a cheaper queue than the O(n^2) scan, shared code paths. Report the size after each change in the outcome. The 1.5 kB cap is hard; if 1.2 kB is not reachable, say what each remaining part costs.
+- [ ] Size pass (maintainer decision, 2026-10-27): the reference sketch (`nodes/reactivity-adr/sketch/runtime.js`, contract v4) measures 1481 B gzip against the 1.5 kB cap. Work toward the 1.2 kB aim without changing behavior: lazy allocation of scope arrays, a cheaper queue than the O(n^2) scan, shared code paths. Report the size after each change in the outcome. The 1.5 kB cap is hard; if 1.2 kB is not reachable, say what each remaining part costs.
 - [ ] No dependencies added.
 - [ ] Fast check passes.
 

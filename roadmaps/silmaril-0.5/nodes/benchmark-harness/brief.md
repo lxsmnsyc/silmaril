@@ -1,7 +1,7 @@
 ---
 id: benchmark-harness
 title: Compile and update benchmarks with a 0.4 baseline
-status: todo
+status: active
 priority: should
 type: chore
 milestone: 0.5.0

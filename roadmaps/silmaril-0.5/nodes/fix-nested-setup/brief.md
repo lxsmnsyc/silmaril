@@ -1,7 +1,7 @@
 ---
 id: fix-nested-setup
 title: Emit one context for a nested $$
-status: todo
+status: active
 priority: should
 type: fix
 milestone: 0.4.1

@@ -1,7 +1,7 @@
 ---
 id: compiler-core
 title: silmaril/compiler parsing and analysis
-status: todo
+status: active
 priority: must
 type: feature
 milestone: 0.5.0
@@ -32,14 +32,15 @@ Build the front half of `silmaril/compiler`: parse with oxc-parser, find the `si
 
 ## Context
 
-- The spike's outcome and the `compiler-api` contract define the design.
+- The spike's outcome (`nodes/compiler-infra-spike/outcome.md`) and the `compiler-api` contract define the design. The prototype in `nodes/compiler-infra-spike/proto/` (`source.ts`, `scope.ts`, `model.ts`, `test.ts`, `fixtures.test.ts`) passes every fixture of `reactivity-runtime` v4: port it rather than start over.
 - What to detect is in `packages/silmaril/babel/index.ts` (`TRACKED_IMPORTS`, `extractImportIdentifiers`, `traverseIdentifiers`, `unwrapLVal`, `getDependencies`) and `babel/unwrap-node.ts`.
 
 ## Acceptance
 
 - [ ] `silmaril/compiler` is built and exported, with types.
+- [ ] The model half of the spike's fixture test is ported: for every fixture under `test/runtime/fixtures/` with an `output.js`, the slots, entries and graphs of the model equal the ones `output.js` encodes, and every compile-error fixture throws its message.
 - [ ] Analysis tests cover: aliased imports, shadowed names, destructuring patterns, TS wrappers, nested setups, local helper calls (direct, transitive, recursive, and a reassigned helper), and errors with locations.
-- [ ] Helpers that are not a plain `function` declaration or a `const` arrow or function expression are treated as opaque, and that limit is in the outcome for the docs.
+- [ ] Helpers that the contract does not treat as local functions are opaque, and that limit is in the outcome for the docs.
 - [ ] No `@babel/*` import under `compiler/`.
 - [ ] Fast check passes.
 
