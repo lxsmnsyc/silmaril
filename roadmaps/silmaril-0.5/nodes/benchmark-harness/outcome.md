@@ -13,6 +13,8 @@
 - `pnpm-workspace.yaml` gained `allowBuilds: esbuild: false`. `tsx` depends on esbuild, and pnpm 12 fails an install (also `--frozen-lockfile`) on its unapproved build script. `tsx` works without it. A later node that rebases `pnpm-workspace.yaml` must keep the line.
 - Sizes are smaller than first planned (400 groups, N = 400): the 0.4 compiler is slower than linear and 1000 groups took minutes.
 
+- Native type stripping (no tsx) was tried and blocked: `pipelines/babel.ts` imports the directory `'../../../babel'` and extensionless `'../../../src'`, so Node throws ERR_UNSUPPORTED_DIR_IMPORT. The files belong to `behavior-tests`. Once pipelines use explicit `.ts` file paths, drop `tsx` and the `allowBuilds` line, and give the benchmark imports `.ts` extensions.
+
 ## Stubs left
 
 - None. No 0.5 pipeline yet; `switch-to-v2` or the codegen nodes add it as a file in the behavior suite's `pipelines/` and `pnpm bench` picks it up. If `switch-to-v2` deletes `pipelines/babel.ts`, the 0.4 baseline stays in the README only.
