@@ -39,6 +39,20 @@ type Registration = (string | number | null)[];
 interface Shape {
   graphs: (Ref[][] | null)[];
   registrations: Registration[];
+  /** The slot numbers of each scope parameter name, sorted. */
+  slots: Record<string, number[]>;
+}
+
+function addSlot(
+  slots: Record<string, number[]>,
+  param: string,
+  index: number,
+): void {
+  const list = (slots[param] ??= []);
+  if (!list.includes(index)) {
+    list.push(index);
+    list.sort((a, b) => a - b);
+  }
 }
 
 // Graphs compare as sets per slot, without trailing empty lists.
@@ -103,12 +117,25 @@ function readOutputShape(code: string): Shape {
   // Registrations in source order, and the graph of every setup and entry body.
   const graphs: (Ref[][] | null)[] = [];
   const registrations: Registration[] = [];
+  const slots: Record<string, number[]> = {};
   visit(program, (node) => {
     if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier') {
       return;
     }
     const args = node.arguments as Node[];
-    switch (node.callee.name) {
+
+    // Every slot appears in a helper call: `$$get(p, k)`, `$$set(p, k, v)`,
+    // `$$update(p, k, ...)`, `$$memo(p, n, k, f)` or `$$store(p, k, s)`.
+    const param = args[0]?.type === 'Identifier' ? args[0].name : null;
+    const name = node.callee.name;
+    if (param && ['$$get', '$$set', '$$update', '$$store'].includes(name)) {
+      addSlot(slots, param, readNumber(args[1]!));
+    }
+    if (param && name === '$$memo' && readNumber(args[2]!) >= 0) {
+      addSlot(slots, param, readNumber(args[2]!));
+    }
+
+    switch (name) {
       case '$$root':
       case '$$composable':
         graphs.push(readGraph(args[0]));
@@ -145,7 +172,7 @@ function readOutputShape(code: string): Shape {
         break;
     }
   });
-  return { graphs, registrations };
+  return { graphs, registrations, slots };
 }
 
 // The same shape from the model of input.js.
@@ -153,11 +180,15 @@ function readModelShape(code: string): Shape {
   const model = analyzeModule(code, 'input.js');
   // No compile-time import: nothing is registered (fixture namespace-root).
   if (!model) {
-    return { graphs: [], registrations: [] };
+    return { graphs: [], registrations: [], slots: {} };
   }
   const graphs: (Ref[][] | null)[] = [];
   const items: { start: number; registration: Registration }[] = [];
+  const slots: Record<string, number[]> = {};
   for (const scope of model.scopes) {
+    for (const slot of scope.slots) {
+      addSlot(slots, scope.param, slot.index);
+    }
     if (scope.call) {
       graphs.push(normalizeGraph(scope.graph!));
     } else if (getBlockBody(scope)) {
@@ -193,17 +224,29 @@ function readModelShape(code: string): Shape {
   return {
     graphs,
     registrations: items.map((item) => item.registration),
+    slots,
   };
 }
 
 const fixtures = loadFixtures();
 
+it('every fixture has either an output.js or a compile error', () => {
+  let withOutput = 0;
+  let withError = 0;
+  for (const fixture of fixtures) {
+    if (fixture.output !== null) {
+      withOutput += 1;
+    }
+    if (fixture.expected.compileError !== undefined) {
+      withError += 1;
+    }
+  }
+  expect([withOutput, withError]).toEqual([54, 7]);
+  expect(withOutput + withError).toBe(fixtures.length);
+});
+
 describe('runtime fixtures: model', () => {
   const withOutput = fixtures.filter((fixture) => fixture.output !== null);
-
-  it('has fixtures', () => {
-    expect(withOutput.length).toBeGreaterThanOrEqual(54);
-  });
 
   for (const fixture of withOutput) {
     it(`fixture ${fixture.name}`, () => {
@@ -218,10 +261,6 @@ describe('runtime fixtures: compile errors', () => {
   const withError = fixtures.filter(
     (fixture) => fixture.expected.compileError !== undefined,
   );
-
-  it('has fixtures', () => {
-    expect(withError.length).toBeGreaterThanOrEqual(7);
-  });
 
   for (const fixture of withError) {
     it(`fixture ${fixture.name}`, () => {

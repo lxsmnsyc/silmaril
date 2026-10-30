@@ -114,6 +114,22 @@ function collectTargets(
   return targets;
 }
 
+/** True for the declarator of `for (var x of e)` or `for (var x in e)`. */
+export function isForHead(
+  context: AnalysisContext,
+  declarator: VariableDeclarator,
+): boolean {
+  const declaration = context.parentOf.get(declarator);
+  if (!declaration) {
+    return false;
+  }
+  const loop = context.parentOf.get(declaration);
+  return (
+    (loop?.type === 'ForInStatement' || loop?.type === 'ForOfStatement') &&
+    loop.left === declaration
+  );
+}
+
 function getWriteKind(node: Node): { kind: WriteKind; pattern: Node } {
   switch (node.type) {
     case 'UpdateExpression':
@@ -150,7 +166,7 @@ function getWriteKind(node: Node): { kind: WriteKind; pattern: Node } {
 export function findWriteSites(
   context: AnalysisContext,
   slotOf: Map<Binding, Slot>,
-  redeclarations: Map<VariableDeclarator, SlotCandidate>,
+  redeclarations: Map<VariableDeclarator, SlotCandidate[]>,
 ): WriteSites {
   const writes: WriteSite[] = [];
   const writeOf = new Map<Node, WriteSite>();
@@ -187,21 +203,38 @@ export function findWriteSites(
     writeOf.set(node, site);
   }
 
-  // A later `var x` of a slotted candidate is a write of it.
-  for (const [declarator, candidate] of redeclarations) {
-    if (!candidate.slotted) {
+  // A later `var x` of a slotted candidate is a write of it. As the head of a for-in
+  // or for-of loop, it is a `for` write of the loop.
+  for (const declarator of redeclarations.keys()) {
+    const targets = collectTargets(context, slotOf, declarator.id);
+    if (targets.length === 0) {
       continue;
     }
-    const site: WriteSite = {
-      kind: 'redeclare',
-      node: declarator,
-      pattern: declarator.id,
-      targets: collectTargets(context, slotOf, declarator.id),
-      statement: true,
-      fn: findTempOwner(context, declarator),
-    };
+    const declaration = context.parentOf.get(declarator)!;
+    const loop = context.parentOf.get(declaration)!;
+    let site: WriteSite;
+    if (isForHead(context, declarator)) {
+      site = {
+        kind: 'for',
+        node: loop,
+        pattern: declaration,
+        targets,
+        statement: false,
+        fn: findTempOwner(context, loop),
+      };
+    } else {
+      site = {
+        kind: 'redeclare',
+        node: declarator,
+        pattern: declarator.id,
+        targets,
+        // False for the init of a `for` statement, which holds no statements.
+        statement: !(loop.type === 'ForStatement' && loop.init === declaration),
+        fn: findTempOwner(context, declarator),
+      };
+    }
     writes.push(site);
-    writeOf.set(declarator, site);
+    writeOf.set(site.node, site);
   }
 
   writes.sort((a, b) => a.node.start - b.node.start);

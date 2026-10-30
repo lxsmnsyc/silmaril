@@ -1,6 +1,6 @@
 import type { Node } from 'oxc-parser';
 import { describe, expect, it } from 'vitest';
-import { createUid, resolveName } from '../../../compiler/analysis/scope';
+import { resolveName } from '../../../compiler/analysis/scope';
 import { visit } from '../../../compiler/analysis/walk';
 import { CompileError } from '../../../compiler/errors';
 import { parseModule } from '../../../compiler/source';
@@ -282,14 +282,6 @@ describe('scopes', () => {
   it('names holds every declared and referenced name, globals included', () => {
     const { info }: Analyzed = analyze('let a = b; function c() {}');
     expect([...info.names].toSorted()).toEqual(['a', 'b', 'c']);
-  });
-
-  it('createUid avoids every name and reserves what it returns', () => {
-    const names = new Set(['_tmp', '_tmp2']);
-    const uid = createUid(names);
-    expect(uid('tmp')).toBe('_tmp3');
-    expect(uid('tmp')).toBe('_tmp4');
-    expect(names.has('_tmp3')).toBe(true);
   });
 });
 

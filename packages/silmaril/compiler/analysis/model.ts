@@ -33,7 +33,7 @@ import {
 } from './reads';
 import { isFunctionNode, type Binding, type ScopeInfo } from './scope';
 import { unwrap, visit } from './walk';
-import { findWriteSites } from './writes';
+import { findWriteSites, isForHead } from './writes';
 
 export type ReactiveScopeKind =
   | 'root'
@@ -123,8 +123,8 @@ export type WriteKind =
   | 'logical' // x ||= v, x &&= v, x ??= v
   | 'update' // x++, --x
   | 'destructure' // P = e
-  | 'for' // for (x of e), for (P in e), for await
-  | 'redeclare'; // a second `var x = v` of a slotted var
+  | 'for' // for (x of e), for (P in e), for await, for (var x of e) redeclaring a slotted var
+  | 'redeclare'; // a later `var x = v` of a slotted var, in a loop too
 
 export interface WriteTarget {
   identifier: IdentifierReference | BindingIdentifier;
@@ -143,13 +143,17 @@ export type TempOwner =
 
 export interface WriteSite {
   kind: WriteKind;
-  /** AssignmentExpression, UpdateExpression, ForIn/ForOfStatement, or the VariableDeclarator of a redeclare. */
+  /**
+   * AssignmentExpression, UpdateExpression, ForIn/ForOfStatement, or the VariableDeclarator
+   * of a redeclare. A redeclare declarator whose other names get a slot is also in
+   * `declarators`; it prints as this write.
+   */
   node: Node;
-  /** The target as written: the left side, the update argument, the loop head, or the declarator id. */
+  /** The target as written: the left side, the update argument, the loop head (a VariableDeclaration for `for (var x of e)`), or the declarator id. */
   pattern: Node;
   /** The targets that have a slot, in source order. Other targets (plain locals, members) stay as written. */
   targets: WriteTarget[];
-  /** A destructuring write that is a whole expression statement in a statement list. */
+  /** A destructuring write that is a whole expression statement in a statement list. For a redeclare, false only in the init of a `for` statement. */
   statement: boolean;
   /** The nearest function, or the class field whose initializer holds the site: it declares the temps. */
   fn: TempOwner;
@@ -230,6 +234,18 @@ const LOOPS = new Set<string>([
   'DoWhileStatement',
 ]);
 
+// Class members: a `$` or `$sync` in a field value, a computed key or a static block
+// is not directly in a setup body.
+const CLASS_MEMBERS = new Set<string>([
+  'MethodDefinition',
+  'PropertyDefinition',
+  'AccessorProperty',
+  'StaticBlock',
+  'TSAbstractMethodDefinition',
+  'TSAbstractPropertyDefinition',
+  'TSAbstractAccessorProperty',
+]);
+
 function compareRefs(a: Ref, b: Ref): number {
   if (typeof a === 'number' && typeof b === 'number') {
     return a - b;
@@ -261,12 +277,37 @@ export function getBlockBody(scope: ReactiveScope): Node[] | null {
   return null;
 }
 
-// Setup declarations of a scope body: in its block or nested blocks, outside nested
-// functions and loops (runtime contract "Setup declaration").
-function collectSetupDeclarations(statements: Node[]): VariableDeclaration[] {
+interface BodyDeclarations {
+  /** Setup declarations: in the block or nested blocks, outside nested functions and loops. */
+  setup: VariableDeclaration[];
+  /** `var` declarations in a loop or a loop head of the body, outside nested functions. */
+  loopVars: VariableDeclaration[];
+}
+
+// The `var` declarations inside a loop, heads included, outside nested functions and
+// static blocks. They declare the same binding as a setup `var` of the same name.
+function collectLoopVars(loop: Node, out: VariableDeclaration[]): void {
+  visit(loop, (node) => {
+    if (isFunctionNode(node) || node.type === 'StaticBlock') {
+      return false;
+    }
+    if (node.type === 'VariableDeclaration' && node.kind === 'var') {
+      out.push(node);
+    }
+    return undefined;
+  });
+}
+
+// The declarations of a scope body (runtime contract "Setup declaration").
+function collectBodyDeclarations(statements: Node[]): BodyDeclarations {
   const out: VariableDeclaration[] = [];
+  const loopVars: VariableDeclaration[] = [];
   function walk(node: Node | null | undefined): void {
     if (!node) {
+      return;
+    }
+    if (LOOPS.has(node.type)) {
+      collectLoopVars(node, loopVars);
       return;
     }
     switch (node.type) {
@@ -315,7 +356,7 @@ function collectSetupDeclarations(statements: Node[]): VariableDeclaration[] {
   for (const statement of statements) {
     walk(statement);
   }
-  return out;
+  return { setup: out, loopVars };
 }
 
 // The declared bindings of a binding pattern, in source order. Defaults and computed
@@ -413,10 +454,16 @@ export function analyzeModel(
     if (name !== '$$' && name !== '$composable') {
       continue;
     }
-    const fn = unwrap(checkOneArgument(context, call));
+    // The only argument is a function or arrow, through wrappers.
+    const arg = call.arguments[0];
+    const fn =
+      call.arguments.length === 1 && arg && arg.type !== 'SpreadElement'
+        ? unwrap(arg)
+        : null;
     if (
-      fn.type !== 'ArrowFunctionExpression' &&
-      fn.type !== 'FunctionExpression'
+      !fn ||
+      (fn.type !== 'ArrowFunctionExpression' &&
+        fn.type !== 'FunctionExpression')
     ) {
       fail(
         context,
@@ -469,11 +516,7 @@ export function analyzeModel(
     while (parent) {
       if (LOOPS.has(parent.type)) {
         inLoop = true;
-      } else if (
-        parent.type === 'PropertyDefinition' ||
-        parent.type === 'AccessorProperty' ||
-        parent.type === 'StaticBlock'
-      ) {
+      } else if (CLASS_MEMBERS.has(parent.type)) {
         fail(context, placeError, call);
       } else if (parent.type === 'CallExpression') {
         const outer = trackedCalls.get(parent);
@@ -525,28 +568,51 @@ export function analyzeModel(
   const { skips, storeCalls } = checkPlacedNames(context);
   checkSkipComments(context);
 
-  // 5. Slot candidates: the setup declarators of each scope body.
+  // 5. Slot candidates: the setup declarators of each scope body. A `var` that names a
+  // binding which already has a candidate is a write of it (a redeclare), checked per
+  // bound name. A `var` in a loop is never a candidate, but it can redeclare one.
   const candidates: SlotCandidate[] = [];
   const candidateOf = new Map<Binding, SlotCandidate>();
-  const redeclarations = new Map<VariableDeclarator, SlotCandidate>();
+  const redeclarations = new Map<VariableDeclarator, SlotCandidate[]>();
+  function findRedeclared(bindings: Binding[]): SlotCandidate[] {
+    const earlier: SlotCandidate[] = [];
+    for (const binding of bindings) {
+      const candidate = candidateOf.get(binding);
+      if (candidate && !earlier.includes(candidate)) {
+        earlier.push(candidate);
+      }
+    }
+    return earlier;
+  }
   for (const scope of scopes) {
     const statements = getBlockBody(scope);
     if (!statements) {
       continue;
     }
-    for (const declaration of collectSetupDeclarations(statements)) {
+    const { setup, loopVars } = collectBodyDeclarations(statements);
+    for (const declaration of setup) {
       const kind = declaration.kind as 'let' | 'const' | 'var';
       for (const declarator of declaration.declarations) {
         const bindings = collectPatternBindings(info, declarator.id);
 
-        // A second `var x` of a name that already has a candidate is a write of it.
-        const earlier = bindings[0] ? candidateOf.get(bindings[0]) : undefined;
-        if (earlier) {
+        // Names that already have a candidate make this declarator a redeclare. The
+        // other names still form a candidate of their own.
+        const earlier = findRedeclared(bindings);
+        if (earlier.length > 0) {
           redeclarations.set(declarator, earlier);
+        }
+        const fresh: Binding[] = [];
+        for (const binding of bindings) {
+          if (!candidateOf.has(binding)) {
+            fresh.push(binding);
+          }
+        }
+        if (fresh.length === 0) {
           continue;
         }
 
-        // Class expressions and setups are never memos. `$store` gives a store slot.
+        // Class expressions, setups and redeclares are never memos. `$store` gives a
+        // store slot.
         const init = declarator.init ? unwrap(declarator.init) : null;
         const initName =
           init && init.type === 'CallExpression'
@@ -557,12 +623,13 @@ export function analyzeModel(
           declarator,
           kind,
           scope,
-          bindings,
+          bindings: fresh,
           neverMemo:
-            init !== null &&
-            (init.type === 'ClassExpression' ||
-              initName === '$$' ||
-              initName === '$composable'),
+            earlier.length > 0 ||
+            (init !== null &&
+              (init.type === 'ClassExpression' ||
+                initName === '$$' ||
+                initName === '$composable')),
           store:
             initName === '$store' && init?.type === 'CallExpression'
               ? init
@@ -571,8 +638,18 @@ export function analyzeModel(
           memo: false,
         };
         candidates.push(candidate);
-        for (const binding of bindings) {
+        for (const binding of fresh) {
           candidateOf.set(binding, candidate);
+        }
+      }
+    }
+    for (const declaration of loopVars) {
+      for (const declarator of declaration.declarations) {
+        const earlier = findRedeclared(
+          collectPatternBindings(info, declarator.id),
+        );
+        if (earlier.length > 0) {
+          redeclarations.set(declarator, earlier);
         }
       }
     }
@@ -580,10 +657,13 @@ export function analyzeModel(
 
   // 6. Slots: rule 1 (a written let or var, or a redeclare with an initializer) and
   // rule 3 (`$store`) first, then rule 2 (memos) to a fixed point.
+  // A redeclare writes when it has an initializer or heads a for-in or for-of loop.
   const redeclared = new Set<SlotCandidate>();
   for (const [declarator, earlier] of redeclarations) {
-    if (declarator.init) {
-      redeclared.add(earlier);
+    if (declarator.init || isForHead(context, declarator)) {
+      for (const candidate of earlier) {
+        redeclared.add(candidate);
+      }
     }
   }
   for (const candidate of candidates) {
@@ -614,7 +694,9 @@ export function analyzeModel(
       list = [];
       declarations.set(declaration, list);
     }
-    list.push(declarator);
+    if (!list.includes(declarator)) {
+      list.push(declarator);
+    }
   }
   for (const candidate of candidates) {
     if (!candidate.slotted) {

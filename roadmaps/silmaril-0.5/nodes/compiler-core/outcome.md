@@ -7,19 +7,19 @@
 - `compiler/source.ts`: `parseModule`, `getLang`, `ParsedModule`, `Lang`. `.js`, `.mjs` and `.cjs` parse as JSX.
 - `compiler/analysis/`, as laid out in `contracts/compiler-api.md` v2:
   - `walk.ts`: `unwrap`, `isWrapper`, `childNodes`, `visit`, plus `climbWrappers(parentOf, node)` and `isCallee(parentOf, node)`.
-  - `scope.ts`: `analyzeScopes`, `resolveName`, `createUid`, `isFunctionNode`, and the `Scope`, `Binding`, `Reference`, `ScopeInfo` types.
+  - `scope.ts`: `analyzeScopes`, `resolveName`, `isFunctionNode`, and the `Scope`, `Binding`, `Reference`, `ScopeInfo` types.
   - `imports.ts`: `findSilmarilImports`, `SOURCE_MODULE`, `TrackedName`, `SilmarilImports`.
   - `model.ts`: `analyzeModel`, every model type of the contract, plus `TempOwner`, `getBlockBody(scope)` (the statements of a block-bodied scope body, or null) and `pickPrefix(names)` (the `$`, `$_`... prefix of generated names). `AnalysisContext` and `SlotCandidate` are internal.
   - `reads.ts`: `collectReads` (the contract's `readsOf`), `findLocalFunction`, `findMemos` (slot rule 2 to a fixed point), `computeEntryReads`, `findEnclosingSetup`, `findTree`.
-  - `writes.ts`: `findWriteSites`.
+  - `writes.ts`: `findWriteSites`, `isForHead`.
   - `checks.ts`: the compile errors not raised by other steps, and `fail`.
   - `index.ts`: `analyzeModule(code, filename): ModuleModel | null`.
 - Nodes are typed with the AST types that `oxc-parser` re-exports from `@oxc-project/types` (`import type { Node, CallExpression } from 'oxc-parser'`). No `any` in `compiler/`.
-- Tests in `packages/silmaril/test/compiler/analysis/` (168 tests):
-  - `fixtures.test.ts`: model half of the runtime fixtures. 55 fixtures with an `output.js` match (slots, entries with kind, id and output slot, graphs), and 7 compile-error fixtures throw their message. `namespace-root` has no named import: the model is null and nothing is registered.
-  - `scope.test.ts`: Babel differential and recorded references on `tricky.tsx.txt` and a generated 2,000-line file, shadowing, hoisting, parameter scopes, TS declarations, JSX references, reference contexts, read and write flags, `resolveName`, `names`, `createUid`, `visit` order.
-  - `model.test.ts`: aliased imports, shadowed names, namespace imports, destructuring patterns, TS wrappers, `$store`, redeclared `var`, nested setups, entry bodies with path refs, local helpers (direct, transitive, recursive, optional call, reassigned), opaque helpers, child memos, `$skip`, scope bindings, generated names, write sites.
-  - `errors.test.ts`: every row of the contract's error table, with the message, the line and the text at the column. Also aliased names, parse errors and UTF-16 columns.
+- Tests in `packages/silmaril/test/compiler/analysis/` (180 tests):
+  - `fixtures.test.ts`: model half of the runtime fixtures. All 54 fixtures with an `output.js` match: the slot numbers of each scope parameter, the entries (kind, id, output slot) and the graphs. All 7 compile-error fixtures throw their message. A test checks that 54 + 7 is every fixture folder. `namespace-root` has no named import: the model is null and nothing is registered.
+  - `scope.test.ts`: Babel differential and recorded references on `tricky.tsx.txt` and a generated 2,000-line file, shadowing, hoisting, parameter scopes, TS declarations, JSX references, reference contexts, read and write flags, `resolveName`, `names`, `visit` order.
+  - `model.test.ts`: aliased imports, shadowed names, namespace imports, destructuring patterns, TS wrappers, `$store`, redeclared `var` (per name, in loop bodies, `for` inits and `for-in`/`for-of` heads), class expressions, a bare `if` body declaration, nested setups, entry bodies with path refs, local helpers (direct, transitive, recursive, optional call, reassigned), opaque helpers, child memos, `$skip`, scope bindings, generated names, write sites.
+  - `errors.test.ts`: every row of the contract's error table, with the message, the line and the text at the column. Also the lifecycle argument row, `$sync` in a static block and in computed keys of fields and methods, aliased names, parse errors and UTF-16 columns.
   - `compile.test.ts`: the public API. `no-node-imports.test.ts`: no file under `compiler/` imports `node:` or `@babel/`.
 
 ### For codegen-core
@@ -28,7 +28,9 @@
 - Use `!ref.write`, never `ref.read`, for runtime reads.
 - `WriteSite.fn` is a `TempOwner`: a function, an arrow, or a `PropertyDefinition`/`AccessorProperty` for a class field value (change request below). Check `fn.type` before reading `body`.
 - A function memo's initializer is not in the scope map for lifecycle binding: `onMount` inside `const f = () => { onMount(g); }` binds to the scope around the memo (spike change request 4, kept as the prototype did it).
-- `onMount` and `onDestroy` with other than one argument fail with `<name> takes exactly one argument.`, as in the prototype. The contract's table does not list this row.
+- `onMount` and `onDestroy` with other than one argument fail with `<name> takes exactly one argument.` (change request item 2).
+- New write sites from redeclares (change request item 3): a `var x = v` in a loop body that names a setup `var` is a `redeclare` site. In the init of a `for` statement it is a `redeclare` with `statement: false`, and the declaration is in `model.declarations`, so codegen cannot split it into statements there. `for (var x of e)` and `for (var x in e)` give a `for` site whose `node` is the loop and whose `pattern` is the `VariableDeclaration`.
+- A redeclaring declarator whose other names get a slot (`var a = 1; a = 2; var [a, b] = arr; b = 3`) is in both `model.declarators` (for `b`) and `model.writeOf` (targets `a` and `b`). Print it as the write.
 - `model.scopes` holds memo and expression child scopes too (`isBody: false`). A scope's `graph` is null unless it is a setup or a body with slots. `graphName` is set exactly when `graph` is not null, numbered in source order of the scope nodes.
 - Generated temp names (`$t0`...) are not picked by the analysis. `pickPrefix(info.names)` gives the scope prefix. The temp prefix rule ("the prefix gets `_` until no user name is the prefix plus digits") is for codegen.
 
@@ -41,14 +43,18 @@ Reads are followed into a called function only when it is a local function of th
 - a written binding (`let f = () => a; f = ...`): it has a slot, so the call reads the slot `f`, not what `f` reads (fixture `written-function`);
 - a function initializer that reads a slot is a memo (`const handler = () => count`), so calling it reads the memo's slot.
 
+A read in a default of a declaration pattern does not make a memo: `const { c: [d] = [a] } = obj` reads only `obj` for the memo rule. Only the initializer counts.
+
 Reads inside nested plain functions are followed (`$sync(() => [1].map(() => a))` reads `a`). Reads inside `$skip(...)`, nested entries and nested setups are not.
 
 ## Deviations
 
 - Imports inside `compiler/` have no `.ts` extension, as in the rest of the package.
 - `@oxc-project/types` is not a dependency: `oxc-parser` re-exports the types, and the public `.d.ts` names no AST type.
-- Extra exports beyond the contract: `isWrapper`, `climbWrappers`, `isCallee` (walk), `isFunctionNode` (scope), `SOURCE_MODULE` (imports), `TempOwner`, `getBlockBody`, `pickPrefix`, `AnalysisContext`, `SlotCandidate` (model), `SourceLocation` (errors and the public entry). The contract's `readsOf` is `collectReads`.
-- `createUid` returns Babel-style `_hint`, `_hint2`... names, as the prototype's `createUidGenerator` did. The contract's "Names" rules (`$s`, `$c0`, `$g0`, `$t0`) are computed by `analyzeModel` and `pickPrefix`, not by `createUid`.
+- Extra exports beyond the contract: `isWrapper`, `climbWrappers`, `isCallee` (walk), `isFunctionNode` (scope), `SOURCE_MODULE` (imports), `isForHead` (writes), `TempOwner`, `getBlockBody`, `pickPrefix`, `AnalysisContext`, `SlotCandidate` (model), `SourceLocation` (errors and the public entry). The contract's `readsOf` is `collectReads`.
+- `createUid` is not implemented. Nothing called it: `analyzeModel` and `pickPrefix` compute the scope and graph names of the contract's "Names" rules, and codegen picks the temp and helper names.
+- Change request `contracts/compiler-api.change-request.md` (v2 to v3): `WriteSite.fn` is a `TempOwner`, the lifecycle argument row, and the step 5 wording on per-name redeclares and loop `var`s. The code follows it.
+- `$` and `$sync` in a computed key of a class method fail like those in a class field (`must be called directly in a setup body.`).
 - The Babel differential in `scope.test.ts` loads `@babel/core` by a computed name and is skipped when it cannot load. `switch-to-v2` can remove Babel without touching this test.
 - `tricky.tsx` is stored as `test/compiler/analysis/fixtures/tricky.tsx.txt`, so `tsc` (the `test` include) and oxfmt do not process it.
 
@@ -72,7 +78,7 @@ Reads inside nested plain functions are followed (`$sync(() => [1].map(() => a))
 
 ## Verification
 
-- `pnpm --filter silmaril test` (the brief's `verify`): 19 files, 249 tests pass (168 in `test/compiler/`).
+- `pnpm --filter silmaril test` (the brief's `verify`): 19 files, 261 tests pass (180 in `test/compiler/`).
 - Fast check `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint`: passes.
 - `pnpm format:check`: passes.
 - `dist/compiler.mjs` imports only `magic-string` and `oxc-parser`. `dist/compiler.d.mts` names no AST or magic-string type.

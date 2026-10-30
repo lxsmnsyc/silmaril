@@ -443,3 +443,141 @@ $$(() => {
     expect(m.writeOf.get(m.writes[0]!.node)).toBe(m.writes[0]);
   });
 });
+
+describe('var redeclarations', () => {
+  it('a var in a loop body that redeclares a setup var with an initializer is a write', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var x = 1;
+  while (c) { var x = 2; }
+});`);
+    expect(readSlots(getRoot(m))).toEqual(['x:state']);
+    expect(
+      m.writes.map(
+        (site) => `${site.kind}:${site.statement}:${site.node.type}`,
+      ),
+    ).toEqual(['redeclare:true:VariableDeclarator']);
+  });
+
+  it('a var in a for head or loop body gives write sites of a slotted var', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var x = 1;
+  x = 5;
+  for (;;) { var x = 2; }
+  for (var x = 3; c; ) {}
+  for (var x of xs) {}
+  for (var x in o) {}
+  do { var x; } while (c);
+});`);
+    expect(readSlots(getRoot(m))).toEqual(['x:state']);
+    expect(
+      m.writes.map(
+        (site) =>
+          `${site.kind}:${site.statement}:${site.node.type}:${site.pattern.type}`,
+      ),
+    ).toEqual([
+      'assign:false:AssignmentExpression:Identifier',
+      'redeclare:true:VariableDeclarator:Identifier',
+      'redeclare:false:VariableDeclarator:Identifier',
+      'for:false:ForOfStatement:VariableDeclaration',
+      'for:false:ForInStatement:VariableDeclaration',
+      'redeclare:true:VariableDeclarator:Identifier',
+    ]);
+    for (const site of m.writes) {
+      expect(site.targets.map((target) => target.slot.index)).toEqual([0]);
+    }
+  });
+
+  it('a for-of head var counts for slot rule 1', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var x;
+  for (var x of xs) {}
+});`);
+    expect(readSlots(getRoot(m))).toEqual(['x:state']);
+  });
+
+  it('a loop var with no setup var of the same name is a plain local', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  while (c) { var w = 1; w = 2; }
+});`);
+    expect(readSlots(getRoot(m))).toEqual([]);
+    expect(m.writes).toEqual([]);
+  });
+
+  it('detects a redeclaration per bound name', () => {
+    const second = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var a = 1;
+  a = 2;
+  var [b, a] = arr;
+});`);
+    expect(readSlots(getRoot(second))).toEqual(['a:state']);
+    expect(
+      second.writes.map((site) =>
+        site.targets.map((target) => target.identifier.name),
+      ),
+    ).toEqual([['a'], ['a']]);
+
+    const first = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var a = 1;
+  a = 2;
+  var [a, b] = arr;
+  b = 3;
+});`);
+    const root = getRoot(first);
+    expect(readSlots(root)).toEqual(['a:state', 'b:state']);
+    const site = first.writes.find((write) => write.kind === 'redeclare')!;
+    expect(site.targets.map((target) => target.slot.index)).toEqual([0, 1]);
+    // The declarator holds b's slot and redeclares a. It prints as the write.
+    expect(first.declarators.get(site.node as never)!.slots.length).toBe(1);
+    expect([...first.declarations.values()].map((list) => list.length)).toEqual(
+      [1, 1],
+    );
+  });
+
+  it('a redeclaring declarator is never a memo', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  var a = 1;
+  a = 2;
+  var [a, c] = [a * 2];
+});`);
+    expect(readSlots(getRoot(m))).toEqual(['a:state']);
+  });
+});
+
+describe('freeze rules of runtime contract v4', () => {
+  it('a class expression initializer is never a memo, even when it reads a slot', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  let x = 0;
+  const K = class { get() { return x; } };
+  let L = class { f = x; };
+  x = 1;
+  L = null;
+});`);
+    const root = getRoot(m);
+    expect(readSlots(root)).toEqual(['x:state', 'L:state']);
+    expect(root.entries).toEqual([]);
+  });
+
+  it('a split declaration that is the bare body of an if gets slots per declarator', () => {
+    const m = model(`import { $$ } from 'silmaril';
+$$(() => {
+  let a = 0;
+  if (a) var w = 1, z = 2;
+  w = 3;
+});`);
+    const root = getRoot(m);
+    expect(readSlots(root)).toEqual(['w:state']);
+    const declaration = root.slots[0]!.declarator.declaration;
+    expect(declaration.declarations.length).toBe(2);
+    expect(m.declarations.get(declaration)).toEqual([
+      declaration.declarations[0],
+    ]);
+  });
+});

@@ -745,22 +745,3 @@ export function resolveName(scope: Scope, name: string): Binding | null {
   }
   return null;
 }
-
-/**
- * A name generator for names that match no name in `names`, as Babel's
- * generateUidIdentifier does: `_hint`, then `_hint2`, `_hint3`... Each name it returns
- * is added to `names`.
- */
-export function createUid(names: Set<string>): (hint: string) => string {
-  return (hint: string) => {
-    const base = `_${hint.replace(/^_+/, '').replace(/[^\w$]/g, '')}`;
-    let name = base;
-    let index = 1;
-    while (names.has(name)) {
-      index += 1;
-      name = `${base}${index}`;
-    }
-    names.add(name);
-    return name;
-  };
-}

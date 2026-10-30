@@ -31,9 +31,15 @@ describe('compile errors of the runtime contract', () => {
     ['$$(1);', '$$ must be called with a function.', '$$(1)'],
     [
       '$composable();',
-      '$composable takes exactly one argument.',
+      '$composable must be called with a function.',
       '$composable()',
     ],
+    [
+      '$$(() => {}, 1);',
+      '$$ must be called with a function.',
+      '$$(() => {}, 1)',
+    ],
+    ['$$(...fns);', '$$ must be called with a function.', '$$(...fns)'],
     [
       '$$(() => { let x = 0; for (const i of [1]) { $(x); } x = 2; });',
       '$ cannot be called inside a loop.',
@@ -81,6 +87,26 @@ describe('compile errors of the runtime contract', () => {
       '$store()',
     ],
     ['$skip(1);', '$skip must be used inside $$ or $composable.', '$skip(1)'],
+    [
+      '$$(() => { onMount(() => {}, 1); });',
+      'onMount takes exactly one argument.',
+      'onMount(() => {}, 1)',
+    ],
+    [
+      '$$(() => { class K { static { $sync(1); } } });',
+      '$sync must be called directly in a setup body.',
+      '$sync(1)',
+    ],
+    [
+      '$$(() => { class K { [$sync(1)] = 2; } });',
+      '$sync must be called directly in a setup body.',
+      '$sync(1)',
+    ],
+    [
+      '$$(() => { class K { [$sync(1)]() {} } });',
+      '$sync must be called directly in a setup body.',
+      '$sync(1)',
+    ],
     [
       'onMount(() => {});',
       'onMount must be used inside $$ or $composable.',
