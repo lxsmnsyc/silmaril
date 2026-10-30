@@ -71,6 +71,34 @@ afterEach(() => {
   }
 });
 
+// Elements passed to Array.prototype.sort while a $ registration and a memo
+// write alternate count times.
+function sortedElements(count: number): number {
+  let total = 0;
+  const original = Array.prototype.sort;
+  const spy = vi.spyOn(Array.prototype, 'sort').mockImplementation(function (
+    this: unknown[],
+    compare,
+  ) {
+    total += this.length;
+    return original.call(this, compare as never);
+  });
+  try {
+    const s = root([[0]], (t) => {
+      $$set(t, 0, 0);
+      $$memo(t, 0, 1, () => $$get(t, 0) + 1);
+      for (let i = 1; i <= count; i++) {
+        $$effect(t, i, () => {});
+        $$set(t, 0, i);
+      }
+    });
+    expect($$get(s, 1)).toBe(count + 1);
+  } finally {
+    spy.mockRestore();
+  }
+  return total;
+}
+
 describe('slots', () => {
   it('reads and writes', () => {
     const s = root([], (t) => {
@@ -165,19 +193,12 @@ describe('write ordering', () => {
 
   it('does not sort the $ queue again for each memo write', () => {
     // One $ registration per round, with a write that queues a memo in
-    // between. A sort of the pending $ queue on each take is quadratic.
-    const count = 30_000;
-    const start = performance.now();
-    const s = root([[0]], (t) => {
-      $$set(t, 0, 0);
-      $$memo(t, 0, 1, () => $$get(t, 0) + 1);
-      for (let i = 1; i <= count; i++) {
-        $$effect(t, i, () => {});
-        $$set(t, 0, i);
-      }
-    });
-    expect($$get(s, 1)).toBe(count + 1);
-    expect(performance.now() - start).toBeLessThan(2000);
+    // between. Sorting the pending $ queue on each take is quadratic, so
+    // count the elements the runtime sorts instead of timing it.
+    const small = sortedElements(1000);
+    const large = sortedElements(2000);
+    // Linear work doubles with the count, quadratic work quadruples.
+    expect(large).toBeLessThan(small * 3);
   });
 
   it('treats a missing graph list as no readers', () => {
