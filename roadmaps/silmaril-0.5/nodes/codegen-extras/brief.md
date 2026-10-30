@@ -1,7 +1,7 @@
 ---
 id: codegen-extras
 title: Codegen for $store, $composable, lifecycles and $skip
-status: active
+status: done
 priority: must
 type: feature
 milestone: 0.5.0
@@ -49,3 +49,7 @@ Finish the compiler: `$store` (one-way for `const`, two-way for `let`), `$compos
 ## Sizing
 
 Same pattern as codegen-core, fewer constructs.
+
+## Pull request
+
+- #19, merged into `roadmap`.
