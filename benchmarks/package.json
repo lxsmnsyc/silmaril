@@ -1,0 +1,14 @@
+{
+  "name": "benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "node --expose-gc --import tsx src/index.ts",
+    "type-check": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2"
+  }
+}

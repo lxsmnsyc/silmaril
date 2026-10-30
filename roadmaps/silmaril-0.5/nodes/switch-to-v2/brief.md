@@ -65,3 +65,4 @@ Mostly deletion and wiring, but it touches every entry point.
 
 - `rollup-plugin-silmaril` and `vite-plugin-silmaril` wrap `silmaril/unplugin` and need no change; check they still build.
 - `oxc-parser` and `magic-string` are regular dependencies of `silmaril` since `compiler-core`, so runtime-only users install the oxc native binding. Kept for now (maintainer, 2026-10-30); weigh optional peers or a separate package here.
+- `website/src/live/run.ts` (`MODULES`) gives live samples the 0.4 runtime. Point it at the v2 runtime, and turn on `check:samples --strict` in CI once samples run (from `runnable-samples`, PR #16).
