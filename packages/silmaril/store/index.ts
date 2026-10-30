@@ -25,7 +25,7 @@ export default class Store<T> {
     }
   }
 
-  subscribe(callback: () => void): () => void {
+  subscribe(callback: (value: T) => void): () => void {
     if (this.alive) {
       this.listeners.add(callback);
     }
