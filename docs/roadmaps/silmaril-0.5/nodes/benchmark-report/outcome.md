@@ -2,7 +2,7 @@
 
 ## Built
 
-- `benchmarks/README.md`: the 0.4 against 0.5 table (taken at `0f55110`, the last commit with both pipelines) and a new section, "Check after the switch (0.5.0)", with runs at `25b4952` and a same-session rerun of `0f55110`.
+- `benchmarks/README.md` keeps the 0.4 against 0.5 table, taken at `0f55110`, the last commit with both pipelines. A new section, "Check after the switch (0.5.0)", adds runs at `25b4952` and a same-session rerun of `0f55110`.
 - Against 0.4, compiling the 54.5 KB source is about 13 times faster. At N = 400, one write is about 60 times cheaper and a batch about 85 times cheaper. In 0.4 the cost of one write grows faster than N. In 0.5 it grows about linearly.
 
 ## Deviations

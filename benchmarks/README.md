@@ -60,7 +60,7 @@ An earlier 0.4 run under load (load average about 10) measured roughly twice the
 
 - Update cost is the same before and after the switch, apart from one noisy run.
 - Compiling the small and medium sources is the same. Compiling the 54.5 KB source is slower and noisier after the switch, but the compiler is the same code. Before the switch, the `babel` pipeline ran first and grew the heap, so the `compiler` rows ran with a warm heap. Now `compiler` runs first, and the 30 MB that one compile allocates hits more young-generation collections. With `--max-semi-space-size=32`, the median drops back to 14.6 ms. It is a benchmark effect, not a compiler regression.
-- The table above (`0f55110`) stays the 0.4 against 0.5 comparison. Against 0.4, 0.5 compiles the 54.5 KB source about 13 times faster, and at N = 400 one write is about 60 times cheaper and a batch about 85 times cheaper.
+- The table above (`0f55110`) stays the 0.4 against 0.5 comparison. Against 0.4, 0.5 compiles the 54.5 KB source about 13 times faster. At N = 400, one write is about 60 times cheaper and a batch about 85 times cheaper.
 
 ## Notes
 
