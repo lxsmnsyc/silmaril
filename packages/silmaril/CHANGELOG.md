@@ -1,5 +1,14 @@
 # silmaril
 
+## 0.4.1
+
+### Patch Changes
+
+- [#21](https://github.com/lxsmnsyc/silmaril/pull/21) [`61b30ce`](https://github.com/lxsmnsyc/silmaril/commit/61b30ce6d657a238ced02a1b777a450dbf57de44) Thanks [@lxsmnsyc](https://github.com/lxsmnsyc)! - - `$$(value)` throws when the argument is not an arrow function or a function expression. It compiled without an error before.
+  - `$skip(expr)` compiles to `expr` and leaves the variables read inside it out of dependency tracking. It threw at runtime before.
+
+- [#21](https://github.com/lxsmnsyc/silmaril/pull/21) [`e8209b3`](https://github.com/lxsmnsyc/silmaril/commit/e8209b304330da984d6175738f295cfd641c69f1) Thanks [@lxsmnsyc](https://github.com/lxsmnsyc)! - A `$$` nested inside another `$$` compiles with one `_$$context()` instead of two.
+
 ## 0.4.0
 
 ### Minor Changes
