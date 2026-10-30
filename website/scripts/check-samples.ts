@@ -77,6 +77,20 @@ async function checkDispose(): Promise<string | undefined> {
   return undefined;
 }
 
+// Logs of the docs pages, kept in one `expected-*.ts` file per page group.
+for (const file of readdirSync(new URL('./', import.meta.url)).toSorted()) {
+  if (/^expected-.+\.ts$/.test(file)) {
+    const records: Record<string, string[]> = (await import(`./${file}`))
+      .default;
+    for (const [name, logs] of Object.entries(records)) {
+      if (name in EXPECTED) {
+        throw new Error(`${file}: duplicate expected logs for ${name}`);
+      }
+      EXPECTED[name] = logs;
+    }
+  }
+}
+
 // `--strict` also fails on samples that were compiled and not run. Turn it on in CI once
 // codegen-core has merged and the compiler emits code.
 const strict = process.argv.includes('--strict');
