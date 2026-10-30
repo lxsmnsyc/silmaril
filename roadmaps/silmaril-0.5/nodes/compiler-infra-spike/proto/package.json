@@ -1,0 +1,28 @@
+{
+  "name": "compiler-infra-spike-proto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.ts && node fixtures.test.ts",
+    "fixtures": "node fixtures.test.ts",
+    "fetch-pr8": "node fetch-pr8.ts",
+    "bench": "node bench.ts",
+    "browser": "node browser/run.ts"
+  },
+  "dependencies": {
+    "@oxc-parser/binding-wasm32-wasi": "0.155.0",
+    "@oxc-parser/binding-wasm32-wasip1": "0.155.0",
+    "@oxc-project/types": "0.155.0",
+    "magic-string": "1.4.4",
+    "oxc-parser": "0.155.0",
+    "periscopic": "4.0.2"
+  },
+  "devDependencies": {
+    "@jridgewell/trace-mapping": "0.3.31",
+    "playwright": "1.64.1",
+    "vite": "8.3.5"
+  },
+  "overrides": {
+    "@napi-rs/wasm-runtime": "1.2.5"
+  }
+}

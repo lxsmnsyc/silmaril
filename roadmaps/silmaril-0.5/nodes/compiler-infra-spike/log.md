@@ -1,0 +1,28 @@
+# Log: compiler-infra-spike
+
+- Reset the worktree to `origin/roadmap` (106c75a). Renamed the branch to `spike/compiler-infra-spike`.
+- Nothing existed yet: no `compiler/` folder, no oxc dependency. Work needed.
+- Prototype lives in `proto/`, installed with `npm install --prefix proto --no-package-lock`. The folder is outside the pnpm workspace globs (`packages/*`, `examples/*`). `node_modules/` and `browser/dist-*/` are ignored.
+- Versions picked older than a day: oxc-parser 0.155.0 (0.156.0 is from today), magic-string 1.4.4, playwright 1.64.1 (its Chromium was cached), vite 8.3.5.
+- oxc-parser does not expose scopes or symbols to JS. `showSemanticErrors` only adds errors. So the choice is periscopic or our own builder.
+- Wrote `proto/scope.ts`, a one-walk scope builder that skips types. References resolve after the walk, so hoisting works.
+- Differential test against Babel's `scope.getBinding` on `fixtures/tricky.tsx` and a generated 2,028-line TSX file. Differences left: TS enums, namespaces and parameter properties, which Babel does not register. Ours does. `declare const` now declares a binding, like Babel.
+- `program` from `parseSync` is a lazy getter. The first bench measured parse without it and looked 3x too fast. Fixed.
+- The Babel plugin grows faster than linear: 14 ms at 250 lines, 69 ms at 1,000, 255 ms at 2,000 (nested `path.traverse` and `scope.crawl()` per setup).
+- Browser: the first run failed with `this.bridge.setLastError is not a function`. Cause: `@napi-rs/wasm-runtime@1.2.6` declares the peer `@emnapi/core ^1.7.1 || 2.0.0-beta.2`, which excludes the `2.0.0-alpha.6` that the oxc bindings pin. npm then nests emnapi 1.11.3 and the two halves do not match. Pinning `@napi-rs/wasm-runtime` to 1.2.5 fixes it. Checked both ways.
+- `@oxc-parser/binding-wasm32-wasip1` exists and is what `oxc-parser`'s browser entry imports by name. It needs no alias and no cross-origin isolation. The threaded `-wasi` binding (brumate's choice, through an alias) also works without isolation in Chromium and WebKit.
+- Firefox did not launch in this sandbox ("Could not find profile folder"). Not tested.
+- oxc offsets are UTF-16, so magic-string edits line up with non-ASCII text. Added a test.
+- Lint: the fixture has a file-level `oxlint-disable`. Ran oxfmt on the node folder.
+- Revision after the design review of PR #9. Fetched `origin/feat/reactivity-adr` at 937424c and read the runtime contract v3, ADR 0001 and the 45 fixtures.
+- Split the prototype: `source.ts` (parse, errors, walk, imports), `scope.ts`, `model.ts` (reactive model), `codegen.ts`, `compile.ts`. `compile.ts` importing `model.ts` importing `compile.ts` would be an `import/no-cycle` error, hence `source.ts`.
+- Scope fixes: `params` scope for parameter expressions, qualified namespaces, `<this.Foo />`, `Reference.context`, `childNodes` sorted by start and without shorthand keys.
+- First fixture run: 40 of 41 models matched. `error-in-rerun` failed because `readsOf` exempted its root from the `$skip` check, and the root of `const value = $skip(x)` is the `$skip` call. Fixed.
+- Text compare: oxfmt through `--stdin-filepath`, after removing comments (with their line when the line is left empty). The fixtures disagree on graph list order (`nested-scope`) and trailing empty lists (`nested-root`), so the compare normalizes both.
+- magic-string: `update` is `overwrite` with `contentOnly`, and keeps the inserts at the range's ends. `generateMap` makes `sources` relative to `file`.
+- Final: model 41/41, logs 41/41, text 38/41, compile errors 4/4. Browser run passes in Chromium and WebKit with the new compiler.
+- Revision for runtime contract v4 (PR #8 at bc5407d, 11 fixtures changed, 16 added, 61 in all). Re-fetched the fixtures. First run: 18 failures.
+- Model: setup declarations in nested blocks (not loops or functions); function and arrow initializers that read a slot are memos (their memo scope is not registered as a scope node, so `onMount` inside binds outward); written bindings are not local functions; `$`/`$sync` allowed in expressions with the new "directly in a setup body" rule (loops, nested functions, class fields, memo initializers, other entries' arguments fail); new messages for argument count and `$store`; memo-initializer writes and class field destructuring are allowed; JSX tag raised in analysis.
+- Codegen: class field writes wrap the value in `(() => { let $t0, ...; return value; })()` with `prependLeft` and `appendRight`. A split declaration whose parent is not a statement list gets `{ }`. Found by probing `if (a) var w = 1, z = 2;`, which moved `z` out of the `if`.
+- Harness: `.js` parses as JSX (`jsx-tag` is a `.js` file). `import * as x` maps to `const x = runtime`, as the v4 runner protocol says (this was the namespace-root failure). Text compare ignores blank lines (`composable-lifecycle` differed only by a blank line between the graphs).
+- Left: `composable` and `composable-glitch` number their graphs against source order. 61 fixtures, 0 failures. `test.ts` 32 checks. Bench and browser rerun, no change. Rechecked the 9 change requests: 8 taken by v4, 1 kept narrowed, 5 new open points.
