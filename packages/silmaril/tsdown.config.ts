@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     babel: 'babel/index.ts',
+    compiler: 'compiler/index.ts',
     store: 'store/index.ts',
     solid: 'solid/index.ts',
     unplugin: 'unplugin/index.ts',
