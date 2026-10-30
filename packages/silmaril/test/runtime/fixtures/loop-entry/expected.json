@@ -1,0 +1,4 @@
+{
+  "description": "A $ or $sync inside a loop is a compile error: one entry id cannot stand for many registrations.",
+  "compileError": "$ cannot be called inside a loop."
+}

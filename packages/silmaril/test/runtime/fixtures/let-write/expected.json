@@ -1,0 +1,11 @@
+{
+  "description": "A reactive let gets a slot. A write runs the entries that read it, before the write returns. A write of the same value by Object.is runs nothing: NaN equals NaN, and 0 differs from -0.",
+  "logs": [
+    ["count", 0],
+    ["count", 1],
+    ["count", 2],
+    ["other", "NaN", false],
+    ["other", "0", false],
+    ["other", "0", true]
+  ]
+}

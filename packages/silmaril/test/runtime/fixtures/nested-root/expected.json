@@ -1,0 +1,4 @@
+{
+  "description": "A $$ inside another $$ is a separate root, as in 0.4. Its entries do not track the outer slots, and disposing the outer root does not dispose it.",
+  "logs": [["inner reads outer", 0], ["outer destroyed"], ["inner destroyed"]]
+}

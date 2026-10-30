@@ -1,0 +1,4 @@
+{
+  "description": "A JSX tag name is not an expression the compiler can replace with $$get, so a reactive variable used as a tag is a compile error.",
+  "compileError": "A reactive variable cannot be used as a JSX tag."
+}

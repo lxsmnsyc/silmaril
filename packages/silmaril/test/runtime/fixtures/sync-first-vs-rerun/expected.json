@@ -1,0 +1,13 @@
+{
+  "description": "A $sync body orders its effects the same way on every run. While any $sync body runs, a write runs memos and queues $sync bodies, which run after the outermost body returns. Registration runs the new body at once.",
+  "logs": [
+    ["body", 0],
+    ["inner", 0],
+    ["body end"],
+    ["inner", 1],
+    ["body", 1],
+    ["inner", 0],
+    ["body end"],
+    ["inner", 1]
+  ]
+}

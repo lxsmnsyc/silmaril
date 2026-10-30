@@ -1,0 +1,11 @@
+{
+  "description": "A var follows the rules of let: it gets a slot when it is written after its declaration. A read before the declaration reads the empty slot, as a hoisted var reads undefined. A second var declaration with an initializer is a write. A var inside a block that is not in a loop gets a slot too, as in 0.4.",
+  "logs": [
+    ["hoisted", "undefined"],
+    ["v", 1],
+    ["v", 2],
+    ["v", 3],
+    ["w", 1],
+    ["w", 2]
+  ]
+}

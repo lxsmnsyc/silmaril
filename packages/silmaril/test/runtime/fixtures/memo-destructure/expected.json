@@ -1,0 +1,8 @@
+{
+  "description": "A memo with a destructuring pattern is one entry with output slot -1. It writes each bound slot with $$set, so a binding whose value did not change (x) runs nothing.",
+  "logs": [
+    ["x", 1],
+    ["y", 2],
+    ["y", 3]
+  ]
+}

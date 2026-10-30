@@ -1,0 +1,11 @@
+{
+  "description": "A memo declared in an entry body is a slot of the child scope. A body that reads its own memo reads what the memo reads, so it runs again when x changes. The memo in the old child scope does not compute, because its parent entry is queued.",
+  "logs": [
+    ["compute"],
+    ["body", 2],
+    ["inner", 2],
+    ["compute"],
+    ["body", 4],
+    ["inner", 4]
+  ]
+}

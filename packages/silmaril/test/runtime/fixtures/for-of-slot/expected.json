@@ -1,0 +1,19 @@
+{
+  "description": "A for-of or for-in loop whose target is a reactive variable loops over a fresh const temp and writes the slot first in each iteration. A pattern target stays in place, with each slot target renamed to a temp of the site, and the slots are written first in each iteration.",
+  "logs": [
+    ["item", ""],
+    ["key", ""],
+    ["pair", 0, 0],
+    ["item", "a"],
+    ["loop", "a"],
+    ["item", "b"],
+    ["loop", "b"],
+    ["key", "x"],
+    ["key loop", "x"],
+    ["key", "y"],
+    ["key loop", "y"],
+    ["pair", 1, 0],
+    ["pair", 1, 2],
+    ["pair loop"]
+  ]
+}

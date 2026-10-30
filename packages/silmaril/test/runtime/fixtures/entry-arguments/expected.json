@@ -1,0 +1,4 @@
+{
+  "description": "$ and $sync take exactly one argument. The message is the one 0.4 throws.",
+  "compileError": "$sync can only accept a single argument"
+}

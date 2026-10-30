@@ -1,0 +1,10 @@
+{
+  "description": "As in 0.4, a memo initializer can write a reactive variable. The write queues its entries in the running memo phase. Here c reads the old b, then b computes, and c computes again with the new b before the $sync runs. So c runs twice for one write.",
+  "logs": [
+    ["c reads b", 0],
+    ["sync c", 0],
+    ["c reads b", 0],
+    ["c reads b", 10],
+    ["sync c", 10]
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "description": "Setup runs a $sync and a memo when they are declared, and queues the first run of a $. A write runs memos, then $sync bodies, before it returns. $ bodies run later, in a microtask. The first run of $ batches with the writes of the same task.",
+  "logs": [
+    ["sync", 0],
+    ["memo", 0],
+    ["memo", 2],
+    ["sync", 1],
+    ["after write"],
+    ["effect", 1, 2],
+    ["memo", 4],
+    ["sync", 2],
+    ["after write"],
+    ["effect", 2, 4]
+  ]
+}

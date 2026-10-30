@@ -1,0 +1,4 @@
+{
+  "description": "A child entry of a queued entry does not run: the parent run disposes its scope and makes a new one. So the memo d inside the $sync body computes once per write, in the new run.",
+  "logs": [["memo d"], ["outer", 0, 0], ["memo d"], ["outer", 1, 2]]
+}

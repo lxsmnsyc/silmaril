@@ -1,0 +1,4 @@
+{
+  "description": "The 0.4 comment form /* $skip */ is a compile error in 0.5, so code that relied on it does not change meaning without notice. $skip(expression) replaces it.",
+  "compileError": "The /* $skip */ comment is not supported. Use $skip(expression)."
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Calls through a namespace import are not compiled. As in 0.4, the runtime $$ runs the setup at once, with no reactivity, and returns a disposer. The runtime $composable returns the setup.",
+  "logs": [["setup"], ["returned", "function"], ["composable", 3]]
+}
