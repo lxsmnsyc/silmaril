@@ -1,7 +1,7 @@
 ---
 id: codegen-core
 title: Codegen for variables, computeds, $ and $sync
-status: todo
+status: active
 priority: must
 type: feature
 milestone: 0.5.0
@@ -37,6 +37,9 @@ Make `silmaril/compiler` emit code for the new runtime for `$$`, reactive `let`,
 ## Context
 
 - The ADR fixtures show the expected output shape for each construct.
+- `compiler-api` v3 has the edit rules and the write sites, `TempOwner` included. `compiler-core`'s outcome lists the analysis API as built and the new write sites (loop `var` redeclares, `for (var x of e)` heads).
+- The spike's `nodes/compiler-infra-spike/proto/codegen.ts` passes every fixture's text and logs against the v4 sketch: port it rather than start over.
+- `runtime-v2` has merged: the runtime is `packages/silmaril/src/v2/`. Run compiled fixtures and behavior cases against it.
 
 ## Acceptance
 
@@ -51,4 +54,5 @@ New code generation on a new runtime: uncertainty medium, size high.
 
 ## Notes for the worker
 
-- Build against the fixtures if `runtime-v2` has not merged; switch the pipeline to the real runtime when it has.
+- `compiler/index.ts` belongs to `compiler-core`. Calling `generate(s, model)` there is the one edit you make to it (the spot is in `compiler-core`'s outcome); record it under Deviations.
+- In the new pipeline file, import with explicit `.ts` paths (no directory or extensionless imports), so the pipeline loads under plain Node. `benchmarks/` discovers pipelines from that folder.

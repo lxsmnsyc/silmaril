@@ -1,7 +1,7 @@
 ---
 id: compiler-core
 title: silmaril/compiler parsing and analysis
-status: active
+status: done
 priority: must
 type: feature
 milestone: 0.5.0
@@ -54,3 +54,7 @@ Uncertainty medium after the spike, size medium-high, adds dependencies (lockfil
 - Leave `compiler/codegen/` to the codegen nodes; `index.ts` calls `codegen/index.ts` once it exists.
 - Keep analysis and code generation in separate modules, so the codegen nodes own their own files.
 - Run the whole analysis on the original AST before any magic-string edit. Codegen reads analysis results only (see reviews/premortem.md, item 1).
+
+## Pull request
+
+- #15, merged into `roadmap`. Its change request became compiler-api v3.

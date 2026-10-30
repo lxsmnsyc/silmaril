@@ -64,3 +64,4 @@ Mostly deletion and wiring, but it touches every entry point.
 ## Notes for the worker
 
 - `rollup-plugin-silmaril` and `vite-plugin-silmaril` wrap `silmaril/unplugin` and need no change; check they still build.
+- `oxc-parser` and `magic-string` are regular dependencies of `silmaril` since `compiler-core`, so runtime-only users install the oxc native binding. Kept for now (maintainer, 2026-10-30); weigh optional peers or a separate package here.

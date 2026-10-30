@@ -3,5 +3,5 @@
   "compilerOptions": {
     "lib": ["ESNext", "DOM"]
   },
-  "include": ["src", "babel", "store", "solid", "unplugin", "test"]
+  "include": ["src", "babel", "compiler", "store", "solid", "unplugin", "test"]
 }

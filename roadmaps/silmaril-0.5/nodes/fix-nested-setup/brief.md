@@ -1,7 +1,7 @@
 ---
 id: fix-nested-setup
 title: Emit one context for a nested $$
-status: active
+status: done
 priority: should
 type: fix
 milestone: 0.4.1
@@ -55,3 +55,7 @@ One guard against transforming a setup twice, plus a test.
 ## Notes for the worker
 
 - Whether the inner `$(console.log(a))` should track the outer `a` is a separate question for the maintainer (the README says reactions stay inside their `$$`). Do not change tracking in this node.
+
+## Pull request
+
+- #12, merged into `roadmap`. Tracking of outer variables by a nested `$$` stays as in 0.4 for 0.4.1 (maintainer, 2026-10-30).

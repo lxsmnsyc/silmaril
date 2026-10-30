@@ -1,7 +1,7 @@
 ---
 id: runtime-v2
 title: Static-graph runtime
-status: active
+status: done
 priority: must
 type: feature
 milestone: 0.5.0
@@ -44,3 +44,7 @@ Known pattern once the contract is frozen; small code, many tests.
 ## Notes for the worker
 
 - Do not touch `src/index.ts`; the 0.4 runtime must keep working until the switch.
+
+## Pull request
+
+- #13, merged into `roadmap`. 1417 B gzip, accepted by the maintainer on 2026-10-30 (under the 1.5 kB cap, over the 1.2 kB aim). Allocation follow-ups are in the outcome.
