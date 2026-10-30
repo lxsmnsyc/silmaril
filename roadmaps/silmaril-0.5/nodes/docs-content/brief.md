@@ -1,7 +1,7 @@
 ---
 id: docs-content
 title: Full documentation for 0.5
-status: todo
+status: dropped
 priority: should
 type: docs
 milestone: docs
@@ -30,3 +30,7 @@ Write the 0.5 documentation: guide, API reference for every export and subpath, 
 ## Notes from earlier waves
 
 - Document the loop guard: one write that reaches more than 10,000 entries in one drain throws `Update loop` (accepted by the maintainer, 2026-10-30).
+
+## Refined
+
+- Split into `docs-guide`, `docs-reference` and `docs-migration` on 2026-10-30.
