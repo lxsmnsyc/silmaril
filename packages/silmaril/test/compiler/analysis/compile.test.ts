@@ -12,11 +12,13 @@ describe('compile', () => {
     });
   });
 
-  it('leaves the text unchanged until code generation lands, with a map', () => {
+  it('compiles the module, with a map', () => {
     const code =
       "import { $$ } from 'silmaril';\n$$(() => { let x = 0; x = 1; });\n";
     const result = compile(code, { filename: 'src/a.ts' });
-    expect(result.code).toBe(code);
+    expect(result.code).toBe(
+      "import { $$root, $$set } from 'silmaril';\n\nconst $g0 = [];\n$$root($g0, ($s) => { $$set($s, 0, 0); $$set($s, 0, 1); });\n",
+    );
     // magic-string keeps the base name, and sources are relative to `file`.
     expect(result.map!.file).toBe('a.ts');
     expect(result.map!.sources).toEqual(['a.ts']);

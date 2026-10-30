@@ -1,8 +1,13 @@
 import { behaviorCases } from '../harness';
 
+// $store, $composable, onMount, onDestroy and $skip compile in codegen-extras,
+// which removes the compiler pipeline from these cases.
+const WAITS_FOR_EXTRAS = { xfail: ['compiler'] };
+
 behaviorCases('nested', [
   {
     name: 'restarts a nested $ when the outer variable changes',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       $$(() => {
@@ -22,6 +27,7 @@ behaviorCases('nested', [
   },
   {
     name: 'cleans up a nested effect and starts a fresh one on outer change',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       let set;
@@ -50,7 +56,11 @@ behaviorCases('nested', [
     ],
   },
   {
+    // 0.5 change (reactivity-runtime v4 "Reads"): reads inside a nested entry do not
+    // count for the outer body, so writing `outer` reruns only the nested $sync,
+    // which still sees `inner` = 20. 0.4 reran the outer body too.
     name: 'keeps the inner variable local to the nested effect',
+    options: { xfail: ['babel'] },
     code: `
       import { $$, $, $sync } from 'silmaril';
       $$(() => {
@@ -66,12 +76,12 @@ behaviorCases('nested', [
     logs: [
       ['sum', 11],
       ['sum', 21],
-      ['sum', 12],
       ['sum', 22],
     ],
   },
   {
     name: 'destroys nested effects together with the boundary',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, onDestroy } from 'silmaril';
       const stop = $$(() => {
@@ -89,6 +99,7 @@ behaviorCases('nested', [
   },
   {
     name: 'gives a nested $$ boundary its own stop callback',
+    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, onDestroy } from 'silmaril';
       $$(() => {

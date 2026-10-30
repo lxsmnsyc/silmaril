@@ -1,7 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ESNext", "DOM"],
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "babel", "compiler", "store", "solid", "unplugin", "test"]
 }

@@ -1,5 +1,6 @@
 import { MagicString } from 'magic-string';
 import { analyzeModule } from './analysis/index';
+import { generate } from './codegen/index';
 
 export { CompileError } from './errors';
 export type { SourceLocation } from './errors';
@@ -48,8 +49,9 @@ export function compile(code: string, options: CompileOptions): CompileResult {
   }
 
   // Analysis has finished on the original AST. Code generation edits the text from the
-  // model only. Until compiler/codegen/ lands, the text stays as written.
+  // model only.
   const s = new MagicString(code);
+  generate(s, model);
 
   if (options.sourcemap === false) {
     return { code: s.toString(), map: null };
