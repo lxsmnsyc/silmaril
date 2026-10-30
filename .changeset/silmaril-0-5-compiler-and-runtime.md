@@ -16,7 +16,7 @@ Removed and added:
 Scheduling:
 
 - A write runs only the computed variables, `$sync` and `$` bodies that read the written variable. 0.4 ran and compared every `$sync` and computed variable of the instance on every write.
-- Computed variables run before `$sync` bodies, in declaration order, so a computed variable never reads a stale input. 0.4 ran them in one list in source order.
+- Computed variables run before `$sync` bodies, in declaration order. 0.4 ran them in one list in source order.
 - `$` runs in one microtask flush for all scopes, in a fixed order (parents before children). 0.4 used one `setTimeout` per instance, so a child's `$` could run before its parent's.
 - A queued `$` runs even if the values it read returned to their old values before the flush. 0.4 compared at flush time and skipped it.
 - Inside a running `$sync` body, a write runs the `$sync` bodies it queues after the outermost body returns. 0.4 ran them at once, inside the write. A body that writes a value and then writes the old value back now runs the other bodies once, where 0.4 ran them twice.
