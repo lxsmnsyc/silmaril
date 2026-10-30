@@ -1,7 +1,7 @@
 ---
 id: docs-migration
 title: Migration, internals and limits pages for 0.5
-status: active
+status: done
 priority: should
 type: docs
 milestone: docs
@@ -46,3 +46,7 @@ Add three pages. Migration from 0.4: every breaking change in the 0.5 changeset 
 ## Notes for the worker
 
 - Merge after `docs-reference` (both edit `website/src/docs.ts`).
+
+## Pull request
+
+- #24, merged into `roadmap`.

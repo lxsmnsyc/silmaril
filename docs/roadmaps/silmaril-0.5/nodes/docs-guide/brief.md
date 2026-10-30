@@ -1,7 +1,7 @@
 ---
 id: docs-guide
 title: Rewrite the guide pages for 0.5
-status: active
+status: done
 priority: should
 type: docs
 milestone: docs
@@ -58,3 +58,7 @@ Rewrite the eight guide pages, which still hold the 0.4 README text, so they des
 ## Notes for the worker
 
 - Do not change the sidebar (`website/src/docs.ts`); these pages are already listed.
+
+## Pull request
+
+- #25, merged into `roadmap`.

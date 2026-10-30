@@ -1,7 +1,7 @@
 ---
 id: docs-reference
 title: API reference and setup pages for 0.5
-status: active
+status: done
 priority: should
 type: docs
 milestone: docs
@@ -45,3 +45,7 @@ Rewrite getting started and bundler setup for 0.5 (`silmaril/unplugin`, the Roll
 ## Notes for the worker
 
 - Merge order: `docs-reference`, then `docs-migration`, both edit `website/src/docs.ts`.
+
+## Pull request
+
+- #23, merged into `roadmap`.
