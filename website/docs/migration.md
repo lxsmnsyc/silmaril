@@ -46,15 +46,11 @@ In this sample, writing `a` does not run the body that reads `b`:
 
 ### Computed variables run before `$sync`
 
-Computed variables run before `$sync` bodies, in declaration order, so a computed variable never reads a stale input. 0.4 ran them in one list in source order, and a computed variable could read another one that had not run yet.
-
-```js live migration-memo-order.js
-
-```
+Computed variables run before `$sync` bodies, in declaration order, so a computed variable never reads a stale input. 0.4 ran them in one list in source order, together with the `$sync` bodies.
 
 ### `$` runs in one microtask flush
 
-`$` runs in one microtask flush for all scopes, in a fixed order: parents before children. 0.4 used one `setTimeout` per instance, so a child's `$` could run before its parent's.
+`$` runs in one microtask flush for all scopes, in a fixed order: parents before children. 0.4 used one `setTimeout` per instance. For a nested `$$` or a composable, 0.4 logged `child` and then `parent`.
 
 ```js live migration-flush-order.js
 
@@ -126,7 +122,7 @@ Declarations inside loops are plain locals. `$store` in a loop is a compile erro
 
 ### Destructuring assignments
 
-A destructuring assignment writes each target on its own, so a `$sync` that reads two targets runs once per changed target. This sample logs three times.
+A destructuring assignment writes each target on its own, so a `$sync` that reads two targets runs once per changed target. This sample logs three times, and 0.4 logged twice.
 
 ```js live migration-destructuring.js
 
@@ -155,11 +151,11 @@ These are compile errors in 0.5. Each shows the 0.4 behavior. A compile error ca
 | Code                                                          | 0.4                                                                                      |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `$` or `$sync` inside a loop                                  | Compiled.                                                                                |
-| The `/* $skip */` comment. Use `$skip(expression)`.           | Skipped tracking for the next expression.                                                |
+| The `/* $skip */` comment. Use `$skip(expression)`.           | Skipped tracking for the next identifier, declarator or assignment target.               |
 | A reactive variable used as a JSX tag name                    | Read the plain local, so it never updated.                                               |
 | A write to a `const`                                          | Worked. 0.4 turned a top-level `const` into `let`.                                       |
 | `$` or `$sync` in a nested function                           | Compiled and threw when it ran.                                                          |
-| `$skip`, `onMount` or `onDestroy` outside a setup             | Compiled and threw when it ran.                                                          |
+| `onMount` or `onDestroy` outside a setup                      | Compiled and threw when it ran.                                                          |
 | A compile-time name used other than as a call                 | Compiled and threw when it ran.                                                          |
 | `$store` inside a loop                                        | Tracked.                                                                                 |
 | `$$` or `$composable` with an argument that is not a function | The message was `<name> argument must be ArrowFunctionExpression or FunctionExpression`. |

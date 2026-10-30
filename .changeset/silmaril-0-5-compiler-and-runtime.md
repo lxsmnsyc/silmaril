@@ -42,5 +42,5 @@ Compile errors:
 - The `/* $skip */` comment. Use `$skip(expression)`.
 - A reactive variable used as a JSX tag name.
 - A write to a `const`. 0.4 turned top-level `const` into `let`.
-- Code that compiled in 0.4 and threw when it ran. That is `$` or `$sync` in a nested function, and `$skip`, `onMount` or `onDestroy` outside a setup. A compile-time name used other than as a call is also an error.
+- Code that compiled in 0.4 and threw when it ran. That is `$` or `$sync` in a nested function, and `onMount` or `onDestroy` outside a setup. A compile-time name used other than as a call is also an error.
 - `$$` or `$composable` with an argument that is not a function says `<name> must be called with a function.` 0.4 said `<name> argument must be ArrowFunctionExpression or FunctionExpression`.

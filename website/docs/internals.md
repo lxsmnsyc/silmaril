@@ -119,4 +119,4 @@ The compiler decides the reads of an entry:
 
 ## Size
 
-The runtime has no dependencies. It is about 1.4 kB gzipped (cap 1.5 kB).
+The runtime has no dependencies. It stays under the 1.5 kB gzip cap.

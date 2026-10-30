@@ -6,3 +6,5 @@
 - A link to `./api.md` was not added: the pages do not need it.
 - `docs.ts`: added a "More" sidebar section after Integrations and one label (`migration`).
 - The plain-writing checker passes with no warnings.
+
+- Review fixes: `$skip` row and changeset sentence, flush-order sample on a nested `$$`, memo-order sample dropped, expected logs moved to `expected-docs-migration.ts`, nits.
