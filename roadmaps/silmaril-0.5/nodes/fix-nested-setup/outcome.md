@@ -3,7 +3,7 @@
 ## Built
 
 - `packages/silmaril/babel/index.ts`: plugin state has a `transformed` WeakSet. `transformSetup` returns early for a call node it already handled, so a nested `$$` is transformed once.
-- `packages/silmaril/test/compiler.test.ts`: test "nested $$" checks two `_$$context()` calls and two `let _ctx` declarations for the reproduction.
+- `packages/silmaril/test/compiler.test.ts`: test "nested $$" checks the reproduction compiles to two context declarations, one per setup body.
 - `.changeset/nested-setup-single-context.md`: patch for `silmaril`.
 
 ## Deviations
@@ -25,7 +25,7 @@
 ## Verification
 
 - Before the fix: the new test failed (3 contexts, expected 2).
-- After: `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check` and `pnpm build:examples` (results below in the PR).
+- After: `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check` and `pnpm build:examples`.
 - Existing snapshots unchanged; none contained the duplicate.
 
 ## Size
