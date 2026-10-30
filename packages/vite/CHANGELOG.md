@@ -1,5 +1,16 @@
 # vite-plugin-silmaril
 
+## 0.5.0
+
+### Minor Changes
+
+- [#31](https://github.com/lxsmnsyc/silmaril/pull/31) [`1eadcda`](https://github.com/lxsmnsyc/silmaril/commit/1eadcda8dd4a86540cafcb688639db95d84d2966) Thanks [@lxsmnsyc](https://github.com/lxsmnsyc)! - Depend on silmaril 0.5. These packages are deprecated: use `silmaril/unplugin` and `silmaril/solid` instead.
+
+### Patch Changes
+
+- Updated dependencies [[`542d677`](https://github.com/lxsmnsyc/silmaril/commit/542d677be559fd88e725f93ba346dcf51428acaf), [`23aef9f`](https://github.com/lxsmnsyc/silmaril/commit/23aef9f6b7c78a5ff84ed620dc44b0376362c03b)]:
+  - silmaril@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
