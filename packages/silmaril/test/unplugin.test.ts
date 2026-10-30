@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { UnpluginOptions } from 'unplugin';
+import { CompileError } from '../compiler';
 import silmaril, { type SilmarilPluginOptions } from '../unplugin';
 
 const SOURCE = `
@@ -56,8 +57,48 @@ describe('unplugin', () => {
       '/src/example.ts',
     );
     expect(result).toMatchObject({
-      code: expect.stringContaining('$$update'),
+      code: expect.stringContaining('$$set($s, 0,'),
       map: expect.objectContaining({ mappings: expect.any(String) }),
     });
+  });
+
+  it.each([
+    ['/src/example.ts?v=123', 'const y: number = 1;'],
+    [
+      '/src/Comp.vue?vue&type=script&setup=true&lang.ts',
+      'const y: number = 1;',
+    ],
+    [
+      '/src/Comp.vue?vue&type=script&lang.tsx',
+      'const y = <T,>(v: T) => <a>{v}</a>;',
+    ],
+    ['/src/example.js', 'const y = <a>{1}</a>;'],
+  ])('should pick the language of %s', async (id, extra) => {
+    const { handler } = getTransform();
+    const result = await handler.call({} as never, `${SOURCE}\n${extra}`, id);
+    expect(result).toMatchObject({
+      code: expect.stringContaining(extra),
+    });
+  });
+
+  it('should parse a .js module as JavaScript, not TypeScript', () => {
+    const { handler } = getTransform();
+    expect(() =>
+      handler.call(
+        {} as never,
+        `${SOURCE}\nconst y: number = 1;`,
+        '/src/example.js',
+      ),
+    ).toThrow(CompileError);
+  });
+
+  it('should leave modules with no compile-time import unchanged', async () => {
+    const { handler } = getTransform();
+    const result = await handler.call(
+      {} as never,
+      "import Store from 'silmaril/store';\nnew Store(0);",
+      '/src/example.ts',
+    );
+    expect(result).toBeUndefined();
   });
 });

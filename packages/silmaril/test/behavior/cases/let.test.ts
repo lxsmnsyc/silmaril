@@ -139,7 +139,6 @@ behaviorCases('let', [
     // 0.5 change (reactivity-runtime v4 "Writes and phases"): a queued $ runs even if
     // later writes put the old values back. 0.4 compared at flush time.
     name: 'runs a queued effect even when a later write restores the value',
-    options: { xfail: ['babel'] },
     code: `
       import { $$, $ } from 'silmaril';
       let set;

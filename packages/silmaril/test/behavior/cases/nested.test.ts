@@ -54,7 +54,6 @@ behaviorCases('nested', [
     // count for the outer body, so writing `outer` reruns only the nested $sync,
     // which still sees `inner` = 20. 0.4 reran the outer body too.
     name: 'keeps the inner variable local to the nested effect',
-    options: { xfail: ['babel'] },
     code: `
       import { $$, $, $sync } from 'silmaril';
       $$(() => {

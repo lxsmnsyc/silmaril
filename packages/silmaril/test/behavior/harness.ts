@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect, vitest/valid-expect, vitest/valid-title */
 import { readdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import * as babel from '@babel/core';
+import { parseSync } from 'oxc-parser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import Store from '../../store';
 
@@ -72,12 +72,7 @@ function rejectDynamicImport(value: unknown, id: string): void {
   if (!isNode(value)) {
     return;
   }
-  if (
-    value.type === 'ImportExpression' ||
-    (value.type === 'CallExpression' &&
-      isNode(value.callee) &&
-      value.callee.type === 'Import')
-  ) {
+  if (value.type === 'ImportExpression') {
     throw new Error(`Dynamic import() is not supported in ${id}.`);
   }
   for (const [key, child] of Object.entries(value)) {
@@ -88,7 +83,7 @@ function rejectDynamicImport(value: unknown, id: string): void {
 }
 
 function nameOf(node: Node): string {
-  return node.type === 'StringLiteral'
+  return node.type === 'Literal'
     ? (node.value as string)
     : (node.name as string);
 }
@@ -115,7 +110,7 @@ function bindings(node: Node, table: string): string {
 
 /**
  * Replaces static imports with lookups in the module table. Imports are found
- * with the Babel parser and replaced by source range, so strings and comments
+ * with oxc-parser and replaced by source range, so strings and comments
  * are never touched. `export` and dynamic `import()` throw.
  */
 function link(
@@ -123,15 +118,12 @@ function link(
   modules: Record<string, unknown>,
   id: string,
 ): string {
-  const ast = babel.parseSync(source, {
-    filename: id,
-    babelrc: false,
-    configFile: false,
-    sourceType: 'module',
-  }) as unknown as { program: { body: Node[] } } | null;
-  if (!ast) {
-    throw new Error(`Could not parse ${id}.`);
+  const result = parseSync(`${id}.js`, source, { sourceType: 'module' });
+  const error = result.errors[0];
+  if (error) {
+    throw new Error(`Could not parse ${id}: ${error.message}`);
   }
+  const ast = result as unknown as { program: { body: Node[] } };
   const imports: Node[] = [];
   for (const node of ast.program.body) {
     if (node.type === 'ImportDeclaration') {

@@ -7,14 +7,11 @@
 // - `console`, `setTimeout`, `setInterval` and their `clear` functions in the sample are
 //   bindings of its run, so `dispose` can stop what the sample started. `$$` and `$$root`
 //   are wrapped to collect the disposers they return.
-// - While `silmaril/compiler` returns its input unchanged (before the code generators land),
-//   a module that imports `silmaril` would throw at its first `$`, so it is compiled and not
-//   run. `ran` says which.
+// - A module that imports `silmaril` and that the compiler returns unchanged is compiled and
+//   not run. `ran` says which.
 
 import { compile, ready } from 'silmaril/compiler';
-// The source of the 0.5 runtime: the package does not export it yet. `switch-to-v2` makes
-// `silmaril` the same module, and this line can import `silmaril` again.
-import * as runtime from '../../../packages/silmaril/src/v2/index.ts';
+import * as runtime from 'silmaril';
 import * as store from 'silmaril/store';
 
 export interface RunOptions {
@@ -41,7 +38,7 @@ export interface RunResult {
   dispose: () => void;
 }
 
-// The runtime of the compiled output (the v2 runtime), under the name samples import it by.
+// The runtime of the compiled output, under the name samples import it by.
 const MODULES: Record<string, object> = {
   silmaril: runtime,
   'silmaril/store': store,

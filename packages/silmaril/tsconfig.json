@@ -4,5 +4,5 @@
     "lib": ["ESNext", "DOM"],
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "babel", "compiler", "store", "solid", "unplugin", "test"]
+  "include": ["src", "compiler", "store", "solid", "unplugin", "test"]
 }

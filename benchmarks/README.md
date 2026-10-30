@@ -17,7 +17,7 @@ The benchmark dependencies (`tsx`) live in this package. `packages/silmaril` gai
 
 ## Results: 0.4 against 0.5
 
-- Pipelines: `babel` (the 0.4 plugin in `packages/silmaril/babel` and the 0.4 runtime in `packages/silmaril/src`) and `compiler` (`silmaril/compiler` and the runtime in `packages/silmaril/src/v2`).
+- Pipelines, with paths as of commit `0f55110`: `babel` (the 0.4 plugin in `packages/silmaril/babel` and the 0.4 runtime in `packages/silmaril/src`) and `compiler` (`silmaril/compiler` and the runtime in `packages/silmaril/src/v2`).
 - Commit: `0f55110` on `roadmap`, the last commit with both pipelines (2026-10-30). `switch-to-v2` deletes the `babel` pipeline, so later runs show only `compiler`.
 - Machine: Apple Silicon (arm64), macOS (Darwin 27.0.0), Node.js v26.12.1. No other build or test running. Load average 5.9 at the start and 5.2 at the end (1 minute, from `uptime`).
 

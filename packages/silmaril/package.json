@@ -3,7 +3,6 @@
   "version": "0.4.0",
   "description": "Compile-time reactivity for JS",
   "keywords": [
-    "babel",
     "compiler",
     "reactivity",
     "rollup",
@@ -28,7 +27,6 @@
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
-    "./babel": "./dist/babel.mjs",
     "./compiler": "./dist/compiler.mjs",
     "./solid": "./dist/solid.mjs",
     "./store": "./dist/store.mjs",
@@ -46,9 +44,6 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@babel/core": "^8.0.9",
-    "@babel/helper-module-imports": "^8.0.0",
-    "@babel/types": "^8.0.8",
     "magic-string": "^1.4.4",
     "oxc-parser": "0.155.0",
     "unplugin": "^3.5.0"

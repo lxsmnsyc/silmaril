@@ -22,7 +22,7 @@ import {
   tick,
   type Scope,
   type Store,
-} from '../../src/v2';
+} from '../../src';
 
 function createStore<T>(initial: T): Store<T> & { size(): number } {
   let value = initial;
