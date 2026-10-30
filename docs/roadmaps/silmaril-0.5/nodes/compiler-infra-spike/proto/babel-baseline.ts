@@ -3,7 +3,7 @@ import { createRequire, registerHooks } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const packageDir = fileURLToPath(
-  new URL('../../../../../packages/silmaril/', import.meta.url),
+  new URL('../../../../../../packages/silmaril/', import.meta.url),
 );
 
 // babel/index.ts imports './checks' without an extension. Node needs one to strip types.

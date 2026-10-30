@@ -1,7 +1,7 @@
 ---
 id: switch-to-v2
 title: Switch silmaril to the new compiler and runtime
-status: active
+status: done
 priority: must
 type: feature
 milestone: 0.5.0
@@ -71,3 +71,7 @@ Mostly deletion and wiring, but it touches every entry point.
 - `website/src/live/run.ts` (`MODULES`) imports the v2 runtime by a relative path to `packages/silmaril/src/v2/index.ts`. Point it back at `silmaril` once the package exports v2. `check:samples --strict` already runs in CI (`runnable-samples`' outcome has the details).
 - Deleting `test/behavior/pipelines/babel.ts` removes the 0.4 row from `pnpm bench`; the 0.4 and 0.5 numbers are recorded in `benchmarks/README.md` before this node starts. With only `pipelines/compiler.ts` left (explicit `.ts` imports), try running `benchmarks` with plain `node` and drop `tsx` and `allowBuilds: esbuild: false` from `pnpm-workspace.yaml` if it works (`benchmark-harness`' outcome explains why they were added).
 - The 0.5 changeset also lists the two behavior changes already in the decision record (a queued `$` runs when a later write restores the old value; reads in a nested entry no longer rerun the outer body) and the loop guard.
+
+## Pull request
+
+- #20, merged into `roadmap` after the maintainer's gate review on 2026-10-30.

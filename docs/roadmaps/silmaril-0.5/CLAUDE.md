@@ -13,4 +13,4 @@ Rules for agents working on a node:
 - If you add a dependency, say so in your outcome: lockfile changes merge one at a time.
 - Add a changeset when published behavior changes (see the changesets skill).
 
-Script: `python3 <skill>/scripts/plan.py roadmaps/silmaril-0.5 context <id>` lists the files to load for a node.
+Script: `python3 <skill>/scripts/plan.py docs/roadmaps/silmaril-0.5 context <id>` lists the files to load for a node.

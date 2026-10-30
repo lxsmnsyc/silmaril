@@ -1,7 +1,7 @@
 ---
 id: fix-babel-plugin
 title: Fix the $$ argument check and compile $skip calls
-status: done
+status: released
 priority: must
 type: fix
 milestone: 0.4.1
@@ -57,3 +57,4 @@ Two small visitor changes, tests and a README section.
 ## Pull request
 
 - #5, merged into `roadmap`.
+- Released in silmaril 0.4.1 from `main` (#21, cherry-picked).

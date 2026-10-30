@@ -113,7 +113,7 @@ No fixture contradicts the v4 contract text. The v4 "Compile errors" table and i
 - A `this` parameter appears as an `Identifier` named `this` in `params`. Skip it. `<this.Foo />` has a `JSXIdentifier` named `this`.
 - magic-string's `generateMap` keeps only the base name of `file`, and makes `sources` relative to it.
 - magic-string 1.x exports `MagicString` as a named export.
-- The root `oxlint` run lints `roadmaps/**` too. Test fixtures with odd code need a file-level `oxlint-disable`.
+- The root `oxlint` run lints `docs/roadmaps/**` too. Test fixtures with odd code need a file-level `oxlint-disable`.
 
 ## Proposed learnings
 

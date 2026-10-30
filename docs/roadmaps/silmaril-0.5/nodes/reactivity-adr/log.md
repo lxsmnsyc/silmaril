@@ -5,7 +5,7 @@
 - Baseline: 0.4 `dist/index.mjs` is 2064 B minified, 770 B gzip (rolldown minify, gzip level 9).
 - Chose `.js` fixtures. tsc has no `allowJs`, so it ignores them, and vitest only picks `test/**/*.test.ts`.
 - Wrote a reference runtime in `nodes/reactivity-adr/sketch/` to check that the expected logs follow from the rules, and to measure size. It is not shipped; `runtime-v2` writes the real one.
-- Wrote 17 fixtures. All pass against the sketch (`node roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`).
+- Wrote 17 fixtures. All pass against the sketch (`node docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`).
 - oxlint flagged `_` prefixed names (no-underscore-dangle), unused expressions and useless spreads in the fixtures. Renamed generated names to `$s`, `$c0`, `$g0`, `$t`, made every expression a `log` argument, and dropped the spreads.
 - Sketch size: 2627 B minified, 1278 B gzip. Target set to 1.5 kB gzip, aim 1.2 kB.
 - Found while writing the composable fixture: ordering parents before children makes a value that crosses scopes through a store show up as two writes. Recorded as decision 12, and the fixture logs the two values separately.

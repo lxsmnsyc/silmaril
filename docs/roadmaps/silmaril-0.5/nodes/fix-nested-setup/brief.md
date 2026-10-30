@@ -1,7 +1,7 @@
 ---
 id: fix-nested-setup
 title: Emit one context for a nested $$
-status: done
+status: released
 priority: should
 type: fix
 milestone: 0.4.1
@@ -59,3 +59,4 @@ One guard against transforming a setup twice, plus a test.
 ## Pull request
 
 - #12, merged into `roadmap`. Tracking of outer variables by a nested `$$` stays as in 0.4 for 0.4.1 (maintainer, 2026-10-30).
+- Released in silmaril 0.4.1 from `main` (#21, cherry-picked).

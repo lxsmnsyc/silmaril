@@ -2,14 +2,14 @@
 // the logs with expected.json. A fixture whose expected.json has
 // `compileError` has no output.js: the runner only checks its shape.
 // Usage, from the repository root:
-//   node roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs
+//   node docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import * as runtime from './runtime.js';
 
 const root = new URL(
-  '../../../../../packages/silmaril/test/runtime/fixtures/',
+  '../../../../../../packages/silmaril/test/runtime/fixtures/',
   import.meta.url,
 );
 const AsyncFunction = (async () => {}).constructor;

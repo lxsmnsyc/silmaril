@@ -1,4 +1,4 @@
-// Static-graph runtime. The contract is roadmaps/silmaril-0.5/contracts/reactivity-runtime.md.
+// Static-graph runtime. The contract is docs/roadmaps/silmaril-0.5/contracts/reactivity-runtime.md.
 
 export interface Store<T> {
   get(): T;

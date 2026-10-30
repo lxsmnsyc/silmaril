@@ -9,7 +9,7 @@ size: L
 spike: true
 gate: true
 owns:
-  - roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md
+  - docs/roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md
   - packages/silmaril/test/runtime/fixtures/**
 provides: [reactivity-runtime]
 depends_on: []

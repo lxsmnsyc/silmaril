@@ -14,7 +14,7 @@ import { analyzeScopes, type Node } from './scope.ts';
 import { findSilmarilImports, parseModule, unwrap, visit } from './source.ts';
 
 const runtime = await import(runtimePath());
-const repo = fileURLToPath(new URL('../../../../../', import.meta.url));
+const repo = fileURLToPath(new URL('../../../../../../', import.meta.url));
 
 // The fixtures picked for the text comparison: the ones with overwrites.
 const TEXT_REQUIRED = new Set([

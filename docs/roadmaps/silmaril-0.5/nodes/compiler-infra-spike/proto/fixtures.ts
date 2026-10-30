@@ -3,11 +3,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const repo = fileURLToPath(new URL('../../../../../', import.meta.url));
+const repo = fileURLToPath(new URL('../../../../../../', import.meta.url));
 const local = fileURLToPath(new URL('./.pr8/', import.meta.url));
 
 const FIXTURES = 'packages/silmaril/test/runtime/fixtures/';
-const RUNTIME = 'roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js';
+const RUNTIME =
+  'docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js';
 
 function base(): string {
   if (existsSync(repo + FIXTURES) && existsSync(repo + RUNTIME)) {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const ref = process.argv[2] ?? 'origin/feat/reactivity-adr';
 const out = fileURLToPath(new URL('./.pr8/', import.meta.url));
-const repo = fileURLToPath(new URL('../../../../../', import.meta.url));
+const repo = fileURLToPath(new URL('../../../../../../', import.meta.url));
 mkdirSync(out, { recursive: true });
 const archive = execFileSync(
   'git',
@@ -14,7 +14,7 @@ const archive = execFileSync(
     'archive',
     ref,
     'packages/silmaril/test/runtime/fixtures',
-    'roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch',
+    'docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch',
   ],
   { cwd: repo },
 );

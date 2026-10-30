@@ -8,7 +8,7 @@ milestone: 0.5.0
 size: M
 spike: true
 owns:
-  - roadmaps/silmaril-0.5/nodes/compiler-infra-spike/**
+  - docs/roadmaps/silmaril-0.5/nodes/compiler-infra-spike/**
 provides: [compiler-api]
 depends_on: []
 ---

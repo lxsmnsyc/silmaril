@@ -2,10 +2,10 @@
 
 ## Built
 
-- `roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md`: the decision record. It records the gate and follow-up decisions, each design decision with the alternatives rejected, the answer to the nested `$$` question, the loop guard, the full "Changes from 0.4" list by category, and what is still open.
-- `roadmaps/silmaril-0.5/nodes/reactivity-adr/proposed-reactivity-runtime.md`: the full replacement for `contracts/reactivity-runtime.md` (version 4), ready to set to `frozen`. It has the exports, exact signatures, the graph format, the compiler rules (slots, entry ids, reads, names, temps, compiled forms, imports, compile errors), the runtime rules (order, phases, registration, runs, the `$` flush and `tick`, lifecycles, stores, composables, errors, limits) and the fixture protocol.
+- `docs/roadmaps/silmaril-0.5/decisions/0001-static-graph-runtime.md`: the decision record. It records the gate and follow-up decisions, each design decision with the alternatives rejected, the answer to the nested `$$` question, the loop guard, the full "Changes from 0.4" list by category, and what is still open.
+- `docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/proposed-reactivity-runtime.md`: the full replacement for `contracts/reactivity-runtime.md` (version 4), ready to set to `frozen`. It has the exports, exact signatures, the graph format, the compiler rules (slots, entry ids, reads, names, temps, compiled forms, imports, compile errors), the runtime rules (order, phases, registration, runs, the `$` flush and `tick`, lifecycles, stores, composables, errors, limits) and the fixture protocol.
 - `packages/silmaril/test/runtime/fixtures/<name>/`: 61 fixtures. 54 have `input.js`, `output.js` and `expected.json` with logs. 7 are compile errors, with `input.js` and an `expected.json` that holds `compileError`.
-- `roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js` and `run-fixtures.mjs`: a reference runtime and a runner that implement the contract. Every fixture passes. Not shipped.
+- `docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/runtime.js` and `run-fixtures.mjs`: a reference runtime and a runner that implement the contract. Every fixture passes. Not shipped.
 
 Key decisions:
 
@@ -72,7 +72,7 @@ Some adversarial fixtures expect other logs than the review wrote, because the r
 
 ## Verification
 
-- `node roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`: 61 of 61 pass. The `$` flush guard was checked with a scratch script: a cycle between two `$` bodies stops after 10000 runs with `Update loop` from the microtask, a later write runs as usual, and 10001 first runs in one flush do not trip it. Earlier: Against the PR's first sketch (with a `tick` shim), 36 of 45 pass. It fails `body-memo`, `child-memo-wasted`, `effect-parent-child`, `error-in-rerun`, `parent-child-cycle`, `setup-throws`, `sibling-order-b`, `store-writeback-batch` and `sync-first-vs-rerun`.
+- `node docs/roadmaps/silmaril-0.5/nodes/reactivity-adr/sketch/run-fixtures.mjs`: 61 of 61 pass. The `$` flush guard was checked with a scratch script: a cycle between two `$` bodies stops after 10000 runs with `Update loop` from the microtask, a later write runs as usual, and 10001 first runs in one flush do not trip it. Earlier: Against the PR's first sketch (with a `tick` shim), 36 of 45 pass. It fails `body-memo`, `child-memo-wasted`, `effect-parent-child`, `error-in-rerun`, `parent-child-cycle`, `setup-throws`, `sibling-order-b`, `store-writeback-batch` and `sync-first-vs-rerun`.
 - `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm type-check && pnpm lint && pnpm format:check`: passes.
 - Size: rolldown 1.2.15 `minify: true`, gzip level 9, every export kept. Sketch 3096 B, 1481 B gzip. Version 3 3036 B, 1434 B. First sketch 2627 B, 1278 B. 0.4 2064 B, 770 B.
 - No dependencies added. No changeset: nothing published changes.
