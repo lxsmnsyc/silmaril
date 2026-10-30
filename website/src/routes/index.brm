@@ -1,5 +1,7 @@
 <script>
+  import LiveSample from '../components/LiveSample.brm';
   import Meta from '../components/Meta.brm';
+  import counter from '../samples/counter.js?raw';
 
   const base = import.meta.env.BASE_URL;
 </script>
@@ -34,16 +36,7 @@
       Inside <code>$$</code>, a variable that changes is reactive. <code>$</code> runs again when
       the variables it reads change.
     </p>
-    <pre class="code"><code>{`import { $$, $ } from 'silmaril';
-
-$$(() => {
-  let count = 0;
-  const message = \`Count: \${count}\`;
-
-  $(console.log(message));
-
-  count = 100; // logs "Count: 100"
-});`}</code></pre>
+    <LiveSample name="counter.js" source=counter />
   </section>
 </main>
 

@@ -71,3 +71,6 @@ jobs:
 
       - name: Build website
         run: pnpm --filter website build
+
+      - name: Check website samples
+        run: pnpm --filter website check:samples --strict
