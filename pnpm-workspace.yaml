@@ -2,3 +2,6 @@ packages:
   - 'packages/*'
   - 'examples/*'
   - 'website'
+  - 'benchmarks'
+allowBuilds:
+  esbuild: false
