@@ -1,7 +1,7 @@
 ---
 id: benchmark-report
 title: Benchmark 0.5 against the 0.4 baseline
-status: active
+status: done
 priority: should
 type: chore
 milestone: 0.5.0
@@ -32,3 +32,7 @@ Add the 0.5 pipeline to the benchmarks, run them, and write the comparison in `b
 ## Notes from earlier waves
 
 - The 0.4 and 0.5 numbers were taken on a quiet machine at `0f55110`, the last commit with both pipelines, and are in `benchmarks/README.md`. After `switch-to-v2` the `babel` pipeline is gone; compare new 0.5 runs with that table.
+
+## Pull request
+
+- #28, merged into `roadmap`.

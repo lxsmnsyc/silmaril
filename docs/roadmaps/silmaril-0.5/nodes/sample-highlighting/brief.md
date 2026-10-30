@@ -1,7 +1,7 @@
 ---
 id: sample-highlighting
 title: Highlight the code of live samples
-status: active
+status: done
 priority: should
 type: feature
 milestone: docs
@@ -38,3 +38,7 @@ Live samples show their source in a plain textarea and their compiled code as pl
 - [ ] The Compiled tab is highlighted.
 - [ ] The colors match the static code blocks.
 - [ ] Verify command passes, and `pnpm format:check`.
+
+## Pull request
+
+- #29, merged into `roadmap`.
