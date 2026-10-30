@@ -72,3 +72,4 @@ If a module that imports `silmaril` is not compiled, `$` throws `$ is meant to b
 - [Bundler setup](./bundler-setup.md) covers Rollup, the other bundlers, every plugin option and the compiler in the browser.
 - [Basic reactivity](./basic-reactivity.md) describes `$$` and `$`.
 - [API reference](./api.md) lists every export.
+- [Migrating from 0.4](./migration.md) lists what changed, if you used silmaril before.
