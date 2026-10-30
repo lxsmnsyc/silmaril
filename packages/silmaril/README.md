@@ -232,6 +232,24 @@ $$(() => {
 });
 ```
 
+### Skipping tracking
+
+`$skip(expr)` compiles to `expr`. The variables read inside it are not tracked, so a change to them does not re-run the effect or the computed variable.
+
+```js
+import { $$, $, $skip } from 'silmaril';
+
+$$(() => {
+  let a = 0;
+  let b = 0;
+
+  // Re-runs when `a` changes, not when `b` changes
+  $(console.log(a, $skip(b)));
+});
+```
+
+The `/*$skip*/` comment before an identifier does the same for that identifier.
+
 ### Stores
 
 Reactivity is isolated in `$$`, but there are multiple ways to expose it outside `$$` e.g. emulating event emitters, using observables, global state management, etc.
