@@ -1,13 +1,8 @@
 import { behaviorCases } from '../harness';
 
-// $store, $composable, onMount, onDestroy and $skip compile in codegen-extras,
-// which removes the compiler pipeline from these cases.
-const WAITS_FOR_EXTRAS = { xfail: ['compiler'] };
-
 behaviorCases('$store', [
   {
     name: 'binds a store in both directions',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $, $sync, $store } from 'silmaril';
       import Store from 'silmaril/store';
@@ -31,7 +26,6 @@ behaviorCases('$store', [
   },
   {
     name: 'writes the variable through to the store',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $store } from 'silmaril';
       import Store from 'silmaril/store';
@@ -46,7 +40,6 @@ behaviorCases('$store', [
   },
   {
     name: 'reflects a store update in the variable',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $store } from 'silmaril';
       import Store from 'silmaril/store';
@@ -66,7 +59,6 @@ behaviorCases('$store', [
   },
   {
     name: 'feeds computed variables from a store',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $store } from 'silmaril';
       import Store from 'silmaril/store';
@@ -85,7 +77,6 @@ behaviorCases('$store', [
   },
   {
     name: 'reads a store without a set method',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $store } from 'silmaril';
       let value = 1;
@@ -111,7 +102,6 @@ behaviorCases('$store', [
   },
   {
     name: 'stops listening to the store when destroyed',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $store } from 'silmaril';
       let value = 1;
@@ -141,7 +131,6 @@ behaviorCases('$store', [
   },
   {
     name: 'keeps two bindings of one store in step',
-    options: WAITS_FOR_EXTRAS,
     code: `
       import { $$, $sync, $store } from 'silmaril';
       import Store from 'silmaril/store';
