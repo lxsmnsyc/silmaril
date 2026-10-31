@@ -9,7 +9,7 @@
     "unplugin",
     "vite"
   ],
-  "homepage": "https://github.com/lxsmnsyc/silmaril/tree/main/packages/silmaril",
+  "homepage": "https://silmaril-docs.vercel.app/",
   "bugs": {
     "url": "https://github.com/lxsmnsyc/silmaril/issues"
   },

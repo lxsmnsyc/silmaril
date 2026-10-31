@@ -2,7 +2,7 @@
 
 > Compile-time reactivity for JS
 
-Documentation: the website lives in [`website`](https://github.com/lxsmnsyc/silmaril/tree/main/website). Its address goes here once the site is deployed.
+Documentation: https://silmaril-docs.vercel.app/ (source in [`website`](https://github.com/lxsmnsyc/silmaril/tree/main/website))
 
 [![NPM](https://img.shields.io/npm/v/silmaril.svg)](https://www.npmjs.com/package/silmaril) [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/github/LXSMNSYC/silmaril/tree/main/examples/demo)
 
