@@ -1,7 +1,7 @@
 ---
 id: playground
 title: Playground with compiled output
-status: todo
+status: dropped
 priority: later
 type: feature
 milestone: docs
@@ -18,3 +18,5 @@ depends_on:
 ## Goal
 
 An editor page that shows the source, the compiled output with source map highlighting, and the logs. Parked until runnable samples show whether it adds enough.
+
+Dropped 2026-10-31: replaced by the `repl` story in `docs/roadmaps/silmaril-0.6`.
