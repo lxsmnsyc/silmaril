@@ -326,15 +326,15 @@ importers:
         specifier: 0.155.0
         version: 0.155.0
       brumate:
-        specifier: 0.3.0
-        version: 0.3.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: 0.5.0
+        version: 0.5.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       silmaril:
         specifier: workspace:*
         version: link:../packages/silmaril
     devDependencies:
       '@brumate/tsc':
-        specifier: 0.1.3
-        version: 0.1.3(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: 0.1.9
+        version: 0.1.9(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@twinkleplop/bash':
         specifier: 0.1.7
         version: 0.1.7
@@ -455,12 +455,12 @@ packages:
     resolution: {integrity: sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ==}
     engines: {node: '>=6.9.0'}
 
-  '@brumate/language-core@0.1.3':
-    resolution: {integrity: sha512-Aj8TqNXIQVq4/YOD23cq8fCpw3BJiuOVXo0Y6AYAz6TQafASRDEdzrPB24C4HcjO/JVNXfIO3AWicmE3X8rQ5Q==}
+  '@brumate/language-core@0.2.5':
+    resolution: {integrity: sha512-1SuybnuZphVoNInS2gh7bHkrRmPncfIkwDj+ElwwbD5wVj5SX3pDNG/EF+GKTgHKbMxVyxcZK1OPw8NSPX/U6g==}
     engines: {node: '>=22'}
 
-  '@brumate/tsc@0.1.3':
-    resolution: {integrity: sha512-zL4g1AnluSyryoKXQKAJMXtPm2jO+S2eQQD5lBl5Ha0GiXSxJAx3czyFgGowzBhIgH27C8zJqq43bKrCkbyONg==}
+  '@brumate/tsc@0.1.9':
+    resolution: {integrity: sha512-2gKHR9D188KMLpOPJ6OuqYMawZ85ibCJUB3fHbUPzHmvbMRM4YQrQNuuyw/8WpL0ZCAg3zo51YUEE59H/F8rHw==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -1807,8 +1807,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
-  brumate@0.3.0:
-    resolution: {integrity: sha512-wsv/cv/472fhzCl9rRTa62KcgTes5H9xdssMKp6SJjHA6lGYtfwBMNmfImhNTIuMr3OqAPJDnKQJjvUPoLdoXw==}
+  brumate@0.5.0:
+    resolution: {integrity: sha512-GDtaWjMYDaY6ZDkMwI914Qf8XkLefjKqPGoITv2eYC6sRDPjKE9s2C+xExtkEbzVBDZJJCfL5UMKjmEEpxRZqg==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -2629,18 +2629,18 @@ snapshots:
       '@babel/helper-string-parser': 7.29.11
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@brumate/language-core@0.1.3(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@brumate/language-core@0.2.5(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@volar/language-core': 2.4.28
-      brumate: 0.3.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+      brumate: 0.5.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
     transitivePeerDependencies:
       - less
       - sass
       - vite
 
-  '@brumate/tsc@0.1.3(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@brumate/tsc@0.1.9(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
-      '@brumate/language-core': 0.1.3(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+      '@brumate/language-core': 0.2.5(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@volar/typescript': 2.4.28(typescript@6.0.3)
       typescript-api: typescript@6.0.3
     transitivePeerDependencies:
@@ -3532,7 +3532,7 @@ snapshots:
       node-releases: 2.0.60
       update-browserslist-db: 1.3.4(browserslist@4.29.4)
 
-  brumate@0.3.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)):
+  brumate@0.5.0(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@twinkleplop/core': 0.3.1
       '@twinkleplop/css': 0.1.7

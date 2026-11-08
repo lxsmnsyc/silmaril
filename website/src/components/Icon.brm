@@ -5,7 +5,7 @@
    * An icon of the site: a stroke on a grid of 24, in the color of the text. It is decoration,
    * so it is hidden from screen readers. Name what it does on the button or link around it.
    */
-  const { name, size = 16, ...rest } = $props<{
+  const { name, size = 16 } = $props<{
     name:
       | 'check'
       | 'minus'
@@ -19,7 +19,6 @@
       | 'chevron'
       | 'grip';
     size?: number;
-    [attribute: string]: unknown;
   }>();
 </script>
 
@@ -34,8 +33,6 @@
   stroke-linecap="round"
   stroke-linejoin="round"
   aria-hidden="true"
-  focusable="false"
-  {...rest}
 >
   #switch {
     #case (name === 'check') {

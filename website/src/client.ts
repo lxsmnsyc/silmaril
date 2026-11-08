@@ -1,16 +1,3 @@
-// The only script before the first interaction: the loader of brumate.
-import { hotLoad } from 'brumate/hot';
-import { start } from 'brumate/loader';
-import { load } from 'virtual:brumate/manifest';
-
-start({
-  // On the dev server, an edit of a component can update the page without a reload.
-  load: hotLoad(import.meta.hot, load),
-  navigate: { transition: true },
-});
-
-if (import.meta.env.DEV) {
-  void import('brumate/devtools').then(({ installDevtools }) =>
-    installDevtools(),
-  );
-}
+// The only script before the first interaction: the loader of brumate. On the dev
+// server the plugin also sets up hot updates and the devtools.
+import 'virtual:brumate/start';
