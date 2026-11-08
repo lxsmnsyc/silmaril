@@ -1,5 +1,11 @@
 # silmaril
 
+## 0.5.1
+
+### Patch Changes
+
+- [#37](https://github.com/lxsmnsyc/silmaril/pull/37) [`a038d1e`](https://github.com/lxsmnsyc/silmaril/commit/a038d1ee338de25e2189657888ef19c99293efa2) Thanks [@lxsmnsyc](https://github.com/lxsmnsyc)! - Resolve a reference to an enum member inside the enum body to the member, not to an outer binding with the same name. Before, `let A = 0; A = 1; enum E { A = 2, B = A }` in a setup compiled `B = A` to `B = $$get($s, 0)`.
+
 ## 0.5.0
 
 ### Minor Changes
