@@ -94,6 +94,22 @@ describe('scopes', () => {
     expect(refsNamed(info, 'p')[0]!.binding!.kind).toBe('param');
   });
 
+  it('resolves enum member names inside the enum body', () => {
+    const { info } = analyze(`
+      const A = 1;
+      enum E { B = A, A = 2, C = A, 'D' = 3 }
+      A;
+      const F = E.A;
+    `);
+    const [early, late, outside] = refsNamed(info, 'A');
+    // A member is visible in every initializer, before or after it.
+    expect(early!.binding!.kind).toBe('enum-member');
+    expect(late!.binding).toBe(early!.binding);
+    expect(early!.binding!.scope.node.type).toBe('TSEnumDeclaration');
+    expect(outside!.binding!.kind).toBe('const');
+    expect(info.root.bindings.get('A')!.references).toEqual([outside]);
+  });
+
   it('`<this.Foo />` reads no binding named this, and lower-case tags are not references', () => {
     const { info } = analyze(
       'const Foo = 1; <this.Foo />; <div />; <my-el />; <Foo.Bar />;',
