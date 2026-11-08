@@ -152,6 +152,23 @@ describe('codegen constructs', () => {
     expect(code).toContain("$$set($c0, 0, 'a');");
   });
 
+  it('leaves an enum member reference that shadows a slot', () => {
+    const code = compileCode(
+      `
+      import { $$ } from 'silmaril';
+      $$(() => {
+        let A = 0;
+        A = 1;
+        enum E { B = A, A = 2, C = A }
+        log(A, E);
+      });
+    `,
+      'input.ts',
+    );
+    expect(code).toContain('enum E { B = A, A = 2, C = A }');
+    expect(code).toContain('log($$get($s, 0), E)');
+  });
+
   it('renames helpers and temps that a user name takes', async () => {
     const code = compileCode(`
       import { $$, $sync } from 'silmaril';

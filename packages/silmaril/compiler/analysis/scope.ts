@@ -33,6 +33,7 @@ export type BindingKind =
   | 'import'
   | 'catch'
   | 'enum'
+  | 'enum-member' // visible only inside the enum body
   | 'namespace'
   | 'import-equals';
 
@@ -617,6 +618,19 @@ export function analyzeScopes(program: Program): ScopeInfo {
         }
         declare(scope, node.id, 'enum', node);
         const enumScope = createScope('block', node, scope);
+        // Member names shadow outer bindings inside the body: in
+        // `enum E { A = 2, B = A }`, `A` is `E.A`. Declare them all first,
+        // since an initializer can name a later member.
+        for (const member of node.body.members) {
+          if (member.id.type === 'Identifier') {
+            declare(
+              enumScope,
+              member.id as unknown as BindingIdentifier,
+              'enum-member',
+              member,
+            );
+          }
+        }
         for (const member of node.body.members) {
           if (member.initializer) {
             walk(member.initializer, enumScope);
