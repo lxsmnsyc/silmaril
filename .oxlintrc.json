@@ -16,7 +16,13 @@
   ],
   "rules": {
     "typescript/no-explicit-any": "off",
-    "import/no-cycle": "error"
+    "import/no-cycle": "error",
+    "import/no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["virtual:brumate/start"]
+      }
+    ]
   },
   "overrides": [
     {

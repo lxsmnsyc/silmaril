@@ -48,7 +48,7 @@
   }
 </script>
 
-<div class="search" onFocusout=((event) => {
+<div class="search" onFocusOut=((event) => {
   if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
     open = false;
   }

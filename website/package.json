@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "@oxc-parser/binding-wasm32-wasip1": "0.155.0",
-    "brumate": "0.3.0",
+    "brumate": "0.5.0",
     "silmaril": "workspace:*"
   },
   "devDependencies": {
-    "@brumate/tsc": "0.1.3",
+    "@brumate/tsc": "0.1.9",
     "@twinkleplop/bash": "0.1.7",
     "@twinkleplop/css": "0.1.7",
     "@twinkleplop/json": "0.1.7",

@@ -93,7 +93,7 @@
   <div class="live-editor">
     <pre class="live-gutter" aria-hidden="true">{lines}</pre>
     <div class="live-body">
-      <div class="live-backdrop code" ref=backdrop aria-hidden="true">{code}</div>
+      <div class="live-backdrop code" ref=$bind(backdrop) aria-hidden="true">{code}</div>
       <textarea
         aria-label=(`Source of ${name}`)
         spellcheck="false"
