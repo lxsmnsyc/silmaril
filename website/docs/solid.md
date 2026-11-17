@@ -1,6 +1,6 @@
 # SolidJS
 
-`silmaril/solid` connects `silmaril` stores with [SolidJS](https://www.solidjs.com/) signals. It requires `solid-js` to be installed. This replaces the deprecated `solid-silmaril` package.
+`silmaril/solid` connects `silmaril` stores with [SolidJS](https://www.solidjs.com/) signals. It requires `solid-js` 2.0 to be installed. This replaces the deprecated `solid-silmaril` package.
 
 Both functions go through the store interface of `$store`: `get`, `set` and `subscribe`. See [stores](./stores.md).
 
@@ -18,8 +18,8 @@ createRoot(() => {
 
   const countStore = fromSignal([count, setCount]);
 
-  createEffect(() => {
-    console.log('SolidJS Count:', count());
+  createEffect(count, (value) => {
+    console.log('SolidJS Count:', value);
   });
 
   $$(() => {
@@ -34,7 +34,7 @@ createRoot(() => {
 });
 ```
 
-The store reads the signal without tracking it. `set` writes the signal. `subscribe` starts a Solid root with an effect that calls the callback when the signal changes, and returns the function that disposes it.
+The store reads the signal without tracking it. `set` writes the signal. Solid 2.0 applies signal writes after a microtask or a `flush()`, so `get` returns the old value until then. `subscribe` starts a detached Solid root with an effect that calls the callback when the signal changes, and returns the function that disposes it.
 
 ## `fromStore`
 
@@ -57,8 +57,8 @@ createRoot(() => {
     $sync(console.log('Silmaril Count:', counter));
   });
 
-  createEffect(() => {
-    console.log('SolidJS Count:', count());
+  createEffect(count, (value) => {
+    console.log('SolidJS Count:', value);
   });
 
   setInterval(() => {
