@@ -215,7 +215,7 @@ stop();
 
 ## `silmaril/solid`
 
-Needs `solid-js` (optional peer dependency, `^1.7`).
+Needs `solid-js` 2.0 (optional peer dependency, `^2.0.0`).
 
 ### `fromSignal`
 

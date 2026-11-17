@@ -1,15 +1,16 @@
 import { $$, $store, $ } from 'silmaril';
-import { createEffect, type JSX, onCleanup } from 'solid-js';
+import { onCleanup, onSettled } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 import { fromSignal, fromStore } from 'silmaril/solid';
 import { countSignal, countStore } from './count';
 
 function createInterval(callback: () => void, timeout: number) {
-  createEffect(() => {
+  onSettled(() => {
     const t = setInterval(callback, timeout);
 
-    onCleanup(() => {
+    return () => {
       clearInterval(t);
-    });
+    };
   });
 }
 
