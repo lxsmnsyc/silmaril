@@ -1,5 +1,5 @@
 <script>
-  import { $props } from 'brumate/signals';
+  import { $client, $effect, $props } from 'brumate/signals';
   import { pages, sections } from '../docs.ts';
   import LiveSample from './LiveSample.brm';
   import Meta from './Meta.brm';
@@ -16,6 +16,34 @@
   const contents = (page?.headings ?? []).filter(
     (heading) => heading.level === 2 || heading.level === 3,
   );
+
+  // The copy buttons of code blocks come from `plugins/markdown.ts` as HTML, so one listener
+  // on the document handles them. The button shows a check for 1.5 seconds after a copy.
+  async function copyCode(event: MouseEvent) {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>('.copy-code');
+    const code = button?.parentElement?.querySelector('pre')?.textContent;
+    if (!button || code == null) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(code.replace(/\n$/, ''));
+      button.dataset.copied = '';
+      button.setAttribute('aria-label', 'Copied');
+      setTimeout(() => {
+        delete button.dataset.copied;
+        button.setAttribute('aria-label', 'Copy code');
+      }, 1500);
+    } catch {
+      // The clipboard can be blocked. The code stays selectable.
+    }
+  }
+
+  $client(() => {
+    document.addEventListener('click', copyCode);
+  });
+  $effect(() => () => {
+    document.removeEventListener('click', copyCode);
+  });
 </script>
 
 #head {

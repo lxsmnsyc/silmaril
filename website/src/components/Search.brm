@@ -1,5 +1,5 @@
 <script>
-  import { $signal } from 'brumate/signals';
+  import { $client, $effect, $signal } from 'brumate/signals';
 
   interface Result {
     href: string;
@@ -12,6 +12,31 @@
   let query = $signal('');
   let results = $signal<Result[]>([]);
   let open = $signal(false);
+  let input = $signal<HTMLInputElement>();
+
+  // `/` and Cmd or Ctrl+K focus the search from anywhere on the page. `/` is left alone
+  // while the visitor types in a field, such as the editor of a sample.
+  function onKey(event: KeyboardEvent) {
+    const target = event.target as HTMLElement | null;
+    const typing =
+      !!target &&
+      (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+    const shortcut =
+      (event.key === 'k' && (event.metaKey || event.ctrlKey)) ||
+      (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey);
+    if (shortcut && input) {
+      event.preventDefault();
+      input.focus();
+      input.select();
+    }
+  }
+
+  $client(() => {
+    window.addEventListener('keydown', onKey);
+  });
+  $effect(() => () => {
+    window.removeEventListener('keydown', onKey);
+  });
 
   // The index loads the first time someone types, so pages do not load it before.
   async function find(value: string) {
@@ -57,10 +82,19 @@
     type="search"
     placeholder="Search the docs"
     aria-label="Search the docs"
+    aria-keyshortcuts="/ Control+K Meta+K"
+    ref=$bind(input)
     value=query
     onInput=((event) => find(event.currentTarget.value))
     onFocus=(() => (open = true))
+    onKeyDown=((event) => {
+      if (event.key === 'Escape') {
+        open = false;
+        event.currentTarget.blur();
+      }
+    })
   >
+  <kbd class="search-key" aria-hidden="true">/</kbd>
   #if (open && query) {
     <div class="search-results" role="listbox">
       #for (result of results by result.href) {
@@ -87,13 +121,34 @@
 
   .search input {
     width: 100%;
-    padding: 0.4rem 0.75rem;
+    padding: 0.4rem 2rem 0.4rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface);
     color: var(--text);
     font: inherit;
     font-size: 0.9rem;
+  }
+
+  .search-key {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    min-width: 1.25rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    text-align: center;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .search input:focus + .search-key {
+    opacity: 0;
   }
 
   .search input:focus {

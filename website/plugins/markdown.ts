@@ -62,14 +62,19 @@ const LANGUAGES = {
   json: json(),
 };
 
+// The icons of the copy button, drawn like `src/components/Icon.brm`.
+const COPY_ICONS =
+  '<svg class="icon icon-copy" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>' +
+  '<svg class="icon icon-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
 /**
  * Code blocks take focus, so a keyboard can scroll one that is wider than the page, as WCAG
- * asks of a region that scrolls.
+ * asks of a region that scrolls. Each block gets a copy button, which `DocPage.brm` handles.
  */
 function focusableCode(html: string): string {
-  return html.replaceAll(
-    '<pre class="twinkleplop',
-    '<pre tabindex="0" class="twinkleplop',
+  return html.replace(
+    /<pre class="twinkleplop([\s\S]*?)<\/pre>/g,
+    `<div class="code-block"><button class="copy-code" type="button" aria-label="Copy code" title="Copy code">${COPY_ICONS}</button><pre tabindex="0" class="twinkleplop$1</pre></div>`,
   );
 }
 

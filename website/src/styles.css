@@ -215,6 +215,81 @@ img {
   }
 }
 
+/* Code blocks of the docs, with a copy button in the corner. */
+
+.code-block {
+  position: relative;
+}
+
+.copy-code {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.code-block:hover .copy-code,
+.copy-code:focus-visible,
+.copy-code[data-copied] {
+  opacity: 1;
+}
+
+.copy-code:hover {
+  color: var(--text);
+}
+
+.copy-code:active {
+  transform: scale(0.92);
+}
+
+.copy-code .icon {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.copy-code .icon-check,
+.copy-code[data-copied] .icon-copy {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.copy-code[data-copied] .icon-check {
+  opacity: 1;
+  transform: none;
+  color: var(--accent-strong);
+}
+
+@media (hover: none) {
+  .copy-code {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy-code,
+  .copy-code .icon {
+    transition: opacity 0.15s;
+  }
+
+  .copy-code:active {
+    transform: none;
+  }
+}
+
 /* Highlighted code from twinkleplop is a <pre> of its own. */
 
 .code .twinkleplop {

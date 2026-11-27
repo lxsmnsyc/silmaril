@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import brumate from 'brumate/vite';
 import { defineConfig } from 'vite';
 import markdown, { SITE_PAGES } from './plugins/markdown.ts';
+import llms from './plugins/llms.ts';
 import search from './plugins/search.ts';
 
 /**
@@ -27,6 +28,7 @@ export default defineConfig({
       [fileURLToPath(new URL('docs', import.meta.url))],
       new Set([...SITE_PAGES].map((page) => page || 'index')),
     ),
+    llms(siteUrl),
     // Every page is written as a static file.
     brumate({
       navigate: { transition: true },
