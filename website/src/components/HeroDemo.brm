@@ -1,0 +1,325 @@
+<script>
+  import { $client, $signal } from 'brumate/signals';
+  import { raw } from 'brumate/html';
+  import Icon from './Icon.brm';
+  import code from '../hero/cart.js?highlight';
+
+  // The demo of the landing page. `src/hero/cart.js` is compiled by `silmaril/unplugin`, and
+  // its two `$` calls report each run here. A write lights up the line that ran.
+
+  interface Ui {
+    show: (name: string, value: unknown) => void;
+    add?: () => void;
+    write?: (text: string) => void;
+  }
+
+  const PRICE = 12;
+  const html = raw(code.html);
+  const lines = code.source.split('\n');
+  const totalLine = lines.findIndex((line) => line.includes("ui.show('total'"));
+  const noteLine = lines.findIndex((line) => line.includes("ui.show('note'"));
+
+  // The steps the demo plays until the visitor uses it: a value, then the wait after it.
+  const SCRIPT: { action: 'add' | 'type' | 'reset'; text?: string; wait: number }[] = [
+    { action: 'add', wait: 1300 },
+    { action: 'add', wait: 1300 },
+    ...[...'Gift wrap'].map((_, index, all) => ({
+      action: 'type' as const,
+      text: all.slice(0, index + 1).join(''),
+      wait: index === all.length - 1 ? 2800 : 110,
+    })),
+    { action: 'reset', wait: 1200 },
+  ];
+
+  let total = $signal(PRICE);
+  let note = $signal('');
+  let totalRuns = $signal(0);
+  let noteRuns = $signal(0);
+  let draft = $signal('');
+  let root = $signal<HTMLElement>();
+
+  // State of the browser side that the page does not render.
+  const session: {
+    ui?: Ui;
+    dispose?: () => void;
+    timer?: number;
+    step: number;
+    touched: boolean;
+    visible: boolean;
+    still: boolean;
+  } = { step: 0, touched: false, visible: false, still: false };
+
+  function flash(name: string) {
+    if (session.still || !root) {
+      return;
+    }
+    for (const element of root.querySelectorAll(`[data-flash="${name}"]`)) {
+      element.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: 900,
+        easing: 'ease-out',
+      });
+    }
+  }
+
+  async function start() {
+    const { cart } = await import('../hero/cart.js');
+    session.dispose?.();
+    totalRuns = 0;
+    noteRuns = 0;
+    const ui: Ui = {
+      show(name, value) {
+        if (name === 'total') {
+          total = value as number;
+          totalRuns += 1;
+        } else {
+          note = value as string;
+          noteRuns += 1;
+        }
+        flash(name);
+      },
+    };
+    session.ui = ui;
+    session.dispose = cart(ui);
+  }
+
+  function add() {
+    session.ui?.add?.();
+  }
+
+  function write(text: string) {
+    draft = text;
+    session.ui?.write?.(text);
+  }
+
+  // Plays the next step while the demo is on screen and the visitor has not used it.
+  function play() {
+    clearTimeout(session.timer);
+    if (session.touched || !session.visible || session.still) {
+      return;
+    }
+    const step = SCRIPT[session.step]!;
+    session.timer = window.setTimeout(() => {
+      if (step.action === 'add') {
+        add();
+      } else if (step.action === 'type') {
+        write(step.text!);
+      } else {
+        draft = '';
+        void start();
+      }
+      session.step = (session.step + 1) % SCRIPT.length;
+      play();
+    }, step.wait);
+  }
+
+  // The visitor took over, so the demo stops playing and keeps its values.
+  function touch() {
+    session.touched = true;
+    clearTimeout(session.timer);
+  }
+
+  $client(() => {
+    session.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    void start();
+    const observer = new IntersectionObserver(([entry]) => {
+      session.visible = !!entry?.isIntersecting;
+      play();
+    });
+    observer.observe(root!);
+    return () => {
+      observer.disconnect();
+      clearTimeout(session.timer);
+      session.dispose?.();
+    };
+  });
+</script>
+
+<figure class="demo" ref=$bind(root) onPointerDown=touch onFocusIn=touch>
+  <div class="demo-code code" style=(`--total: ${totalLine}; --note: ${noteLine}`)>
+    <span class="line-flash total" data-flash="total" aria-hidden="true"></span>
+    <span class="line-flash note" data-flash="note" aria-hidden="true"></span>
+    {html}
+  </div>
+  <div class="demo-ui">
+    <div class="demo-controls">
+      <button class="button" type="button" onClick=add>
+        <Icon name="plus" />
+        Add one
+      </button>
+      <input
+        type="text"
+        aria-label="Gift note"
+        placeholder="Gift note"
+        maxlength="24"
+        value=draft
+        onInput=((event) => write(event.currentTarget.value))
+      >
+    </div>
+    <dl class="demo-out">
+      <div class="demo-row">
+        <span class="row-flash" data-flash="total" aria-hidden="true"></span>
+        <dt>total</dt>
+        <dd>${total}</dd>
+        <dd class="runs">{totalRuns} {totalRuns === 1 ? 'run' : 'runs'}</dd>
+      </div>
+      <div class="demo-row">
+        <span class="row-flash" data-flash="note" aria-hidden="true"></span>
+        <dt>note</dt>
+        <dd>{note || '-'}</dd>
+        <dd class="runs">{noteRuns} {noteRuns === 1 ? 'run' : 'runs'}</dd>
+      </div>
+    </dl>
+  </div>
+  <figcaption class="sr-only">
+    A cart with a quantity and a gift note. Adding one runs only the code that reads the total.
+    Typing a note runs only the code that reads the note.
+  </figcaption>
+</figure>
+
+<style>
+  .demo {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .demo-code {
+    --pad: 1rem;
+    --lh: 1.6em;
+    position: relative;
+    padding: var(--pad) 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow: auto;
+  }
+
+  .demo-code :global(.twinkleplop) {
+    position: relative;
+  }
+
+  .line-flash {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: var(--lh);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .line-flash.total {
+    top: calc(var(--pad) + var(--total) * var(--lh));
+  }
+
+  .line-flash.note {
+    top: calc(var(--pad) + var(--note) * var(--lh));
+  }
+
+  .demo-ui {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    padding: 1rem;
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .demo-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .demo-controls input {
+    flex: 1 1 8rem;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .demo-controls input:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: 1px;
+  }
+
+  .demo-out {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  .demo-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .row-flash {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-soft);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .demo-row dt,
+  .demo-row dd {
+    position: relative;
+    margin: 0;
+  }
+
+  .demo-row dt {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+
+  .demo-row dd {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .demo-row .runs {
+    color: var(--accent-strong);
+    font-size: 0.8rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 760px) {
+    .demo {
+      grid-template-columns: 1fr;
+    }
+
+    .demo-ui {
+      border-top: 1px solid var(--border);
+      border-left: 0;
+    }
+  }
+</style>

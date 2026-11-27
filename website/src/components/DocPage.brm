@@ -1,5 +1,5 @@
 <script>
-  import { $client, $effect, $props } from 'brumate/signals';
+  import { $client, $props } from 'brumate/signals';
   import { pages, sections } from '../docs.ts';
   import LiveSample from './LiveSample.brm';
   import Meta from './Meta.brm';
@@ -40,10 +40,8 @@
 
   $client(() => {
     document.addEventListener('click', copyCode);
-  });
-  $effect(() => () => {
-    document.removeEventListener('click', copyCode);
-  });
+    return () => document.removeEventListener('click', copyCode);
+  }, 'idle');
 </script>
 
 #head {

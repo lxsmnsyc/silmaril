@@ -1,82 +1,199 @@
 <script>
-  import LiveSample from '../components/LiveSample.brm';
+  import { raw } from 'brumate/html';
+  import HeroDemo from '../components/HeroDemo.brm';
+  import Icon from '../components/Icon.brm';
+  import InstallCommand from '../components/InstallCommand.brm';
   import Meta from '../components/Meta.brm';
-  import counter from '../samples/counter.js?raw';
+  import compiled from '../hero/cart.js?compiled';
+  import withSilmaril from '../hero/compare-silmaril.js?highlight';
+  import withSignals from '../hero/compare-signals.js?highlight';
 
   const base = import.meta.env.BASE_URL;
+  const description =
+    'silmaril makes plain let variables reactive at compile time. No signal API, no framework, and a runtime under 1.5 kB gzipped.';
+  const bundlers = ['Vite', 'Rollup', 'Rolldown', 'esbuild', 'webpack', 'Rspack', 'Rsbuild', 'Farm', 'Bun'];
 </script>
 
 #head {
   <title>silmaril: compile-time reactivity for JS</title>
 }
 
-<Meta
-  title="silmaril: compile-time reactivity for JS"
-  description="Compile-time reactivity for JS."
-  path=""
-/>
+<Meta title="silmaril: compile-time reactivity for JS" description=description path="" />
 <main class="home">
   <section class="hero">
-    <p class="eyebrow">Compile-time reactivity for JS</p>
-    <h1>Write variables. Get <span class="gradient-text">reactivity</span>.</h1>
+    <h1>Assign a variable. Only the code that reads it runs.</h1>
     <p class="lead">
-      <code>$$</code> defines a reactive boundary. Variables declared inside it are reactive, and
-      <code>$</code> reacts when they change.
+      silmaril makes plain <code>let</code> variables reactive at compile time. No signal API, no
+      framework, and a runtime under 1.5&nbsp;kB gzipped.
     </p>
     <div class="actions">
-      <a class="button primary" href=(`${base}docs/getting-started`)>Get started</a>
-      <a class="button" href=(`${base}docs`)>Read the docs</a>
+      <a class="button primary" href=(`${base}docs/getting-started`)>
+        Get started
+        <Icon name="arrow-right" />
+      </a>
+      <InstallCommand />
     </div>
-    <pre class="install"><span class="prompt">$</span> pnpm add silmaril</pre>
+    <HeroDemo />
   </section>
 
-  <section class="section">
-    <h2>Plain variables</h2>
-    <p class="section-lead">
-      Inside <code>$$</code>, a variable that changes is reactive. <code>$</code> runs again when
-      the variables it reads change.
-    </p>
-    <LiveSample name="counter.js" source=counter />
+  <section class="feature">
+    <div class="feature-text">
+      <h2>No signals. No <code>.value</code>.</h2>
+      <p>
+        State is a <code>let</code>, and an update is an assignment. The compiler rewrites reads
+        and writes, so your source stays plain JS and TS.
+      </p>
+      <a class="more" href=(`${base}docs/basic-reactivity`)>Basic reactivity <Icon name="arrow-right" /></a>
+    </div>
+    <div class="compare">
+      <figure class="code-card">
+        <figcaption>silmaril</figcaption>
+        <div class="code">{raw(withSilmaril.html)}</div>
+      </figure>
+      <figure class="code-card muted">
+        <figcaption>Signals, Solid 2.0</figcaption>
+        <div class="code">{raw(withSignals.html)}</div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="feature">
+    <div class="feature-text">
+      <h2>Dependencies found at build time.</h2>
+      <p>
+        The compiler lists which code reads each variable. A write runs that list, with no
+        tracking while your code runs.
+      </p>
+      <a class="more" href=(`${base}docs/internals`)>How it works <Icon name="arrow-right" /></a>
+    </div>
+    <figure class="code-card">
+      <figcaption>The demo above, compiled</figcaption>
+      <div class="code">{raw(compiled.html)}</div>
+    </figure>
+  </section>
+
+  <section class="feature">
+    <div class="feature-text">
+      <h2>Under 1.5 kB of runtime.</h2>
+      <p>The runtime has no dependencies. A test fails the build when it grows past the limit.</p>
+    </div>
+    <div class="stat">
+      <p class="stat-value">&lt; 1.5<span> kB</span></p>
+      <p class="stat-foot">
+        Minified and gzipped, measured by <code>packages/silmaril/test/size.test.ts</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="feature">
+    <div class="feature-text">
+      <h2>Any bundler, any UI library.</h2>
+      <p>
+        One plugin covers nine bundlers. Stores pass values to event emitters, global state or
+        Solid signals.
+      </p>
+      <a class="more" href=(`${base}docs/bundler-setup`)>Bundler setup <Icon name="arrow-right" /></a>
+    </div>
+    <ul class="chips">
+      #for (bundler of bundlers) {
+        <li>{bundler}</li>
+      }
+    </ul>
+  </section>
+
+  <section class="table-section">
+    <h2>How it compares</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">silmaril 0.5</th>
+            <th scope="col">Svelte 5 runes</th>
+            <th scope="col">Solid 2.0 signals</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">State</th>
+            <td><code>let count = 0</code></td>
+            <td><code>let count = $state(0)</code></td>
+            <td><code>createSignal(0)</code></td>
+          </tr>
+          <tr>
+            <th scope="row">Dependencies found</th>
+            <td>At compile time</td>
+            <td>At run time</td>
+            <td>At run time</td>
+          </tr>
+          <tr>
+            <th scope="row">Works in</th>
+            <td>Any compiled <code>.js</code> or <code>.ts</code> file</td>
+            <td><code>.svelte</code>, <code>.svelte.js</code> and <code>.svelte.ts</code> files</td>
+            <td>Any file</td>
+          </tr>
+          <tr>
+            <th scope="row">Renders UI</th>
+            <td>No. Pair it with a UI library through stores.</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">Needs a build step</th>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">Compared in November 2026.</p>
+  </section>
+
+  <section class="facts" aria-label="Facts">
+    <dl>
+      <div><dt>License</dt><dd>MIT</dd></div>
+      <div><dt>Runtime</dt><dd>&lt; 1.5 kB, no dependencies</dd></div>
+      <div><dt>Compiler</dt><dd>Node.js 22.18 or 24.11+</dd></div>
+      <div><dt>Format</dt><dd>ESM only</dd></div>
+      <div><dt>Version</dt><dd>0.5, before 1.0</dd></div>
+    </dl>
+  </section>
+
+  <section class="final">
+    <h2>Make your first variable reactive.</h2>
+    <div class="actions">
+      <a class="button primary" href=(`${base}docs/getting-started`)>
+        Get started
+        <Icon name="arrow-right" />
+      </a>
+      <a class="button" href="https://github.com/lxsmnsyc/silmaril" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
   </section>
 </main>
 
 <style>
   .home {
-    max-width: 52rem;
+    max-width: 64rem;
     margin: 0 auto;
-    padding: 0 1rem 4rem;
+    padding: 0 1rem 5rem;
   }
 
   .hero {
-    padding: 4rem 0 2rem;
-    text-align: center;
-  }
-
-  .eyebrow {
-    margin: 0 0 0.75rem;
-    color: var(--accent-strong);
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    padding: 4rem 0 3rem;
   }
 
   .hero h1 {
+    max-width: 18ch;
     margin: 0 0 1rem;
     font-size: clamp(2.2rem, 6vw, 3.5rem);
     line-height: 1.1;
     letter-spacing: -0.03em;
   }
 
-  .gradient-text {
-    background: linear-gradient(120deg, var(--accent), var(--cool));
-    background-clip: text;
-    color: transparent;
-  }
-
   .lead {
     max-width: 38rem;
-    margin: 0 auto 1.5rem;
+    margin: 0 0 1.5rem;
     color: var(--muted);
     font-size: 1.15rem;
   }
@@ -85,45 +202,204 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    justify-content: center;
+    align-items: center;
+    margin-bottom: 2.5rem;
   }
 
-  .install {
-    display: inline-block;
-    margin: 1.75rem 0 0;
-    padding: 0.6rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--code-bg);
-    font-size: 0.9rem;
+  .feature {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: 2rem;
+    align-items: center;
+    padding: 3rem 0;
   }
 
-  .prompt {
-    color: var(--muted);
-  }
-
-  .section {
-    padding-top: 2.5rem;
-  }
-
-  .section h2 {
+  .feature h2,
+  .table-section h2,
+  .final h2 {
     margin: 0 0 0.5rem;
     font-size: 1.6rem;
+    line-height: 1.2;
     letter-spacing: -0.015em;
   }
 
-  .section-lead {
+  .feature-text p {
     margin: 0 0 1rem;
     color: var(--muted);
   }
 
-  .code {
-    padding: 1rem 1.1rem;
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--accent-strong);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .more:hover {
+    text-decoration: underline;
+  }
+
+  .compare {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .code-card {
+    margin: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--code-bg);
+    overflow: hidden;
+  }
+
+  .code-card figcaption {
+    padding: 0.5rem 1.1rem 0;
+    color: var(--accent-strong);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .code-card.muted figcaption {
+    color: var(--muted);
+  }
+
+  .code-card .code {
+    padding: 0.5rem 1.1rem 1rem;
     font-size: 0.85rem;
     line-height: 1.6;
     overflow: auto;
+  }
+
+  .stat {
+    padding: 2rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .stat-value {
+    margin: 0;
+    font-size: clamp(3rem, 9vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-value span {
+    color: var(--muted);
+    font-size: 0.4em;
+    letter-spacing: 0;
+  }
+
+  .stat-foot {
+    margin: 1rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chips li {
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: var(--surface);
+    font-weight: 600;
+  }
+
+  .table-section {
+    padding: 3rem 0;
+  }
+
+  .table-wrap {
+    margin-top: 1rem;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.925rem;
+  }
+
+  th,
+  td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  thead th:nth-child(2),
+  tbody td:first-of-type {
+    background: var(--accent-soft);
+  }
+
+  tbody th {
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .foot {
+    margin: 0.5rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .facts dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1px;
+    margin: 0;
+    border-radius: var(--radius);
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .facts dl > div {
+    padding: 1rem;
+    background: var(--bg);
+  }
+
+  .facts dt {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .facts dd {
+    margin: 0.2rem 0 0;
+    font-weight: 600;
+  }
+
+  .final {
+    padding: 4rem 0 0;
+    text-align: center;
+  }
+
+  .final .actions {
+    justify-content: center;
+    margin: 1.25rem 0 0;
+  }
+
+  @media (max-width: 760px) {
+    .feature {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      padding: 2rem 0;
+    }
   }
 </style>

@@ -1,0 +1,97 @@
+<script>
+  import { $signal } from 'brumate/signals';
+  import Icon from './Icon.brm';
+
+  // The install command with a copy button. The button shows a check for 1.5 seconds.
+  const COMMAND = 'npm install silmaril';
+  let copied = $signal(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(COMMAND);
+      copied = true;
+      setTimeout(() => {
+        copied = false;
+      }, 1500);
+    } catch {
+      // The clipboard can be blocked. The command stays selectable.
+    }
+  }
+</script>
+
+<div class="install">
+  <code>{COMMAND}</code>
+  <button
+    type="button"
+    class={ 'install-copy': true, copied }
+    aria-label=(copied ? 'Copied' : 'Copy the install command')
+    title="Copy"
+    onClick=copy
+  >
+    <span class="icon-copy"><Icon name="copy" /></span>
+    <span class="icon-check"><Icon name="check" /></span>
+  </button>
+</div>
+
+<style>
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.25rem 0.25rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    font-size: 0.9rem;
+  }
+
+  .install code {
+    font-family: var(--mono);
+  }
+
+  .install-copy {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .install-copy:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .install-copy:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .install-copy > span {
+    grid-area: 1 / 1;
+    display: grid;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  }
+
+  .install-copy .icon-check,
+  .install-copy.copied .icon-copy {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  .install-copy.copied .icon-check {
+    opacity: 1;
+    transform: none;
+    color: var(--accent-strong);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .install-copy > span {
+      transition: opacity 0.15s;
+    }
+  }
+</style>

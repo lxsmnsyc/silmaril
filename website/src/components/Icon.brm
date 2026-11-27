@@ -17,7 +17,8 @@
       | 'moon'
       | 'arrow-right'
       | 'chevron'
-      | 'grip';
+      | 'grip'
+      | 'copy';
     size?: number;
   }>();
 </script>
@@ -66,6 +67,10 @@
     }
     #case (name === 'grip') {
       <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" />
+    }
+    #case (name === 'copy') {
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
     }
     #case (name === 'arrow-right') {
       <path d="M5 12h14M13 6l6 6-6 6" />

@@ -1,5 +1,5 @@
 <script>
-  import { $client, $effect, $signal } from 'brumate/signals';
+  import { $client, $signal } from 'brumate/signals';
 
   interface Result {
     href: string;
@@ -33,10 +33,8 @@
 
   $client(() => {
     window.addEventListener('keydown', onKey);
-  });
-  $effect(() => () => {
-    window.removeEventListener('keydown', onKey);
-  });
+    return () => window.removeEventListener('keydown', onKey);
+  }, 'idle');
 
   // The index loads the first time someone types, so pages do not load it before.
   async function find(value: string) {

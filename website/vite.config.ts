@@ -1,7 +1,9 @@
 import { fileURLToPath } from 'node:url';
 import brumate from 'brumate/vite';
+import silmaril from 'silmaril/unplugin';
 import { defineConfig } from 'vite';
 import markdown, { SITE_PAGES } from './plugins/markdown.ts';
+import highlight from './plugins/highlight.ts';
 import llms from './plugins/llms.ts';
 import search from './plugins/search.ts';
 
@@ -24,6 +26,9 @@ export default defineConfig({
   },
   plugins: [
     markdown(),
+    highlight(),
+    // The demo of the landing page is real silmaril code, compiled by the plugin.
+    silmaril.vite({ filter: { include: /\/src\/hero\/[\w-]+\.js$/ } }),
     search(
       [fileURLToPath(new URL('docs', import.meta.url))],
       new Set([...SITE_PAGES].map((page) => page || 'index')),
