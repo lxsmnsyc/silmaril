@@ -134,80 +134,79 @@
   });
 </script>
 
-<figure class="demo" ref=$bind(root) onPointerDown=touch onFocusIn=touch>
-  <div class="demo-code code" style=(`--total: ${totalLine}; --note: ${noteLine}`)>
-    <span class="line-flash total" data-flash="total" aria-hidden="true"></span>
-    <span class="line-flash note" data-flash="note" aria-hidden="true"></span>
-    {html}
-  </div>
-  <div class="demo-ui">
-    <div class="demo-controls">
-      <button class="button" type="button" onClick=add>
-        <Icon name="plus" />
-        Add one
-      </button>
-      <input
-        type="text"
-        aria-label="Gift note"
-        placeholder="Gift note"
-        maxlength="24"
-        value=draft
-        onInput=((event) => write(event.currentTarget.value))
-      >
+<figure class="hero-code demo" ref=$bind(root) onPointerDown=touch onFocusIn=touch>
+  <div class="window">
+    <div class="window-bar">
+      <span class="window-title">cart.js</span>
     </div>
-    <dl class="demo-out">
-      <div class="demo-row">
-        <span class="row-flash" data-flash="total" aria-hidden="true"></span>
-        <dt>total</dt>
-        <dd>${total}</dd>
-        <dd class="runs">{totalRuns} {totalRuns === 1 ? 'run' : 'runs'}</dd>
+    <div class="demo-code" style=(`--total: ${totalLine}; --note: ${noteLine}`)>
+      <span class="line-flash total" data-flash="total" aria-hidden="true"></span>
+      <span class="line-flash note" data-flash="note" aria-hidden="true"></span>
+      <div class="code-block">{html}</div>
+    </div>
+    <div class="demo-ui">
+      <div class="demo-controls">
+        <button class="button primary demo-add" type="button" onClick=add>
+          <Icon name="plus" size=(16) />
+          Add one
+        </button>
+        <input
+          type="text"
+          aria-label="Gift note"
+          placeholder="Gift note"
+          maxlength="24"
+          value=draft
+          onInput=((event) => write(event.currentTarget.value))
+        >
       </div>
-      <div class="demo-row">
-        <span class="row-flash" data-flash="note" aria-hidden="true"></span>
-        <dt>note</dt>
-        <dd>{note || '-'}</dd>
-        <dd class="runs">{noteRuns} {noteRuns === 1 ? 'run' : 'runs'}</dd>
-      </div>
-    </dl>
+      <dl class="demo-out">
+        <div class="demo-row">
+          <span class="row-flash" data-flash="total" aria-hidden="true"></span>
+          <dt>total</dt>
+          <dd>${total}</dd>
+          <dd class="runs">{totalRuns} {totalRuns === 1 ? 'run' : 'runs'}</dd>
+        </div>
+        <div class="demo-row">
+          <span class="row-flash" data-flash="note" aria-hidden="true"></span>
+          <dt>note</dt>
+          <dd>{note || '-'}</dd>
+          <dd class="runs">{noteRuns} {noteRuns === 1 ? 'run' : 'runs'}</dd>
+        </div>
+      </dl>
+    </div>
   </div>
-  <figcaption class="sr-only">
+  <figcaption class="visually-hidden">
     A cart with a quantity and a gift note. Adding one runs only the code that reads the total.
     Typing a note runs only the code that reads the note.
   </figcaption>
 </figure>
 
 <style>
-  .demo {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-    margin: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--code-bg);
-    overflow: hidden;
-    text-align: left;
-  }
+  /* The code, then the cart as rows in the same window. A run lights up its line and its row. */
 
   .demo-code {
-    --pad: 1rem;
-    --lh: 1.6em;
+    --pad: 4px;
+    --lh: calc(12.8px * 1.75);
     position: relative;
-    padding: var(--pad) 1.1rem;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    overflow: auto;
   }
 
-  .demo-code :global(.twinkleplop) {
+  .demo-code .code-block {
+    margin: 0;
+    background: none;
+  }
+
+  .demo-code .code-block :global(pre) {
     position: relative;
+    padding: 4px 28px 20px;
   }
 
   .line-flash {
     position: absolute;
-    right: 0;
-    left: 0;
+    right: 8px;
+    left: 8px;
     height: var(--lh);
-    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: var(--radius-sm);
+    background: var(--accent-tint);
     opacity: 0;
     pointer-events: none;
   }
@@ -222,39 +221,50 @@
 
   .demo-ui {
     display: grid;
-    align-content: start;
-    gap: 1rem;
-    padding: 1rem;
-    border-left: 1px solid var(--border);
-    background: var(--bg);
+    gap: 8px;
+    margin: 0 8px 8px;
+    padding: 8px;
+    border-radius: var(--radius-row);
+    background: var(--surface);
   }
 
   .demo-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 8px;
+  }
+
+  .demo-add {
+    min-height: 40px;
+    padding: 0 18px;
+    font-size: 15px;
   }
 
   .demo-controls input {
     flex: 1 1 8rem;
     min-width: 0;
-    min-height: 2.5rem;
-    padding: 0.4rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--bg-elevated);
     color: var(--text);
-    font: inherit;
+    font: 500 15px var(--font-sans);
+    transition: box-shadow var(--duration-fast);
+  }
+
+  .demo-controls input:hover {
+    box-shadow: inset 0 0 0 2px var(--surface-strong);
   }
 
   .demo-controls input:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    outline-offset: 1px;
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
   }
 
   .demo-out {
     display: grid;
-    gap: 0.5rem;
+    gap: 4px;
     margin: 0;
   }
 
@@ -262,18 +272,18 @@
     position: relative;
     display: grid;
     grid-template-columns: 3.5rem 1fr auto;
+    gap: 8px;
     align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    background: var(--surface);
+    padding: 10px 14px;
+    border-radius: var(--radius-row);
+    background: var(--bg-elevated);
     overflow: hidden;
   }
 
   .row-flash {
     position: absolute;
     inset: 0;
-    background: var(--accent-soft);
+    background: var(--accent-tint);
     opacity: 0;
     pointer-events: none;
   }
@@ -286,40 +296,26 @@
 
   .demo-row dt {
     color: var(--muted);
-    font-family: var(--mono);
-    font-size: 0.85rem;
+    font: 400 12px var(--font-mono);
   }
 
   .demo-row dd {
+    overflow: hidden;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .demo-row .runs {
-    color: var(--accent-strong);
-    font-size: 0.8rem;
+    font: 400 12px var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  @media (max-width: 760px) {
-    .demo {
-      grid-template-columns: 1fr;
-    }
-
-    .demo-ui {
-      border-top: 1px solid var(--border);
-      border-left: 0;
+  @media (pointer: coarse) {
+    .demo-add,
+    .demo-controls input {
+      min-height: 44px;
     }
   }
 </style>

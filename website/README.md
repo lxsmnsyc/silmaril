@@ -1,6 +1,6 @@
 # silmaril website
 
-The documentation of silmaril, built with [brumate](https://github.com/lxsmnsyc/brumate). The layout follows the website of brumate.
+The documentation of silmaril, built with [brumate](https://github.com/lxsmnsyc/brumate). The look follows Banig, the shared design of the project websites. Its tokens sit between `tokens:start` and `tokens:end` in [`src/styles.css`](./src/styles.css), with the accent made from the sky blue of the logo. The fonts in [`public/fonts`](./public/fonts) are Bricolage Grotesque and Martian Mono, under the OFL.
 
 - The pages are Markdown files in [`docs`](./docs). [`plugins/markdown.ts`](./plugins/markdown.ts) renders them with markdown-it and highlights code with twinkleplop at build time. [`src/sections.ts`](./src/sections.ts) orders them in the sidebar.
 - To add a page, add `docs/<name>.md` and list `<name>` in a section of [`src/sections.ts`](./src/sections.ts). The URL is `/docs/<name>`.

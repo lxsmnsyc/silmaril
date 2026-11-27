@@ -31,3 +31,9 @@ declare module '*?compiled' {
   const code: { source: string; html: string };
   export default code;
 }
+
+declare module 'virtual:runtime-size' {
+  /** The `silmaril` runtime in bytes, minified and gzipped. */
+  const bytes: number;
+  export default bytes;
+}

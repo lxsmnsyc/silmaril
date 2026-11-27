@@ -1,70 +1,226 @@
-/* The global styles of the site: the colors of the themes, the base elements, buttons, and
-   the prose and code of the docs, which come from Markdown. Each component keeps its own
-   styles in its <style> block. */
+/* The global styles of the site, built on Banig (the Block direction): rounded tiles on a gray
+   ground, no borders and no shadows. Values come from the tokens below. The accent is the sky
+   blue of the silmaril logo, made with Banig's `scripts/accent.mjs '#8fd3ff'`. */
 
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/martian-mono.woff2') format('woff2');
+}
+
+/* tokens:start */
 :root {
-  --bg: #fbfaf8;
-  --surface: #f2efea;
-  --surface-strong: #e9e4dc;
-  --text: #1c1917;
-  --muted: #6b635b;
-  --border: #e3ddd4;
-  --accent: #d4612a;
-  --accent-strong: #9f4116;
-  --danger: #b3261e;
-  --warn: #8a5a00;
-  --success: #2da44e;
-  --accent-soft: #fbe7dc;
-  --cool: #2f7fbf;
-  --code-bg: #f6f3ee;
-  --header-height: 3.5rem;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgb(28 25 23 / 6%), 0 8px 24px rgb(28 25 23 / 6%);
-  --font:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
   color-scheme: light;
+  --bg: #ebebee;
+  --bg-elevated: #ffffff;
+  --surface: #f4f4f6;
+  --surface-strong: #e2e2e6;
+  --text: #121214;
+  --muted: #55555c;
+  --subtle: #9a9aa2;
+  --border-strong: #c4c4cb;
+  --ink: #121214;
+  --on-ink: #f4f4f6;
+  --on-ink-muted: #b4b4bc;
+  --accent-fill: #8fd3ff;
+  --accent-strong: #32769e;
+  --on-accent: #121214;
+  --accent-tint: #8fd3ff59;
+  --focus: #32769e;
+  --danger: #b0262e;
+  --on-danger: #ffffff;
+  --danger-tint: #fbe3e4;
+  --warning: #6f6208;
+  --warning-tint: #f3efd9;
+  --info: #0a6e61;
+  --info-tint: #daf6ef;
+  --code-bg: #ffffff;
+  --scrim: #08080a8c;
+  --syn-keyword: #9c1f63;
+  --syn-string: #2c6a00;
+  --syn-function: #1f4fb0;
+  --syn-tag: #6b2fb0;
+  --syn-attr: #8a4700;
+  --syn-type: #006874;
+  --syn-number: #8a4700;
+  --syn-comment: #5f5f67;
+  --syn-punct: #55555c;
+
+  --gap: 12px;
+  --pad: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 8px;
+  --radius-row: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-full: 999px;
+  --header-height: 72px;
+  --sidebar-width: 256px;
+  --toc-width: 224px;
+  --prose-width: 736px;
+  --page-width: 1344px;
+  --control-height: 48px;
+  --icon-button: 40px;
+  --z-header: 20;
+  --z-drawer: 30;
+  --z-overlay: 40;
+  --z-toast: 50;
+  --z-skip: 60;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #141210;
-    --surface: #1d1a17;
-    --surface-strong: #27231f;
-    --text: #efe9e2;
-    --muted: #a39a90;
-    --border: #2f2a25;
-    --accent: #f08a52;
-    --accent-strong: #f6a679;
-    --danger: #f28b82;
-    --warn: #e3b341;
-    --success: #3fb950;
-    --accent-soft: #3a2116;
-    --cool: #6fb2e6;
-    --code-bg: #1a1714;
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
     color-scheme: dark;
+    --bg: #08080a;
+    --bg-elevated: #161619;
+    --surface: #1f1f23;
+    --surface-strong: #2a2a2f;
+    --text: #f2f2f4;
+    --muted: #a6a6ae;
+    --subtle: #6c6c74;
+    --border-strong: #3c3c43;
+    --ink: #f2f2f4;
+    --on-ink: #121214;
+    --on-ink-muted: #4a4a52;
+    --accent-fill: #8fd3ff;
+    --accent-strong: #8fd3ff;
+    --on-accent: #121214;
+    --accent-tint: #8fd3ff24;
+    --focus: #8fd3ff;
+    --danger: #ff8a8a;
+    --on-danger: #121214;
+    --danger-tint: #3a1a1c;
+    --warning: #bfaa17;
+    --warning-tint: #2b270e;
+    --info: #1abea8;
+    --info-tint: #0b2d27;
+    --code-bg: #161619;
+    --scrim: #000000b3;
+    --syn-keyword: #ff8cc6;
+    --syn-string: #b8f06a;
+    --syn-function: #8fb8ff;
+    --syn-tag: #d0a8ff;
+    --syn-attr: #ffc078;
+    --syn-type: #74dde8;
+    --syn-number: #ffc078;
+    --syn-comment: #8e8e96;
+    --syn-punct: #a6a6ae;
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #141210;
-  --surface: #1d1a17;
-  --surface-strong: #27231f;
-  --text: #efe9e2;
-  --muted: #a39a90;
-  --border: #2f2a25;
-  --accent: #f08a52;
-  --accent-strong: #f6a679;
-  --danger: #f28b82;
-  --warn: #e3b341;
-  --success: #3fb950;
-  --accent-soft: #3a2116;
-  --cool: #6fb2e6;
-  --code-bg: #1a1714;
-  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
   color-scheme: dark;
+  --bg: #08080a;
+  --bg-elevated: #161619;
+  --surface: #1f1f23;
+  --surface-strong: #2a2a2f;
+  --text: #f2f2f4;
+  --muted: #a6a6ae;
+  --subtle: #6c6c74;
+  --border-strong: #3c3c43;
+  --ink: #f2f2f4;
+  --on-ink: #121214;
+  --on-ink-muted: #4a4a52;
+  --accent-fill: #8fd3ff;
+  --accent-strong: #8fd3ff;
+  --on-accent: #121214;
+  --accent-tint: #8fd3ff24;
+  --focus: #8fd3ff;
+  --danger: #ff8a8a;
+  --on-danger: #121214;
+  --danger-tint: #3a1a1c;
+  --warning: #bfaa17;
+  --warning-tint: #2b270e;
+  --info: #1abea8;
+  --info-tint: #0b2d27;
+  --code-bg: #161619;
+  --scrim: #000000b3;
+  --syn-keyword: #ff8cc6;
+  --syn-string: #b8f06a;
+  --syn-function: #8fb8ff;
+  --syn-tag: #d0a8ff;
+  --syn-attr: #ffc078;
+  --syn-type: #74dde8;
+  --syn-number: #ffc078;
+  --syn-comment: #8e8e96;
+  --syn-punct: #a6a6ae;
 }
+/* tokens:end */
+
+:root {
+  --font-sans: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --duration-fast: 120ms;
+  --duration: 220ms;
+  /* Springy ease for press and lift; plain ease-out for things entering. */
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* The token colors of twinkleplop, mapped to the syntax colors of Banig. */
+  --twp-keyword: var(--syn-keyword);
+  --twp-operator: var(--syn-keyword);
+  --twp-lifetime: var(--syn-keyword);
+  --twp-unit: var(--syn-keyword);
+  --twp-string: var(--syn-string);
+  --twp-template: var(--syn-string);
+  --twp-regex: var(--syn-string);
+  --twp-url: var(--syn-string);
+  --twp-number: var(--syn-number);
+  --twp-boolean: var(--syn-number);
+  --twp-constant: var(--syn-number);
+  --twp-function: var(--syn-function);
+  --twp-type: var(--syn-type);
+  --twp-class_name: var(--syn-type);
+  --twp-namespace: var(--syn-type);
+  --twp-builtin: var(--syn-type);
+  --twp-variant: var(--syn-type);
+  --twp-attribute: var(--syn-attr);
+  --twp-attr_name: var(--syn-attr);
+  --twp-decorator: var(--syn-attr);
+  --twp-css_variable: var(--syn-attr);
+  --twp-tag_name: var(--syn-tag);
+  --twp-selector: var(--syn-tag);
+  --twp-selector_class: var(--syn-tag);
+  --twp-selector_id: var(--syn-tag);
+  --twp-selector_pseudo: var(--syn-tag);
+  --twp-entity: var(--syn-tag);
+  --twp-heading: var(--syn-function);
+  --twp-comment: var(--syn-comment);
+  --twp-doctype: var(--syn-comment);
+  --twp-hash: var(--syn-comment);
+  --twp-label: var(--syn-comment);
+  --twp-punctuation: var(--syn-punct);
+  --twp-identifier: var(--text);
+  --twp-variable: var(--text);
+  --twp-parameter: var(--text);
+  --twp-property: var(--text);
+  --twp-inserted: var(--syn-string);
+  --twp-inserted_marker: var(--syn-string);
+  --twp-deleted: var(--danger);
+  --twp-deleted_marker: var(--danger);
+  --twp-changed: var(--syn-attr);
+  --twp-changed_marker: var(--syn-attr);
+}
+
+/* Base */
 
 *,
 *::before,
@@ -73,273 +229,1633 @@
 }
 
 html {
-  scroll-padding-top: calc(var(--header-height) + 1rem);
+  scroll-padding-top: calc(var(--header-height) + 16px);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.65 var(--font);
+  font: 400 16px/1.55 var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--accent-strong);
+  color: inherit;
+  text-decoration-color: var(--accent-strong);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
 }
 
 code,
-pre {
-  font-family: var(--mono);
+pre,
+kbd {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
 }
 
-/* Images fit the column, such as the sponsors image at its 800px natural width. */
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Buttons */
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2.5rem;
-  padding: 0.6rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.15s ease-out;
-}
-
-.button:hover {
-  border-color: var(--muted);
-}
-
-.button:active {
-  transform: scale(0.97);
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--accent);
+:focus-visible {
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .button:active {
-    transform: none;
-  }
+::selection {
+  background: var(--accent-fill);
+  color: var(--on-accent);
 }
 
-.button.primary {
-  border-color: transparent;
-  background: var(--accent);
-  color: #fff;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.button.primary:hover {
-  background: var(--accent-strong);
+.skip {
+  position: absolute;
+  top: -64px;
+  left: 16px;
+  z-index: var(--z-skip);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.prose {
+.skip:focus {
+  top: 12px;
+}
+
+/* Header: the same color as the page, no edge */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  height: var(--header-height);
+  background: var(--bg);
+}
+
+.header-inner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  max-width: var(--page-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.brand {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--text);
+  font: 800 26px/1 var(--font-sans);
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* The search trigger goes here. It pushes the nav to the end. */
+
+.header-slot {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
   min-width: 0;
-  padding: 1.75rem 0 4rem;
 }
 
-.prose h1 {
-  margin: 0 0 1rem;
-  font-size: 2.4rem;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+/* One pill track holds the pages, the GitHub link and the theme button. */
+
+.header-nav {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
 }
 
-.prose h2 {
-  margin: 2.75rem 0 0.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border);
-  font-size: 1.5rem;
-  letter-spacing: -0.015em;
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 15px;
+  border-radius: var(--radius-full);
+  color: var(--text);
+  font: 500 15px var(--font-sans);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
 }
 
-.prose h3 {
-  margin: 2rem 0 0.5rem;
-  font-size: 1.15rem;
-}
-
-.prose p,
-.prose li {
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-}
-
-.prose :not(pre) > code {
-  padding: 0.1rem 0.35rem;
-  border-radius: 5px;
+.nav-link:hover {
   background: var(--surface-strong);
-  font-size: 0.875em;
 }
 
-.prose table {
-  display: block;
-  width: 100%;
-  border-collapse: collapse;
-  overflow-x: auto;
-  font-size: 0.925rem;
+.nav-link:active {
+  transform: scale(0.96);
 }
 
-.prose th,
-.prose td {
-  padding: 0.45rem 0.7rem;
-  border: 1px solid var(--border);
-  text-align: left;
-  vertical-align: top;
+.nav-link[aria-current='page'] {
+  background: var(--ink);
+  color: var(--on-ink);
 }
 
-.prose th {
-  background: var(--surface);
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--icon-button);
+  height: var(--icon-button);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
 }
 
-.prose pre,
-.code {
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--code-bg);
-  font-size: 0.85rem;
-  line-height: 1.6;
-  overflow: auto;
+.icon-button:hover {
+  background: var(--surface-strong);
 }
 
-.prose blockquote,
-.alert {
-  margin: 1.25rem 0;
-  padding: 0.6rem 1rem;
-  border-left: 3px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--surface);
+.icon-button:active {
+  transform: scale(0.9);
 }
 
-.alert-title {
-  margin: 0 0 0.25rem;
-  font-weight: 700;
+/* The header button shows the theme it switches to: a moon in light mode, a sun in dark mode. */
+
+.theme-toggle .sun {
+  display: none;
 }
 
-@media (max-width: 640px) {
-  :root {
-    --header-height: 6.5rem;
+.theme-toggle .moon,
+.theme-toggle .sun {
+  line-height: 0;
+}
+
+:root[data-theme='dark'] .theme-toggle .moon {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .sun {
+  display: inline-flex;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-toggle .moon {
+    display: none;
+  }
+
+  :root:not([data-theme='light']) .theme-toggle .sun {
+    display: inline-flex;
   }
 }
 
-/* Code blocks of the docs, with a copy button in the corner. */
+/* The theme button's label shows as a tooltip below it, naming the theme it switches to. */
 
-.code-block {
+.theme-toggle {
   position: relative;
 }
 
-.copy-code {
+.theme-toggle::after {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--muted);
-  cursor: pointer;
+  top: calc(100% + 8px);
+  right: 0;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 500 13px/18px var(--font-sans);
+  white-space: nowrap;
+  content: 'Switch to dark theme';
   opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
   transition:
-    opacity 0.15s ease-out,
-    transform 0.15s ease-out;
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
-.code-block:hover .copy-code,
-.copy-code:focus-visible,
-.copy-code[data-copied] {
+:root[data-theme='dark'] .theme-toggle::after {
+  content: 'Switch to light theme';
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-toggle::after {
+    content: 'Switch to light theme';
+  }
+}
+
+.theme-toggle:is(:hover, :focus-visible)::after {
   opacity: 1;
+  transform: none;
+  transition-delay: 400ms;
 }
 
-.copy-code:hover {
+@media (pointer: coarse) {
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav-link {
+    min-height: 44px;
+  }
+}
+
+/* Footer: plain text on the page */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 24px 28px 48px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--duration-fast);
+}
+
+.footer a:hover {
   color: var(--text);
 }
 
-.copy-code:active {
-  transform: scale(0.92);
+/* Docs: a sidebar tile, a prose tile and a bare outline */
+
+.docs {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--toc-width);
+  gap: var(--gap);
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 8px 20px 16px;
 }
 
-.copy-code .icon {
-  grid-area: 1 / 1;
+.docs.no-sidebar {
+  grid-template-columns: minmax(0, 1fr) var(--toc-width);
+}
+
+/* A bar under the header that fills as the page is read. */
+
+.progress {
+  position: fixed;
+  top: calc(var(--header-height) - 3px);
+  left: 0;
+  z-index: calc(var(--z-header) + 1);
+  width: 100%;
+  height: 3px;
+  background: var(--accent-fill);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .progress {
+      animation: fill linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@keyframes fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.sidebar,
+.toc {
+  position: sticky;
+  top: var(--header-height);
+  align-self: start;
+  max-height: calc(100vh - var(--header-height) - 16px);
+  overflow-y: auto;
+  font-size: 14px;
+  scrollbar-width: thin;
+}
+
+.sidebar {
+  display: grid;
+  gap: 2px;
+  padding: 20px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+}
+
+.toc {
+  padding: 20px 8px;
+}
+
+.sidebar-title,
+.toc-title {
+  margin: 0 0 6px 12px;
+  color: var(--muted);
+  font: 600 12px/18px var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar a {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  color: var(--text);
+  line-height: 1.4;
+  text-decoration: none;
   transition:
-    opacity 0.15s ease-out,
-    transform 0.15s ease-out;
+    background-color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
 }
 
-.copy-code .icon-check,
-.copy-code[data-copied] .icon-copy {
+.sidebar-number {
+  flex: none;
+  width: 1.75rem;
+  color: var(--muted);
+  font: 400 11px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar a:hover {
+  background: var(--surface-strong);
+}
+
+.sidebar a:active {
+  transform: scale(0.98);
+}
+
+.sidebar a[aria-current='page'] {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.sidebar a[aria-current='page'] .sidebar-number {
+  color: var(--on-accent);
+}
+
+/* A group of the sidebar that opens and closes, such as the std modules of the reference. */
+
+.sidebar-group {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+}
+
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  font: 600 12px/18px var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color var(--duration-fast);
+}
+
+.sidebar-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar-toggle:hover {
+  background: var(--surface-strong);
+}
+
+.sidebar-toggle .chevron {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.sidebar-group[open] > .sidebar-toggle .chevron {
+  transform: rotate(90deg);
+}
+
+.sidebar .sidebar-module {
+  font: 400 12px/1.6 var(--font-mono);
+}
+
+.toc {
+  position: sticky;
+}
+
+.toc a {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast);
+}
+
+.toc a:hover {
+  background: var(--surface-strong);
+}
+
+.toc a[aria-current] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.toc a.level-3 {
+  padding-left: 24px;
+}
+
+/* The pill behind the outline link of the section in view. Only transform animates; the height
+   snaps. It is placed by script after the first frame, so nothing slides on first paint. */
+
+.toc-indicator {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  left: 8px;
+  z-index: 0;
+  height: 0;
+  border-radius: var(--radius-full);
+  background: var(--surface-strong);
   opacity: 0;
-  transform: scale(0.6);
+  pointer-events: none;
+  transition: opacity var(--duration-fast);
 }
 
-.copy-code[data-copied] .icon-check {
+.toc-indicator[data-shown='true'] {
+  opacity: 1;
+  transition:
+    transform var(--duration) var(--ease),
+    opacity var(--duration-fast);
+}
+
+.menu {
+  display: none;
+}
+
+.menu summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--control-height);
+  padding: 0 20px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  transition:
+    background-color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
+}
+
+.menu summary:active {
+  transform: scale(0.98);
+}
+
+.menu .chevron {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.menu[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu summary:hover {
+  background: var(--surface-strong);
+}
+
+/* Prose: the page tile */
+
+.prose {
+  min-width: 0;
+  padding: 40px 48px 48px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  overflow-wrap: break-word;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.doc-head {
+  display: grid;
+  justify-items: start;
+  margin-bottom: 24px;
+}
+
+.doc-kicker {
+  margin: 0;
+  padding: 2px 11px;
+  border-radius: var(--radius-full);
+  background: var(--surface-strong);
+  font-size: 14px;
+}
+
+.doc-title {
+  margin: 16px 0 0;
+  font-size: clamp(2.75rem, 6vw, 5.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+/* The page's own first heading is shown by the header above. */
+
+.doc-body > h1:first-child {
+  display: none;
+}
+
+.doc-body > h1:first-child + p {
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  position: relative;
+}
+
+.prose h2 {
+  margin: 48px 0 12px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.prose h3 {
+  margin: 32px 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+}
+
+.prose h4 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.prose h2 a,
+.prose h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  max-width: var(--prose-width);
+  margin: 0 0 16px;
+}
+
+.prose li + li {
+  margin-top: 6px;
+}
+
+.prose li::marker {
+  color: var(--muted);
+}
+
+.prose a {
+  text-decoration-line: underline;
+  text-decoration-color: var(--accent-strong);
+  transition: text-decoration-color var(--duration-fast);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--text);
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+/* A quote is a callout: a tinted well. */
+
+.prose blockquote {
+  max-width: var(--prose-width);
+  margin: 24px 0;
+  padding: 18px 22px;
+  border-radius: var(--radius-md);
+  background: var(--info-tint);
+}
+
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prose hr {
+  height: 8px;
+  margin: 48px 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+}
+
+:not(pre) > code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-strong);
+  font-size: 0.8em;
+}
+
+/* Code: a well, with the language and the copy button in the top band */
+
+.code-block {
+  position: relative;
+  margin: 24px 0;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 44px 28px 24px;
+  overflow-x: auto;
+  font-size: 12.8px;
+  line-height: 1.75;
+  tab-size: 4;
+}
+
+.code-block pre code {
+  padding: 0;
+  background: none;
+  font: inherit;
+}
+
+.code-lang {
+  position: absolute;
+  top: 13px;
+  right: 52px;
+  z-index: 1;
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+  pointer-events: none;
+}
+
+.copy-button {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--on-ink);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    background-color var(--duration-fast),
+    color var(--duration-fast);
+}
+
+.copy-button:hover {
+  transform: translateY(-1px);
+}
+
+.copy-button:active {
+  transform: scale(0.9);
+}
+
+.copy-button[data-copied='true'] {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.copy-button[data-failed='true'] {
+  background: var(--danger);
+  color: var(--on-danger);
+  animation: shake 240ms var(--ease-out);
+}
+
+/* The label shows as a tooltip to the left, on hover, focus and after a click. */
+
+.copy-button::before {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 8px);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 500 13px/18px var(--font-sans);
+  white-space: nowrap;
+  content: attr(aria-label);
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 -50%;
+  transform: translateX(2px);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.copy-button:is(
+    :hover,
+    :focus-visible,
+    [data-copied='true'],
+    [data-failed='true']
+  )::before {
   opacity: 1;
   transform: none;
-  color: var(--accent-strong);
 }
 
-@media (hover: none) {
-  .copy-code {
-    opacity: 1;
+@media (pointer: coarse) {
+  .copy-button::after {
+    position: absolute;
+    inset: -6px;
+    content: '';
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .copy-code,
-  .copy-code .icon {
-    transition: opacity 0.15s;
+@keyframes shake {
+  25% {
+    translate: -4px 0;
   }
 
-  .copy-code:active {
-    transform: none;
+  75% {
+    translate: 4px 0;
   }
 }
 
-/* Highlighted code from twinkleplop is a <pre> of its own. */
+/* Output: a text block right after code reads as what that code prints. It sits in its own well
+   right under the code, labelled in the top band. */
+
+.code-block:has(pre[data-language='text']) pre {
+  color: var(--muted);
+}
+
+.code-block:has(pre:not([data-language='text']))
+  + .code-block:has(pre[data-language='text']) {
+  margin-top: -16px;
+}
+
+.code-block:has(pre:not([data-language='text']))
+  + .code-block:has(pre[data-language='text'])::before {
+  position: absolute;
+  top: 13px;
+  left: 28px;
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+  content: 'output';
+}
+
+.code-block:has(pre:not([data-language='text']))
+  + .code-block:has(pre[data-language='text'])
+  .code-lang {
+  display: none;
+}
+
+/* Tables: no rules; odd rows are pill stripes */
+
+.table-scroll {
+  margin: 24px 0;
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-scroll th,
+.table-scroll td {
+  padding: 10px 14px;
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-scroll thead th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.table-scroll tbody tr:nth-child(odd) td {
+  background: var(--surface);
+}
+
+.table-scroll tbody tr:nth-child(odd) td:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.table-scroll tbody tr:nth-child(odd) td:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+/* The pager at the end of a chapter: two wells that light up on hover */
+
+.pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  margin-top: 64px;
+}
+
+.pager a {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 18px 22px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
+}
+
+.pager a:hover {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.pager a:active {
+  transform: scale(0.98);
+}
+
+.pager small {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.pager-icon {
+  display: inline-flex;
+  transition: transform var(--duration) var(--ease);
+}
+
+.pager .previous:hover .pager-icon {
+  transform: translateX(-3px);
+}
+
+.pager .next:hover .pager-icon {
+  transform: translateX(3px);
+}
+
+.pager .next {
+  grid-column: 2;
+  align-items: flex-end;
+  text-align: end;
+}
+
+/* Buttons: pills */
+
+.button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px currentColor;
+  color: inherit;
+  font: 600 16px var(--font-sans);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    background-color var(--duration-fast);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.button:active {
+  transform: scale(0.96);
+}
+
+.button.primary {
+  background: var(--accent-fill);
+  box-shadow: none;
+  color: var(--on-accent);
+}
+
+.button.quiet {
+  box-shadow: none;
+}
+
+.button.quiet:hover {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  transform: none;
+}
+
+.button-icon {
+  display: inline-flex;
+  transition: transform var(--duration) var(--ease);
+}
+
+.button:hover .button-icon {
+  transform: translateX(3px);
+}
+
+/* Two or more children in one grid cell; only the one shown takes part. */
+
+.swap {
+  display: inline-grid;
+}
+
+.swap-item {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease);
+}
+
+.swap-item[aria-hidden='true'] {
+  opacity: 0;
+  transform: scale(0.6);
+  pointer-events: none;
+}
+
+/* Line numbers on the code panels of the home page */
+
+.window pre code {
+  counter-reset: line;
+}
+
+.window .l::before {
+  display: inline-block;
+  width: 2.5ch;
+  margin-right: 2ch;
+  color: var(--subtle);
+  text-align: right;
+  content: counter(line);
+  counter-increment: line;
+  user-select: none;
+}
+
+/* Home: rows of tiles */
+
+.home {
+  display: grid;
+  gap: var(--gap);
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 8px 20px 16px;
+}
+
+.home em {
+  font-style: normal;
+}
+
+/* Hero: the ink tile */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 48px;
+  align-items: center;
+  padding: 56px 48px;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.hero :focus-visible {
+  outline-color: var(--on-ink);
+}
+
+.hero-text {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  min-width: 0;
+}
+
+.hero-title {
+  justify-self: start;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(3rem, 5.6vw, 5rem);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.hero-title em {
+  display: inline-block;
+  margin-top: 0.08em;
+  padding: 0 0.18em 0.06em;
+  border-radius: 0.24em;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.home .lead {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--on-ink-muted);
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.hero-note {
+  margin: -12px 0 0;
+  color: var(--on-ink-muted);
+  font-size: 14px;
+}
+
+.hero-note code {
+  background: color-mix(in srgb, var(--on-ink) 14%, transparent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Install command: the system as pills, one command, one copy button. On the ink hero the well
+   is a lighter wash of ink. */
+
+.install {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  width: min(100%, 34rem);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.hero .install {
+  background: color-mix(in srgb, var(--on-ink) 14%, transparent);
+}
+
+.install-systems {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.install-system {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--muted);
+  font: 600 14px var(--font-sans);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
+}
+
+.install-system:hover {
+  color: var(--text);
+}
+
+.install-system:active {
+  transform: scale(0.96);
+}
+
+.install-system[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.hero .install-system {
+  color: var(--on-ink-muted);
+}
+
+.hero .install-system:hover {
+  color: var(--on-ink);
+}
+
+.hero .install-system[aria-pressed='true'] {
+  background: var(--on-ink);
+  color: var(--ink);
+}
+
+@media (pointer: coarse) {
+  .install-system {
+    min-height: 44px;
+  }
+}
+
+.install-line {
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px 0 12px;
+}
+
+.install-commands {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 85%, transparent);
+}
+
+.install-command {
+  grid-area: 1 / 1;
+  padding: 0;
+  background: none;
+  font-size: 13px;
+  line-height: 2.25rem;
+  white-space: nowrap;
+  transition:
+    opacity var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.install-command[aria-hidden='true'] {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-in);
+}
+
+.install-prompt {
+  margin-right: 0.75ch;
+  color: var(--muted);
+  user-select: none;
+}
+
+.hero .install-prompt {
+  color: var(--on-ink-muted);
+}
+
+.install-copy {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.hero .install-copy {
+  background: var(--on-ink);
+  color: var(--ink);
+}
+
+.install-copy:hover,
+.hero .install-copy:hover,
+.install-copy[data-copied='true'] {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.install-copy[data-failed='true'] {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+/* The code beside the hero is a light well on the ink tile. */
+
+.hero-code {
+  min-width: 0;
+  margin: 0;
+}
+
+/* A code panel with its file name in the top band */
+
+.window {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.hero .window {
+  background: var(--bg-elevated);
+}
+
+.window-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 28px;
+}
+
+.window-dots {
+  display: none;
+}
+
+.window-title {
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+}
+
+.window .code-block {
+  margin: 0;
+  background: none;
+}
+
+.window .code-lang {
+  display: none;
+}
+
+.window .code-block pre {
+  padding: 4px 28px 24px;
+}
+
+/* Section heads sit on the page above their tiles. */
+
+.section {
+  display: grid;
+  gap: var(--gap);
+}
+
+.section-head {
+  display: grid;
+  gap: 8px;
+  margin: 48px 0 0 8px;
+}
+
+.section-index {
+  margin: 0;
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3.8vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.section-head p:not(.section-index) {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+/* Two code panes in one tile */
+
+.compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+}
+
+.compare-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.compare-pane:last-child {
+  background: var(--accent-tint);
+}
+
+.compare-pane figcaption {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 0;
+}
+
+.compare-lang {
+  font-weight: 700;
+}
+
+.compare-file {
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+}
+
+.compare-pane .code-block {
+  flex: 1;
+  margin: 0;
+  background: none;
+}
+
+.compare-pane .code-lang {
+  display: none;
+}
+
+.compare-pane .code-block pre {
+  height: 100%;
+  padding: 12px 20px 20px;
+}
+
+.compare-output {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  margin: 0 8px 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-row);
+  background: var(--bg-elevated);
+  font-size: 14px;
+}
+
+.compare-label {
+  color: var(--muted);
+  font: 400 12px var(--font-mono);
+}
+
+.compare-output > code {
+  padding: 0;
+  background: none;
+  font: 600 15px var(--font-mono);
+}
+
+.compare-output mark {
+  padding: 0 0.25em;
+  border-radius: 4px;
+  color: inherit;
+}
+
+.compare-output mark.bad {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.compare-output mark.good {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.compare-hint {
+  color: var(--muted);
+}
+
+/* Highlighted code that is not a docs code block, such as the samples and the home page panels.
+   twinkleplop renders a <pre> of its own, which takes the type and color of its container. */
 
 .code .twinkleplop {
   margin: 0;
   padding: 0;
-  border: 0;
-  background: transparent;
+  background: none;
   font: inherit;
   overflow: visible;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.15s;
+.code .twinkleplop code {
+  padding: 0;
+  background: none;
+  font: inherit;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none;
+/* The second and later groups of the sidebar */
+
+.sidebar-title-next {
+  margin-top: 16px;
+}
+
+/* GitHub alerts in the docs, such as `[!NOTE]`: a tinted well with its title */
+
+.prose .alert {
+  max-width: var(--prose-width);
+  margin: 24px 0;
+  padding: 18px 22px;
+  border-radius: var(--radius-md);
+  background: var(--info-tint);
+}
+
+.prose .alert.warning,
+.prose .alert.caution {
+  background: var(--warning-tint);
+}
+
+.prose .alert > :last-child {
+  margin-bottom: 0;
+}
+
+.alert-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+/* Not found: one ink tile */
+
+.not-found {
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+  width: min(100% - 40px, var(--page-width) - 40px);
+  margin: 8px auto;
+  padding: 64px 48px;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.not-found h1 {
+  margin: 0;
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.not-found p {
+  margin: 0;
+  color: var(--on-ink-muted);
+  font-size: 20px;
+}
+
+.not-found :focus-visible {
+  outline-color: var(--on-ink);
+}
+
+/* Narrow screens */
+
+@media (max-width: 70rem) {
+  .docs {
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  }
+
+  .docs.no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toc {
+    display: none;
   }
 }
 
-/* Native boxes, such as those of the demos and the live samples, take the accent of the site. */
-input[type='checkbox'],
-input[type='radio'] {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: var(--accent);
-  vertical-align: -0.15em;
+@media (max-width: 48rem) {
+  .docs,
+  .docs.no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 8px 12px 16px;
+  }
+
+  .home {
+    padding: 8px 12px 16px;
+  }
+
+  .menu {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+    position: static;
+    max-height: none;
+  }
+
+  .menu[open] + .sidebar {
+    display: grid;
+  }
+
+  .prose {
+    padding: 28px 20px 32px;
+  }
+
+  .hero,
+  .not-found {
+    padding: 32px 20px;
+  }
+
+  .not-found {
+    width: calc(100% - 24px);
+  }
+
+  .header-inner {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .nav-link {
+    padding: 0 10px;
+  }
+
+  .pager {
+    grid-template-columns: 1fr;
+  }
+
+  .pager .next {
+    grid-column: 1;
+  }
+}
+
+/* On a phone the GitHub link stays in the footer, so the header keeps the pages and the theme. */
+
+@media (max-width: 34rem) {
+  .brand span,
+  .github-link {
+    display: none;
+  }
+
+  .nav-link {
+    padding: 0 9px;
+  }
+}
+
+/* Reduced motion: movement ends at once; fades stay */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-property:
+      opacity, background-color, color, box-shadow !important;
+    transition-delay: 0s !important;
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .button:hover,
+  .button:active,
+  .icon-button:active,
+  .nav-link:active,
+  .pager a:active,
+  .copy-button::before,
+  .swap-item[aria-hidden='true'],
+  .install-command[aria-hidden='true'] {
+    transform: none;
+  }
 }

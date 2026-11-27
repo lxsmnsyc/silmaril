@@ -145,54 +145,69 @@
 </figure>
 
 <style>
-  /* Live samples of the docs */
+  /* Live samples of the docs: a well with the file name and Run in the top band, the editor,
+     then the logs or the compiled output in a row inside the well. */
 
   .live {
-    margin: 1.5rem 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--code-bg);
+    margin: 24px 0;
+    padding-bottom: 8px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
     overflow: hidden;
   }
 
   .live-bar,
   .live-tabs {
     display: flex;
+    gap: var(--space-1);
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.35rem 0.5rem;
-    background: var(--surface);
-    font: 0.8rem var(--mono);
-  }
-
-  .live-bar {
-    border-bottom: 1px solid var(--border);
+    padding: 6px 8px 0 28px;
+    font: 400 12px var(--font-mono);
   }
 
   .live-tabs {
-    border-top: 1px solid var(--border);
+    padding: 0 8px 6px;
   }
 
   .live-bar button,
   .live-tabs button {
-    padding: 0.15rem 0.6rem;
-    border: 1px solid transparent;
-    border-radius: 6px;
+    min-height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-full);
     background: none;
     color: var(--muted);
-    font: inherit;
+    font: 600 13px var(--font-sans);
     cursor: pointer;
+    transition:
+      background-color var(--duration-fast),
+      color var(--duration-fast),
+      transform var(--duration-fast) var(--ease);
+  }
+
+  .live-bar button:hover,
+  .live-tabs button:hover {
+    color: var(--text);
+  }
+
+  .live-bar button:active,
+  .live-tabs button:active {
+    transform: scale(0.96);
   }
 
   .live-bar .live-run {
-    border-color: var(--border);
-    color: var(--text);
+    background: var(--ink);
+    color: var(--on-ink);
+  }
+
+  .live-bar .live-run:hover {
+    background: var(--accent-fill);
+    color: var(--on-accent);
   }
 
   .live-tabs button.active {
-    border-color: var(--border);
-    background: var(--code-bg);
-    color: var(--text);
+    background: var(--ink);
+    color: var(--on-ink);
   }
 
   .live-file {
@@ -206,18 +221,17 @@
 
   .live-editor {
     display: flex;
+    margin: 4px 0 8px;
   }
 
   .live-gutter {
     flex: none;
     min-width: 3rem;
     margin: 0;
-    padding: 0.9rem 0.75rem 0.9rem 0.5rem;
-    border-right: 1px solid var(--border);
-    color: var(--muted);
-    font: 0.85rem/1.6 var(--mono);
+    padding: 4px 4px 16px 8px;
+    color: var(--subtle);
+    font: 400 12.8px/1.75 var(--font-mono);
     text-align: right;
-    opacity: 0.6;
     user-select: none;
   }
 
@@ -230,18 +244,16 @@
   .live-backdrop,
   .live-editor textarea {
     margin: 0;
-    padding: 0.9rem 1.1rem;
-    font: 0.85rem/1.6 var(--mono);
+    padding: 4px 28px 16px 16px;
+    font: 400 12.8px/1.75 var(--font-mono);
+    font-variant-ligatures: none;
     white-space: pre;
     overflow-x: auto;
     overflow-y: hidden;
     tab-size: 2;
   }
 
-  .live-backdrop.code {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+  .live-backdrop {
     pointer-events: none;
   }
 
@@ -263,24 +275,25 @@
 
   /* The textarea has no outline, so the editor shows the focus instead. */
   .live-editor:has(textarea:focus-visible) {
-    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    outline-offset: -2px;
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
   }
 
   .live-editor textarea::selection {
-    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    background: var(--accent-tint);
     color: transparent;
   }
 
   .live-logs,
-  .live-compiled.code {
-    margin: 0;
-    padding: 0.75rem 1.1rem;
-    border: 0;
-    border-radius: 0;
-    background: var(--bg);
+  .live-compiled,
+  .live-error {
+    margin: 0 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-row);
+    background: var(--bg-elevated);
     color: var(--text);
-    font: 0.85rem/1.6 var(--mono);
+    font: 400 12.8px/1.75 var(--font-mono);
+    font-variant-ligatures: none;
     overflow-x: auto;
   }
 
@@ -293,12 +306,9 @@
   }
 
   .live-error {
-    margin: 0;
-    padding: 0.75rem 1.1rem;
-    border: 0;
-    border-radius: 0;
-    background: color-mix(in srgb, #e5484d 12%, var(--bg));
-    color: var(--text);
+    margin-bottom: 8px;
+    background: var(--danger-tint);
+    color: var(--danger);
     white-space: pre-wrap;
   }
 </style>
