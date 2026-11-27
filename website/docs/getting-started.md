@@ -45,7 +45,7 @@ export default defineConfig({
 });
 ```
 
-The plugin compiles every `.js`, `.jsx`, `.ts` and `.tsx` module that imports from `silmaril`. Other modules are not touched.
+The plugin compiles every `.js`, `.jsx`, `.ts` and `.tsx` module whose code contains the text `silmaril`. A module that imports no compile-time name from `silmaril` comes back unchanged.
 
 ## First example
 

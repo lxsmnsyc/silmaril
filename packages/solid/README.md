@@ -14,7 +14,7 @@
 + import { fromSignal, fromStore } from 'silmaril/solid';
 ```
 
-The API is the same. See the [`silmaril` README](https://github.com/lxsmnsyc/silmaril#solidjs) for usage.
+The API is the same. See [SolidJS](https://silmaril-docs.vercel.app/docs/solid) in the docs for usage.
 
 ## Sponsors
 
