@@ -23,7 +23,9 @@ test('the runtime stays under 1.5 kB minified and gzipped', async () => {
       outDir,
       logLevel: 'silent',
     });
-    const size = gzipSync(readFileSync(join(outDir, 'index.js')), { level: 9 }).length;
+    const size = gzipSync(readFileSync(join(outDir, 'index.js')), {
+      level: 9,
+    }).length;
     expect(size).toBeLessThan(LIMIT);
   } finally {
     rmSync(outDir, { recursive: true, force: true });

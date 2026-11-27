@@ -1,5 +1,7 @@
 # Composition
 
+A composable is reactive code in a function that you can call from several setups. A `$` or `$sync` body is also a scope, so you can nest reactive code in it.
+
 ## `$composable`
 
 `$composable(setup)` wraps a function so that it can use reactive variables, `$`, `$sync`, `$store`, `onMount` and `onDestroy`. Call it from a `$$`, another `$composable`, or the body of a `$` or `$sync`.

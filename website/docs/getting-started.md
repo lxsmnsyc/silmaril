@@ -12,22 +12,11 @@ This page installs `silmaril` in a Vite project and runs a first example.
 ## Install
 
 ```bash
-npm install --save silmaril
-```
-
-```bash
-yarn add silmaril
-```
-
-```bash
-pnpm add silmaril
-```
-
-This page also uses Vite.
-
-```bash
+npm install silmaril
 npm install --save-dev vite
 ```
+
+With pnpm, run `pnpm add silmaril` and `pnpm add -D vite`. With yarn, run `yarn add silmaril` and `yarn add -D vite`.
 
 `silmaril` compiles your code at build time with `silmaril/compiler`, which uses [oxc-parser](https://oxc.rs/) and [magic-string](https://github.com/Rich-Harris/magic-string). Both install with `silmaril`. The runtime (`silmaril`, `silmaril/store` and `silmaril/solid`) has no dependencies.
 
