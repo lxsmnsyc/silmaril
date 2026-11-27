@@ -3,8 +3,8 @@ import {
   createEffect,
   createRoot,
   createSignal,
-  on,
   onCleanup,
+  runWithOwner,
   type Signal,
   untrack,
 } from 'solid-js';
@@ -19,29 +19,49 @@ export function fromSignal<T>([get, set]: Signal<T>): SignalStore<T> {
       return untrack(get);
     },
     set(value: T) {
-      set(() => value);
+      // A store write comes from outside Solid, even when silmaril runs it
+      // inside a component body. Without an owner, Solid does not treat it as
+      // a write from a computation.
+      runWithOwner(null, () => {
+        set(() => value);
+      });
     },
     subscribe(callback) {
-      return createRoot((cleanup) => {
-        createEffect(on(get, callback));
-        return cleanup;
-      });
+      // The root is detached, so the subscription lasts until the returned
+      // function runs, not until the owner active at subscribe time is
+      // disposed.
+      return runWithOwner(null, () =>
+        createRoot((dispose) => {
+          createEffect(get, () => {
+            callback();
+          });
+          return dispose;
+        }),
+      );
     },
   };
 }
 
 export function fromStore<T>(store: Store<T>): Signal<T> {
-  const [get, set] = createSignal(store.get());
+  // The compute form holds any value, functions included. The plain form
+  // would call a function value as a compute function.
+  const [get, set] = createSignal<T>(() => untrack(() => store.get()));
 
-  createEffect(() => {
+  // Writes from Solid reach the store.
+  createEffect(get, (value) => {
     if (store.set) {
-      store.set(get());
+      store.set(value);
     }
   });
 
+  // Changes from the store reach the signal, until the owner is disposed.
+  // The store can change inside a Solid owner, for example from a silmaril
+  // scope in a component body, so the write runs without one.
   onCleanup(
     store.subscribe(() => {
-      set(() => store.get());
+      runWithOwner(null, () => {
+        set(() => store.get());
+      });
     }),
   );
 

@@ -408,7 +408,7 @@ $$(() => {
 
 ## SolidJS
 
-`silmaril/solid` connects `silmaril` stores with [SolidJS](https://www.solidjs.com/) signals. It requires `solid-js` to be installed. This replaces the deprecated `solid-silmaril` package.
+`silmaril/solid` connects `silmaril` stores with [SolidJS](https://www.solidjs.com/) signals. It requires `solid-js` 2.0 to be installed. This replaces the deprecated `solid-silmaril` package.
 
 ### `fromSignal`
 
@@ -423,8 +423,8 @@ const [count, setCount] = createSignal(0);
 
 const countStore = fromSignal([count, setCount]);
 
-createEffect(() => {
-  console.log('SolidJS Count:', count());
+createEffect(count, (value) => {
+  console.log('SolidJS Count:', value);
 });
 
 $$(() => {
@@ -458,8 +458,8 @@ $$(() => {
   $sync(console.log('Silmaril Count:', counter));
 });
 
-createEffect(() => {
-  console.log('SolidJS Count:', count());
+createEffect(count, (value) => {
+  console.log('SolidJS Count:', value);
 });
 
 setInterval(() => {
