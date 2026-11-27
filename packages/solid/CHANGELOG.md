@@ -1,5 +1,16 @@
 # solid-silmaril
 
+## 0.6.0
+
+### Minor Changes
+
+- [#41](https://github.com/lxsmnsyc/silmaril/pull/41) [`b55cf5b`](https://github.com/lxsmnsyc/silmaril/commit/b55cf5bb1102348812053546b53948787c58b43b) Thanks [@lxsmnsyc](https://github.com/lxsmnsyc)! - `silmaril/solid` supports Solid 2.0 and drops Solid 1.x: the `solid-js` peer dependency is now `^2.0.0`. Stay on silmaril 0.5 for Solid 1.x.
+
+### Patch Changes
+
+- Updated dependencies [[`b55cf5b`](https://github.com/lxsmnsyc/silmaril/commit/b55cf5bb1102348812053546b53948787c58b43b)]:
+  - silmaril@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

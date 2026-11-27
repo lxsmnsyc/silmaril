@@ -1,5 +1,12 @@
 # vite-plugin-silmaril
 
+## 0.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`b55cf5b`](https://github.com/lxsmnsyc/silmaril/commit/b55cf5bb1102348812053546b53948787c58b43b)]:
+  - silmaril@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
