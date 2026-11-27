@@ -1,0 +1,78 @@
+<script>
+  import { $signal } from 'brumate/signals';
+  import Icon from './Icon.brm';
+
+  // The install command, with the package manager as pills and one copy button.
+  const COMMANDS = [
+    { id: 'npm', command: 'npm install silmaril' },
+    { id: 'pnpm', command: 'pnpm add silmaril' },
+    { id: 'yarn', command: 'yarn add silmaril' },
+    { id: 'bun', command: 'bun add silmaril' },
+  ];
+
+  let manager = $signal('npm');
+  let copied = $signal(false);
+  let failed = $signal(false);
+  let timer = 0;
+
+  async function copyCommand() {
+    let text = '';
+    for (const item of COMMANDS) {
+      if (item.id === manager) {
+        text = item.command;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch {
+      failed = true;
+    }
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      copied = false;
+      failed = false;
+    }, 1500);
+  }
+
+  function choose(id: string) {
+    manager = id;
+    copied = false;
+    failed = false;
+  }
+</script>
+
+<div class="install">
+  <div class="install-systems" role="group" aria-label="Package manager">
+    #for (item of COMMANDS by item.id) {
+      <button
+        type="button"
+        class="install-system"
+        aria-pressed=(manager === item.id ? 'true' : 'false')
+        onClick=(() => choose(item.id))
+      >{item.id}</button>
+    }
+  </div>
+  <div class="install-line">
+    <div class="install-commands">
+      #for (item of COMMANDS by item.id) {
+        <code class="install-command" aria-hidden=(manager === item.id ? 'false' : 'true')><span class="install-prompt" aria-hidden="true">$</span>{item.command}</code>
+      }
+    </div>
+    <button
+      type="button"
+      class="icon-button install-copy"
+      aria-label=(failed ? 'Copy failed' : copied ? 'Copied' : 'Copy')
+      title=(failed ? 'Copy failed' : copied ? 'Copied' : 'Copy')
+      data-copied=(copied ? 'true' : 'false')
+      data-failed=(failed ? 'true' : 'false')
+      onClick=copyCommand
+    >
+      <span class="swap">
+        <span class="swap-item" aria-hidden=(copied || failed ? 'true' : 'false')><Icon name="copy" size=(16) /></span>
+        <span class="swap-item" aria-hidden=(copied ? 'false' : 'true')><Icon name="check" size=(16) /></span>
+        <span class="swap-item" aria-hidden=(failed ? 'false' : 'true')><Icon name="alert" size=(16) /></span>
+      </span>
+    </button>
+  </div>
+</div>

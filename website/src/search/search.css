@@ -1,0 +1,316 @@
+/* The search trigger in the header and the search palette, after Banig's SearchDialog: a tile over
+   a scrim, the selected result filled with the accent. The state of the palette is `data-state`
+   on `.search`, so a transition that is in progress turns around from where it is. */
+
+.search-trigger {
+  display: flex;
+  flex: 0 1 272px;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  height: var(--control-height);
+  margin-inline-end: var(--gap);
+  padding: 0 10px 0 16px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast),
+    transform var(--duration-fast) var(--ease);
+}
+
+.search-trigger:hover {
+  background: var(--surface-strong);
+}
+
+.search-trigger:active {
+  transform: scale(0.97);
+}
+
+.search-trigger-label {
+  flex: 1;
+  text-align: start;
+}
+
+.search-trigger-key,
+.search-esc {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--muted);
+  font: 400 12px/1 var(--font-mono);
+}
+
+.search {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(14vh, 8rem) 12px 12px;
+  visibility: hidden;
+  transition: visibility 0s linear var(--duration-fast);
+}
+
+.search[data-state='open'] {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+:root[data-search] {
+  overflow: hidden;
+}
+
+.search-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: var(--scrim);
+  cursor: default;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-in);
+}
+
+.search[data-state='open'] .search-overlay {
+  opacity: 1;
+  transition: opacity var(--duration) var(--ease-out);
+}
+
+.search-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: min(544px, 100%);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transition:
+    opacity var(--duration-fast) var(--ease-in),
+    transform var(--duration-fast) var(--ease-in);
+}
+
+.search[data-state='open'] .search-panel {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.search-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 8px 8px 0;
+  padding: 0 12px 0 16px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.search-input-row:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 400 16px var(--font-sans);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-esc {
+  background: var(--bg-elevated);
+}
+
+.search-results {
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+}
+
+.search-results:not(:has(.search-result)) {
+  display: none;
+}
+
+/* One accent thumb glides to the selected result. Until the script places it, the selected row
+   fills itself. */
+
+.search-thumb {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  left: 8px;
+  z-index: 0;
+  border-radius: var(--radius-row);
+  background: var(--accent-fill);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.search-thumb[data-placed] {
+  opacity: 1;
+}
+
+.search-thumb[data-ready] {
+  transition: transform var(--duration) var(--ease);
+}
+
+.search-results:has(.search-thumb[data-placed])
+  .search-result[aria-selected='true'] {
+  background: none;
+}
+
+.search-result {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-row);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast);
+}
+
+.search-result:hover {
+  background: var(--surface);
+}
+
+.search-result[aria-selected='true'] {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.search-result-icon {
+  display: inline-flex;
+  color: var(--muted);
+}
+
+.search-result[aria-selected='true'] .search-result-icon {
+  color: var(--on-accent);
+}
+
+.search-result-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.search-result-title {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-weight: 600;
+}
+
+.search-result-page,
+.search-result-text {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.search-result-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.search-result[aria-selected='true']
+  :is(.search-result-page, .search-result-text) {
+  color: var(--on-accent);
+}
+
+.search-result-enter {
+  display: inline-flex;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease);
+}
+
+.search-result[aria-selected='true'] .search-result-enter {
+  opacity: 1;
+  transform: none;
+}
+
+.search-empty {
+  margin: 0;
+  padding: 40px 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.search-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 48rem) {
+  .search-trigger {
+    flex: none;
+    justify-content: center;
+    width: var(--control-height);
+    margin-inline-end: 4px;
+    padding: 0;
+  }
+
+  .search-trigger-label,
+  .search-trigger-key,
+  .search-esc {
+    display: none;
+  }
+
+  .search {
+    padding-top: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-panel,
+  .search[data-state='open'] .search-panel,
+  .search-result-enter {
+    transform: none;
+  }
+}
+
+/* The palette sits inside the header, so the header rises above the page's hover popups while it is open. */
+.header:has(.search[data-state='open']) {
+  z-index: calc(var(--z-skip) + 1);
+}

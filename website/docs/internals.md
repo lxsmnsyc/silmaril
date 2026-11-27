@@ -2,6 +2,9 @@
 
 silmaril decides at compile time which code each variable feeds. The compiler writes that graph into the module, and the runtime follows it. This page walks through one setup, then describes slots, entries, the order of runs and the loop guard.
 
+> [!NOTE]
+> This page describes the current implementation for contributors and curious users. The compiled output and the runtime functions are not public API, and they can change in any 0.x release.
+
 ## Step by step
 
 This sample has one written variable, one computed variable and two entries that read:
@@ -117,6 +120,21 @@ The compiler decides the reads of an entry:
 - A call by name to a local function adds the reads of that function. See [limits](./limits.md) for the calls that are not followed.
 - An entry does not read the slots of its own child scope, because running the body again would reset them. If it reads a memo of its child scope, it gets that memo's reads instead.
 
+## Where the code lives
+
+| Stage                         | Path                                                        |
+| ----------------------------- | ----------------------------------------------------------- |
+| Parse                         | `packages/silmaril/compiler/source.ts`                      |
+| Imports of compile-time names | `packages/silmaril/compiler/analysis/imports.ts`            |
+| Scopes, slots and entries     | `packages/silmaril/compiler/analysis/model.ts`, `scope.ts`  |
+| Reads and writes              | `packages/silmaril/compiler/analysis/reads.ts`, `writes.ts` |
+| Compile errors                | `packages/silmaril/compiler/analysis/checks.ts`             |
+| Output                        | `packages/silmaril/compiler/codegen/`                       |
+| Runtime                       | `packages/silmaril/src/index.ts`                            |
+| Bundler plugin                | `packages/silmaril/unplugin/index.ts`                       |
+
+Start with `compile` in `packages/silmaril/compiler/index.ts`. The fixtures in `packages/silmaril/test/runtime/fixtures/` hold an input, its compiled output and the expected logs. The Compiled tab of a sample on this site shows the output for your own code.
+
 ## Size
 
-The runtime has no dependencies. It stays under the 1.5 kB gzip cap.
+The runtime has no dependencies. It stays under 1.5 kB minified and gzipped. `packages/silmaril/test/size.test.ts` fails when it does not.

@@ -1,9 +1,13 @@
 <script>
-  import { $props } from 'brumate/signals';
+  import { $client, $props, $signal } from 'brumate/signals';
+  import { addCopyButtons, followHeadings } from '../docs-client/enhance.ts';
   import { pages, sections } from '../docs.ts';
+  import Icon from './Icon.brm';
   import LiveSample from './LiveSample.brm';
   import Meta from './Meta.brm';
 
+  // A page of the docs: its title, its parts, the links to the pages before and after it, and
+  // an outline that follows the section in view. The sidebar is in `DocsShell.brm`.
   const { slug } = $props<{ slug: string }>();
   const base = import.meta.env.BASE_URL;
   const brand = 'silmaril';
@@ -16,131 +20,75 @@
   const contents = (page?.headings ?? []).filter(
     (heading) => heading.level === 2 || heading.level === 3,
   );
+  // The kicker above the title names the sidebar section of the page.
+  const kicker = sections.find((group) => group.pages.some((item) => item.slug === slug))?.title;
+  const title = page ? (page.title === brand ? brand : `${page.title} | ${brand}`) : `Not found | ${brand}`;
+
+  let article = $signal<HTMLElement>();
+  let toc = $signal<HTMLElement>();
+
+  $client(() => {
+    if (!article) {
+      return undefined;
+    }
+    addCopyButtons(article);
+    return toc ? followHeadings(article, toc) : undefined;
+  }, 'idle');
 </script>
 
 #head {
-  <title>{page ? (page.title === brand ? brand : `${page.title} | ${brand}`) : `Not found | ${brand}`}</title>
+  <title>{title}</title>
 }
 
 #if (page) {
-  <Meta
-    title=(page.title === brand ? brand : `${page.title} | ${brand}`)
-    description=page.description
-    path=(slug ? `docs/${slug}` : 'docs')
-    type="article"
-  />
+  <Meta title=title description=page.description path=(slug ? `docs/${slug}` : 'docs') type="article" />
 }
-<article class="prose">
+<article class="prose" ref=$bind(article)>
   #if (page) {
-    #for (part, index of page.parts by index) {
-      #if ('sample' in part) {
-        <LiveSample name=(part.sample.name) source=(part.sample.source) />
-      } #else {
-        {part.html}
+    <header class="doc-head">
+      #if (kicker) {
+        <p class="doc-kicker">{kicker}</p>
       }
+      <h1 class="doc-title">{page.title}</h1>
+    </header>
+    <div class="doc-body">
+      #for (part, position of page.parts by position) {
+        #if ('sample' in part) {
+          <LiveSample name=(part.sample.name) source=(part.sample.source) />
+        } #else {
+          {part.html}
+        }
+      }
+    </div>
+    #if (previous || next) {
+      <nav class="pager" aria-label="Pages">
+        #if (previous) {
+          <a class="previous" href=(link(previous.slug))>
+            <small><span class="pager-icon"><Icon name="arrow-left" size=(14) /></span>Previous</small>
+            <span>{previous.title}</span>
+          </a>
+        }
+        #if (next) {
+          <a class="next" href=(link(next.slug))>
+            <small>Next<span class="pager-icon"><Icon name="arrow-right" size=(14) /></span></small>
+            <span>{next.title}</span>
+          </a>
+        }
+      </nav>
     }
-    <nav class="pager" aria-label="Pages">
-      #if (previous) {
-        <a class="previous" href=(link(previous.slug))><small>Previous</small>{previous.title}</a>
-      }
-      #if (next) {
-        <a class="next" href=(link(next.slug))><small>Next</small>{next.title}</a>
-      }
-    </nav>
   } #else {
-    <h1>Not found</h1>
+    <header class="doc-head">
+      <h1 class="doc-title">Not found</h1>
+    </header>
     <p>No page at this address. <a href=(link(''))>Back to the documentation</a>.</p>
   }
 </article>
-<nav class="toc" aria-label="On this page">
+<nav class="toc" aria-label="On this page" ref=$bind(toc)>
   #if (contents.length > 0) {
-    <p>On this page</p>
+    <p class="toc-title">On this page</p>
+    <span class="toc-indicator" aria-hidden="true"></span>
     #for (heading of contents by heading.id) {
-      <a href=(`#${heading.id}`) class=(`level-${heading.level}`)>{heading.text}</a>
+      <a href=(`#${heading.id}`) class={ 'level-3': heading.level === 3 }>{heading.text}</a>
     }
   }
 </nav>
-
-<style>
-  .toc {
-    position: sticky;
-    top: var(--header-height);
-    align-self: start;
-    max-height: calc(100vh - var(--header-height));
-    padding: 1.5rem 0;
-    overflow-y: auto;
-  }
-
-  .toc p {
-    margin: 1rem 0 0.3rem;
-    padding: 0 0.75rem;
-    color: var(--muted);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
-
-  .toc p {
-    margin-top: 0;
-  }
-
-  .toc a {
-    display: block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    color: var(--muted);
-    font-size: 0.925rem;
-    text-decoration: none;
-  }
-
-  .toc a:hover {
-    color: var(--text);
-  }
-
-  .toc a {
-    font-size: 0.85rem;
-  }
-
-  .toc a.level-3 {
-    padding-left: 1.5rem;
-  }
-
-  .pager {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 3.5rem;
-  }
-
-  .pager a {
-    display: flex;
-    flex-direction: column;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .pager a:hover {
-    border-color: var(--accent);
-  }
-
-  .pager small {
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  .pager .next {
-    grid-column: 2;
-    text-align: right;
-  }
-
-  @media (max-width: 1100px) {
-    .toc {
-        display: none;
-      }
-  }
-</style>

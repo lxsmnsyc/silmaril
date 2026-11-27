@@ -1,11 +1,13 @@
 # silmaril website
 
-The documentation of silmaril, built with [brumate](https://github.com/lxsmnsyc/brumate). The layout follows the website of brumate.
+The documentation of silmaril, built with [brumate](https://github.com/lxsmnsyc/brumate). The look follows Banig, the shared design of the project websites. Its tokens sit between `tokens:start` and `tokens:end` in [`src/styles.css`](./src/styles.css), with the accent made from the sky blue of the logo. The fonts in [`public/fonts`](./public/fonts) are Bricolage Grotesque and Martian Mono, under the OFL.
 
-- The pages are Markdown files in [`docs`](./docs). [`plugins/markdown.ts`](./plugins/markdown.ts) renders them with markdown-it and highlights code with twinkleplop at build time. [`src/docs.ts`](./src/docs.ts) orders them in the sidebar.
-- To add a page, add `docs/<name>.md` and list `<name>` in a section of [`src/docs.ts`](./src/docs.ts). The URL is `/docs/<name>`.
+- The pages are Markdown files in [`docs`](./docs). [`plugins/markdown.ts`](./plugins/markdown.ts) renders them with markdown-it and highlights code with twinkleplop at build time. [`src/sections.ts`](./src/sections.ts) orders them in the sidebar.
+- To add a page, add `docs/<name>.md` and list `<name>` in a section of [`src/sections.ts`](./src/sections.ts). The URL is `/docs/<name>`.
 - The routes are in [`src/routes`](./src/routes). The build renders each one to a static HTML file with the `prerender` option of the brumate plugin, so the site needs no server.
 - [`plugins/search.ts`](./plugins/search.ts) builds the search index from the pages.
+- [`plugins/llms.ts`](./plugins/llms.ts) writes `llms.txt`, `llms-full.txt` and a Markdown copy of each page.
+- The demo of the landing page is [`src/hero/cart.js`](./src/hero/cart.js). `silmaril/unplugin` compiles it, and [`plugins/highlight.ts`](./plugins/highlight.ts) highlights its source and compiled output at build time.
 - The site uses the `silmaril` package of this workspace.
 
 Run it from the root of the repository:

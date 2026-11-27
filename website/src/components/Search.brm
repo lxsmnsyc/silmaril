@@ -1,164 +1,244 @@
 <script>
-  import { $signal } from 'brumate/signals';
+  import { $client, $effect, $memo, $signal } from 'brumate/signals';
+  import { prevent } from 'brumate/events';
+  import Icon from './Icon.brm';
+  import { loadIndex, runSearch } from '../search/search.ts';
+  import type { SearchResult } from '../search/search.ts';
 
-  interface Result {
-    href: string;
-    title: string;
-    page: string;
-    text: string;
-  }
-
-  const base = import.meta.env.BASE_URL;
-  let query = $signal('');
-  let results = $signal<Result[]>([]);
+  // The trigger in the header and the search palette. The palette is always in the page, hidden
+  // and inert while closed, so it can animate in both directions. The entries and the search
+  // library load when it opens for the first time.
   let open = $signal(false);
+  let query = $signal('');
+  let results = $signal<SearchResult[]>([]);
+  let active = $signal(0);
+  let modifier = $signal('Ctrl');
+  let trigger = $signal<HTMLButtonElement>();
+  let input = $signal<HTMLInputElement>();
+  let thumb = $signal<HTMLElement>();
 
-  // The index loads the first time someone types, so pages do not load it before.
-  async function find(value: string) {
-    query = value;
+  const hasQuery = $memo(query.trim() !== '');
+  const activeId = $memo(results.length > 0 ? `search-option-${active}` : undefined);
+  const status = $memo(
+    !hasQuery
+      ? ''
+      : results.length === 0
+        ? 'No results'
+        : `${results.length} ${results.length === 1 ? 'result' : 'results'}`,
+  );
+
+  // Only the newest query may write its results.
+  let latest = 0;
+
+  function openSearch() {
     open = true;
-    const terms = value.toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) {
-      results = [];
-      return;
+    // Show the palette and focus its input now, not after the next render, so keys typed right
+    // after Cmd+K or / land in the input.
+    const root = input?.closest<HTMLElement>('.search');
+    if (root && input) {
+      root.removeAttribute('inert');
+      root.dataset.state = 'open';
+      input.focus();
     }
-    const { index } = await import('virtual:search-index');
-    const scored = index.flatMap((entry) => {
-      const heading = entry.heading.toLowerCase();
-      const text = entry.text.toLowerCase();
-      if (!terms.every((term) => heading.includes(term) || text.includes(term))) {
-        return [];
-      }
-      const score = terms.reduce((sum, term) => sum + (heading.includes(term) ? 3 : 1), 0);
-      const at = Math.max(0, text.indexOf(terms[0]!) - 40);
-      return [
-        {
-          score,
-          href: `${base}docs${entry.page ? `/${entry.page}` : ''}${entry.id ? `#${entry.id}` : ''}`,
-          title: entry.heading,
-          page: entry.pageTitle,
-          text: `${at > 0 ? '…' : ''}${entry.text.slice(at, at + 120)}…`,
-        },
-      ];
-    });
-    // Only the answer to the latest query is shown.
-    if (query === value) {
-      results = scored.toSorted((a, b) => b.score - a.score).slice(0, 8);
-    }
+    // The entries load while the palette animates in.
+    loadIndex();
   }
-</script>
 
-<div class="search" onFocusOut=((event) => {
-  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+  function closeSearch() {
     open = false;
   }
-})>
-  <input
-    type="search"
-    placeholder="Search the docs"
+
+  async function search(value: string) {
+    query = value;
+    latest += 1;
+    const turn = latest;
+    const found = await runSearch(value);
+    if (turn === latest) {
+      results = found;
+      active = 0;
+    }
+  }
+
+  function openResult(result: SearchResult) {
+    // A link that is clicked goes through the client navigation of the site.
+    const link = document.createElement('a');
+    link.href = result.href;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    closeSearch();
+  }
+
+  function onInputKey(event: KeyboardEvent) {
+    if (event.key === 'ArrowDown' && results.length > 0) {
+      active = (active + 1) % results.length;
+    } else if (event.key === 'ArrowUp' && results.length > 0) {
+      active = (active - 1 + results.length) % results.length;
+    } else if (event.key === 'Enter') {
+      // The result on screen opens, so a query still on its way does not change the target.
+      const result = results[active];
+      if (result) {
+        openResult(result);
+      }
+    }
+  }
+
+  function onPanelKey(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      closeSearch();
+    }
+  }
+
+  function keepFocus(event: FocusEvent) {
+    // Focus that leaves the palette goes back to its input.
+    const panel = event.currentTarget as HTMLElement;
+    if (input && event.relatedTarget instanceof Node && !panel.contains(event.relatedTarget)) {
+      input.focus();
+    }
+  }
+
+  // Focus moves to the input when the palette opens and back to the trigger when it closes.
+  $effect(() => {
+    document.documentElement.toggleAttribute('data-search', open);
+    if (open) {
+      requestAnimationFrame(() => {
+        input?.focus();
+        input?.select();
+      });
+    } else {
+      trigger?.focus({ preventScroll: true });
+      // The next opening places the selection without a slide.
+      if (thumb) {
+        delete thumb.dataset.placed;
+        delete thumb.dataset.ready;
+      }
+    }
+  });
+
+  // The active result stays in view, and the accent thumb glides to it. Only transform animates;
+  // the height snaps. The first placement after opening does not slide.
+  $effect(() => {
+    const count = results.length;
+    if (!open || !activeId || count === 0) {
+      return;
+    }
+    const id = activeId;
+    requestAnimationFrame(() => {
+      const option = document.getElementById(id);
+      option?.scrollIntoView({ block: 'nearest' });
+      const marker = thumb;
+      if (!marker || !option) {
+        return;
+      }
+      marker.style.transform = `translateY(${option.offsetTop}px)`;
+      marker.style.height = `${option.offsetHeight}px`;
+      if (marker.dataset.placed) {
+        marker.dataset.ready = 'true';
+      }
+      marker.dataset.placed = 'true';
+    });
+  });
+
+  $client(() => {
+    modifier = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
+    // Cmd or Ctrl and K open search anywhere, and `/` opens it outside a field.
+    function onShortcut(event: KeyboardEvent) {
+      const target = event.target;
+      const typing =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT');
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        if (open) {
+          closeSearch();
+        } else {
+          openSearch();
+        }
+      } else if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        openSearch();
+      }
+    }
+    document.addEventListener('keydown', onShortcut);
+    return () => document.removeEventListener('keydown', onShortcut);
+  }, 'idle');
+</script>
+
+<button
+  class="search-trigger"
+  type="button"
+  ref=$bind(trigger)
+  aria-haspopup="dialog"
+  aria-expanded=(open ? 'true' : 'false')
+  aria-keyshortcuts="Control+K Meta+K"
+  onClick=openSearch
+>
+  <Icon name="search" size=(16) />
+  <span class="search-trigger-label">Search</span>
+  <kbd class="search-trigger-key">{modifier} K</kbd>
+</button>
+<div class="search" data-state=(open ? 'open' : 'closed') inert=(!open)>
+  <button class="search-overlay" type="button" tabindex="-1" aria-label="Close search" onClick=closeSearch></button>
+  <div
+    class="search-panel"
+    role="dialog"
+    aria-modal="true"
     aria-label="Search the docs"
-    value=query
-    onInput=((event) => find(event.currentTarget.value))
-    onFocus=(() => (open = true))
+    onKeyDown=(prevent(onPanelKey, 'Escape'))
+    onFocusOut=keepFocus
   >
-  #if (open && query) {
-    <div class="search-results" role="listbox">
-      #for (result of results by result.href) {
-        <a href=(result.href) onClick=(() => (open = false))>
-          <strong>{result.title}</strong>
-          <small>{result.page}</small>
-          <span>{result.text}</span>
+    <div class="search-input-row">
+      <Icon name="search" size=(18) />
+      <input
+        class="search-input"
+        type="text"
+        role="combobox"
+        placeholder="Search the docs"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Search the docs"
+        aria-autocomplete="list"
+        aria-controls="search-results"
+        aria-expanded=(results.length > 0 ? 'true' : 'false')
+        aria-activedescendant=activeId
+        ref=$bind(input)
+        value=query
+        onInput=((event) => search(event.currentTarget.value))
+        onKeyDown=(prevent(onInputKey, 'ArrowDown', 'ArrowUp', 'Enter'))
+      >
+      <kbd class="search-esc">Esc</kbd>
+    </div>
+    <div class="search-results" id="search-results" role="listbox" aria-label="Results">
+      <span class="search-thumb" aria-hidden="true" ref=$bind(thumb)></span>
+      #for (result, position of results by result.id) {
+        <a
+          class="search-result"
+          id=(`search-option-${position}`)
+          role="option"
+          href=(result.href)
+          tabindex="-1"
+          aria-selected=(position === active ? 'true' : 'false')
+          onClick=closeSearch
+          onMouseMove=(() => (active = position))
+        >
+          <span class="search-result-icon"><Icon name=(result.section ? 'hash' : 'file') size=(16) /></span>
+          <span class="search-result-body">
+            <span class="search-result-title">
+              {result.heading}
+              #if (result.section) {
+                <span class="search-result-page">{result.page}</span>
+              }
+            </span>
+            <span class="search-result-text">{result.snippet}</span>
+          </span>
+          <span class="search-result-enter"><Icon name="corner-down-left" size=(16) /></span>
         </a>
-      } #else {
-        <p class="search-empty">No results</p>
       }
     </div>
-  }
+    #if (results.length === 0) {
+      <p class="search-empty">{hasQuery ? `No results for “${query.trim()}”` : 'Search every page of the docs.'}</p>
+    }
+    <p class="search-status" role="status">{status}</p>
+  </div>
 </div>
-
-<style>
-  /* Search */
-
-  .search {
-    position: relative;
-    flex: 0 1 18rem;
-    margin: 0 1rem;
-  }
-
-  .search input {
-    width: 100%;
-    padding: 0.4rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.9rem;
-  }
-
-  .search input:focus {
-    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    outline-offset: 1px;
-  }
-
-  .search-results {
-    position: absolute;
-    top: calc(100% + 0.4rem);
-    right: 0;
-    left: 0;
-    min-width: 20rem;
-    max-height: 70vh;
-    padding: 0.35rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    box-shadow: var(--shadow);
-    overflow-y: auto;
-  }
-
-  .search-results a {
-    display: grid;
-    gap: 0.1rem;
-    padding: 0.5rem 0.65rem;
-    border-radius: 8px;
-    color: var(--text);
-    text-decoration: none;
-  }
-
-  .search-results a:hover,
-  .search-results a:focus {
-    background: var(--surface);
-  }
-
-  .search-results small {
-    color: var(--accent-strong);
-    font-size: 0.75rem;
-  }
-
-  .search-results span {
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-
-  .search-empty {
-    margin: 0;
-    padding: 0.6rem;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-
-  @media (max-width: 800px) {
-    .search {
-        flex-basis: 9rem;
-        margin: 0 0.5rem;
-      }
-  }
-
-  @media (max-width: 640px) {
-    .search {
-        order: 1;
-        flex: 1 1 100%;
-        margin: 0;
-      }
-  }
-</style>

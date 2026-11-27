@@ -64,12 +64,14 @@ const LANGUAGES = {
 
 /**
  * Code blocks take focus, so a keyboard can scroll one that is wider than the page, as WCAG
- * asks of a region that scrolls.
+ * asks of a region that scrolls. Each block sits in a well with its language in the top band.
+ * `src/docs-client/enhance.ts` adds the copy button in the browser.
  */
 function focusableCode(html: string): string {
-  return html.replaceAll(
-    '<pre class="twinkleplop',
-    '<pre tabindex="0" class="twinkleplop',
+  return html.replace(
+    /<pre class="twinkleplop([^"]*)" data-language="([^"]*)"([\s\S]*?)<\/pre>/g,
+    (_, classes: string, language: string, rest: string) =>
+      `<div class="code-block">${language ? `<span class="code-lang">${language}</span>` : ''}<pre tabindex="0" role="group" aria-label="Code" class="twinkleplop${classes}" data-language="${language}"${rest}</pre></div>`,
   );
 }
 
@@ -171,6 +173,10 @@ function createRenderer(base: string): MarkdownIt {
     on_unknown_language: 'plain',
   });
   parser.use(alerts);
+  // A wide table scrolls, and a region that scrolls takes focus.
+  parser.renderer.rules.table_open = () =>
+    '<div class="table-scroll" role="group" aria-label="Table" tabindex="0">\n<table>\n';
+  parser.renderer.rules.table_close = () => '</table>\n</div>\n';
   parser.renderer.rules.link_open = (tokens, index, options, _env, self) => {
     const token = tokens[index]!;
     const href = token.attrGet('href');

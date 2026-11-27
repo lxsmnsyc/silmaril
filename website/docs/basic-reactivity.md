@@ -108,7 +108,7 @@ A write inside `$skip` is still a write. The comment form `/* $skip */` is a com
 
 A `$` that writes a variable it reads runs again after the write, until the value settles.
 
-One write that runs more than 10,000 entries in one pass throws `Update loop`. A cycle that settles is not an error. [Internals](./internals.md#the-loop-guard) explains how the guard counts.
+A value that never settles throws `Update loop`. See [the loop guard](./limits.md#the-loop-guard).
 
 ## TypeScript
 

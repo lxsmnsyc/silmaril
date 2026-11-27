@@ -46,7 +46,7 @@ A `$` that was queued runs even if later writes put the old value back.
 
 ## Loops
 
-One write that runs more than 10,000 entries in one pass throws `Update loop`. A `$` flush counts the `$` bodies that ran before, and throws the same error after 10,000. A first run does not count. [Internals](./internals.md#the-order-of-runs) shows the order of runs step by step.
+An entry that writes what it reads runs again until the value settles. A value that never settles throws `Update loop`. [The loop guard](./limits.md#the-loop-guard) gives the limits for a write and for a `$` flush.
 
 ## Choosing
 

@@ -18,11 +18,13 @@ Compile-time reactivity for plain JS and TS.
 
 ## Where to go next
 
-- [Getting started](./getting-started.md) installs the package and lists the requirements.
+- [Getting started](./getting-started.md) installs the package and runs a first example.
 - [Bundler setup](./bundler-setup.md) adds the compiler to Vite, Rollup, webpack and others.
-- [Basic reactivity](./basic-reactivity.md) starts the guide. [Computed variables](./computed-variables.md), [synchronous tracking](./synchronous-tracking.md), [lifecycles](./lifecycles.md) and [composition](./composition.md) follow it.
+- [Basic reactivity](./basic-reactivity.md) starts the concepts. [Computed variables](./computed-variables.md), [lifecycles](./lifecycles.md), [synchronous tracking](./synchronous-tracking.md) and [composition](./composition.md) follow it.
 - [Stores](./stores.md) and [SolidJS](./solid.md) connect reactive code with the rest of an app.
-- [API reference](./api.md) lists every export. [Migrating from 0.4](./migration.md) lists what changed. [Internals](./internals.md) and [Limits](./limits.md) explain how the compiler and the runtime work and what they do not track.
+- [API reference](./api.md) lists every export, [errors](./errors.md) lists every message, and the [glossary](./glossary.md) defines the terms.
+- [Troubleshooting](./troubleshooting.md) and [limits](./limits.md) help when code does not run. [Migrating from 0.4](./migration.md) lists what changed.
+- [Internals](./internals.md) explains how the compiler and the runtime work.
 
 ## Inspirations and prior art
 

@@ -1,6 +1,7 @@
 // The pages of the documentation, from the Markdown files in `website/docs`.
 
 import type { Page } from '../plugins/markdown.ts';
+import { SECTIONS } from './sections.ts';
 
 export type { Page };
 
@@ -29,25 +30,11 @@ const labels: Record<string, string> = {
   migration: 'Migrating from 0.4',
 };
 
-/** The sections of the sidebar, in reading order. */
+/** The sections of the sidebar, in reading order, with the title of each page. */
 export const sections: {
   title: string;
   pages: { slug: string; title: string }[];
-}[] = [
-  { title: 'Start', pages: ['', 'getting-started', 'bundler-setup', 'api'] },
-  {
-    title: 'Guide',
-    pages: [
-      'basic-reactivity',
-      'computed-variables',
-      'lifecycles',
-      'synchronous-tracking',
-      'composition',
-    ],
-  },
-  { title: 'Integrations', pages: ['stores', 'solid'] },
-  { title: 'More', pages: ['migration', 'internals', 'limits'] },
-].map((section) => ({
+}[] = SECTIONS.map((section) => ({
   title: section.title,
   pages: section.pages
     .filter((slug) => slug in pages)

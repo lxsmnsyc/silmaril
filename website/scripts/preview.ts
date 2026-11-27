@@ -12,6 +12,8 @@ const TYPES: Record<string, string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.svg': 'image/svg+xml',
+  '.md': 'text/markdown; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
 const http = createServer(async (request, response) => {

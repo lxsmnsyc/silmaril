@@ -14,24 +14,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/svg+xml" href=(`${base}logo.svg`)>
+    <link rel="preload" href=(`${base}fonts/bricolage-grotesque.woff2`) as="font" type="font/woff2" crossorigin>
     {raw(THEME_SCRIPT)}
     {raw(STYLES)}
   </head>
   <body>
+    <a class="skip" href="#main">Skip to content</a>
     <Header />
-    {children}
+    <div id="main" tabindex="-1">
+      {children}
+    </div>
     <footer class="footer">
-      <p>MIT licensed. Built with <a href="https://github.com/lxsmnsyc/brumate" target="_blank" rel="noreferrer">brumate</a>.</p>
+      <p>MIT licensed. Built with <a href="https://github.com/lxsmnsyc/brumate">brumate</a>.</p>
+      <nav class="footer-links" aria-label="Project">
+        <a href="https://github.com/lxsmnsyc/silmaril">Source</a>
+        <a href="https://github.com/lxsmnsyc/silmaril/issues">Issues</a>
+        <a href="https://www.npmjs.com/package/silmaril">npm</a>
+        <a href="https://github.com/lxsmnsyc/silmaril/blob/main/packages/silmaril/CHANGELOG.md">Changelog</a>
+      </nav>
     </footer>
   </body>
 </html>
-
-<style>
-  .footer {
-    padding: 2rem 1rem;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 0.875rem;
-    text-align: center;
-  }
-</style>
